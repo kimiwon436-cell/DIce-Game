@@ -44,6 +44,25 @@ button,input{font:inherit}button{cursor:pointer}
 .loading{position:absolute;inset:0;background:#0d0916;z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column}.loading.active{display:flex}.bar{width:min(430px,80%);height:10px;background:#281d3c;border-radius:20px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#42d9ff,#9a6cff);width:0}
 .battle{background:#ddc28e;position:absolute;inset:0}.battleTop{height:58px;background:#191325e8;display:flex;align-items:center;gap:9px;padding:8px 12px}.battleTop b{font-size:22px}.battleTop .pill{background:#312548;border:1px solid #614b82;border-radius:10px;padding:7px 9px;font-size:11px;font-weight:1000}.battleTop .right{margin-left:auto}.arena{position:absolute;top:58px;left:0;right:0;bottom:124px;overflow:hidden;background:linear-gradient(90deg,#e1c18b,#ecd09d 50%,#dfbf87)}.lane{position:absolute;left:0;right:0;top:39%;height:86px;background:linear-gradient(#e9ce9e,#dcb97f);border-top:2px solid #b58e5b77;border-bottom:2px solid #b58e5b77}.enemy{position:absolute;width:34px;height:34px;border-radius:12px;background:linear-gradient(145deg,#8f7a9e,#43344e);border:2px solid #ffffff77;display:grid;place-items:center;font-size:12px;font-weight:1000;box-shadow:0 5px 12px #0004}.enemy.boss{width:49px;height:49px;background:linear-gradient(145deg,#b84cf0,#65209d)}.gate{position:absolute;right:12px;top:35%;width:63px;height:80px;border-radius:16px;background:#4b4052;border:5px solid #28202d;display:grid;place-items:center;font-size:28px}.gate small{position:absolute;bottom:-18px;background:#23192f;border-radius:8px;padding:2px 7px;font-size:10px}.hp{position:absolute;left:50%;transform:translateX(-50%);top:10px;background:#22172f;border:2px solid #5e4a78;border-radius:12px;padding:5px 10px;font-weight:1000;min-width:160px;text-align:center}.hp i{display:block;height:7px;background:#4fe6ff;border-radius:20px;margin-top:3px}.battleDice{position:absolute;left:18px;right:18px;bottom:10px;height:51%;display:grid;grid-template-columns:repeat(5,1fr);gap:9px;z-index:5}.slot{display:grid;place-items:center;border:2px dashed #6d563866;border-radius:11px}.battleDice .dice{width:min(58px,90%);cursor:pointer}.battlebar{position:absolute;left:10px;right:10px;bottom:62px;height:55px;display:flex;gap:9px;z-index:9}.sp{background:#21162d;border:2px solid #624a7f;border-radius:13px;padding:9px 12px;font-weight:1000;display:flex;align-items:center}.spawn{flex:1;border:0;border-radius:13px;background:linear-gradient(#44e5a8,#13b979);font-weight:1000;color:#052117;box-shadow:0 6px 0 #08734f}.speed{border:2px solid #614b80;background:#2d2240;color:#fff;border-radius:13px;padding:0 13px;font-weight:1000}
 .battleBottom{position:absolute;bottom:0;left:0;right:0;height:62px;background:#21172d;border-top:1px solid #513d6c;display:flex;align-items:center;justify-content:center;color:#bcb1cf;font-size:11px}
+.coopArena{position:absolute;top:58px;left:0;right:0;bottom:124px;overflow:hidden;background:linear-gradient(180deg,#e7cd9a 0 49.5%,#c8a56d 49.5% 50.5%,#e7cd9a 50.5% 100%)}
+.coopPlayer{position:absolute;left:0;right:0;height:50%;padding:7px 10px 4px;display:flex;flex-direction:column}
+.coopPlayer.opponent{top:0;border-bottom:1px solid #b59362}
+.coopPlayer.me{bottom:0;border-top:1px solid #f2d8aa}
+.coopHeader{height:24px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:1000}
+.coopHeader .who{background:#251a31dd;border:1px solid #5a4968;border-radius:8px;padding:3px 7px}
+.coopHeader .base{margin-left:auto;background:#24172e;border:1px solid #5a466f;border-radius:8px;padding:3px 7px}
+.coopField{flex:1;display:grid;grid-template-columns:38px 1fr 52px;gap:5px;min-height:0}
+.coopPath{position:relative;border-radius:9px;background:linear-gradient(180deg,#ddbb7f,#edcf9d);border:1px solid #c29e64;overflow:hidden}
+.coopPath i{position:absolute;left:4px;right:4px;top:50%;height:2px;background:#c19b60aa}
+.coopEnemy{position:absolute;left:-10px;width:24px;height:24px;border-radius:8px;background:linear-gradient(145deg,#927f9c,#493a54);border:2px solid #ffffff66;display:grid;place-items:center;font-size:9px;font-weight:1000;box-shadow:0 3px 7px #0004}
+.coopEnemy.boss{width:30px;height:30px;background:linear-gradient(145deg,#be68ed,#64249a)}
+.coopGrid{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(3,1fr);gap:4px;min-height:0}
+.coopGrid .slot{border:1px solid #c39d64;background:#e9cc97aa}
+.coopGrid .dice{width:min(44px,82%);height:auto;aspect-ratio:1;border-radius:9px;font-size:19px;cursor:pointer}
+.coopBase{border-radius:10px;background:linear-gradient(#6b6267,#3b303c);border:4px solid #2f2730;display:grid;place-items:center;font-size:22px;position:relative;align-self:center;height:70px}
+.coopBase small{position:absolute;bottom:-15px;font-size:8px;background:#23182e;padding:2px 5px;border-radius:7px}
+.remoteBadge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#1f1827cc;border:1px solid #655178;border-radius:9px;padding:3px 7px;font-size:8px;z-index:5;white-space:nowrap}
+
 .shoplessNav{display:flex;justify-content:space-between;gap:7px;margin-top:14px}.quick{flex:1;background:#2a1e40;border:1px solid #56436f;border-radius:12px;padding:10px;text-align:center;font-size:11px;font-weight:900}
 .table{width:100%;border-collapse:separate;border-spacing:0 7px}.table td{background:#2a1d40;padding:10px;font-size:12px}.table td:first-child{border-radius:10px 0 0 10px}.table td:last-child{border-radius:0 10px 10px 0;text-align:right}
 .tree{position:relative;height:420px;background:radial-gradient(circle at center,#382457,#1b1228);border:1px solid #543e70;border-radius:17px;overflow:hidden}.node{position:absolute;width:70px;height:70px;border-radius:18px;border:2px solid #72589a;background:#302045;display:grid;place-items:center;font-size:27px;box-shadow:0 12px 25px #0005}.node.lock{filter:grayscale(.7);opacity:.72}.node.ok{border-color:#69e7b0}.edge{position:absolute;height:4px;background:#5f4c79;transform-origin:left center}.nodeLabel{position:absolute;top:72px;left:50%;transform:translateX(-50%);font-size:9px;white-space:nowrap;color:#b9adce}.tree button{position:absolute;bottom:12px;right:12px}
@@ -396,7 +415,7 @@ function pollMatchStatus(){
 }
 function handleMatchResult(r){
  clearInterval(appState.matchTimer);appState.matchTimer=null;appState.matching=false;
- appState.opponentType=r.opponentType||'ai';appState.opponentNickname=r.opponentNickname|| (r.opponentType==='player'?'플레이어':'AI 플레이어');
+ appState.opponentType=r.opponentType||'ai';appState.opponentNickname=r.opponentNickname|| (r.opponentType==='player'?'플레이어':'AI 플레이어');appState.matchId=r.matchId||null;
  beginLoading(appState.opponentType,appState.opponentNickname);
 }
 async function cancelMatch(){
@@ -412,68 +431,148 @@ function startBattle(){
   const opponentType=appState.opponentType||'ai';
   const opponentName=appState.opponentNickname|| (opponentType==='player'?'플레이어':'AI 플레이어');
   const playerName=appState.profile.nickname||appState.user||'플레이어';
+  appState.battle={matchId:appState.matchId||null,opponentType,playerName,opponentName,opponentDice:[],opponentSpeed:1,opponentBase:150,myBase:150,wave:1};
+  appState.coopEnded=false;
   document.getElementById('page-battle').innerHTML=`<div class="battle">
-    <div class="battleTop">
-      <button class="topbtn" onclick="leaveBattle()">‹</button>
-      <div style="min-width:72px"><b id="bwave">1</b><div style="font-size:8px;color:#b9adca">WAVE</div></div>
-      <div class="pill">🤝 협동전</div>
-      <div class="pill">상대: ${esc(opponentName)}</div>
-      <div class="pill" id="btime">20s</div>
-      <div class="pill right">SP <span id="bsp">100</span></div>
-      <div class="pill" id="bkills">처치 0</div>
+    <div class="battleTop"><button class="topbtn" onclick="leaveBattle()">‹</button><div style="min-width:60px"><b id="bwave">1</b><div style="font-size:8px;color:#b9adca">WAVE</div></div><div class="pill">🤝 협동전</div><div class="pill">상대: ${esc(opponentName)}</div><div class="pill" id="btime">20s</div><div class="pill right">SP <span id="bsp">100</span></div><div class="pill" id="bkills">처치 0</div></div>
+    <div class="coopArena">
+      <div class="coopPlayer opponent">
+        <div class="coopHeader"><span class="who">상대 · ${esc(opponentName)}</span><span id="oppSpeedLabel" class="who">1.0x</span><span class="who">${opponentType==='player'?'온라인':'AI'}</span><span id="oppBaseLabel" class="base">❤️ 150</span></div>
+        <div class="coopField"><div class="coopPath"><i></i><div id="oppEnemies"></div></div><div class="coopGrid" id="opponentDiceGrid"></div><div class="coopBase">⚡<small>150</small></div></div>
+      </div>
+      <div class="remoteBadge">상대의 주사위 소환 공간도 같이 보입니다</div>
+      <div class="coopPlayer me">
+        <div class="coopHeader"><span class="who">나 · ${esc(playerName)}</span><span id="mySpeedLabel" class="who">1.0x</span><span class="who">SP <span id="miniSp">100</span></span><span id="myBaseLabel" class="base">❤️ 150</span></div>
+        <div class="coopField"><div class="coopPath"><i></i><div id="myEnemies"></div></div><div class="coopGrid" id="myDiceGrid"></div><div class="coopBase">⚡<small>150</small></div></div>
+      </div>
     </div>
-    <div class="arena">
-      <div class="hp">적 기지 HP <span id="basehp">150</span><i id="hpbar" style="width:100%"></i></div>
-      <div class="lane"></div>
-      <div class="gate">⚡<small>150</small></div>
-      <div id="enemyLayer"></div>
-      <div id="battleDice" class="battleDice"></div>
-    </div>
-    <div class="battlebar">
-      <div class="sp">✦ <span id="sp">100</span></div>
-      <button class="spawn" onclick="summonBattleDice()">소환 · SP 50</button>
-      <button class="speed" onclick="toggleSpeed()">1.0x</button>
-    </div>
-    <div class="battleBottom">${esc(playerName)} · ${opponentType==='ai'?'AI와 협동':'다른 플레이어와 협동'} · 게임 내 사용 재화: <b style="color:#65e5ff">SP</b></div>
+    <div class="battlebar"><div class="sp">✦ <span id="sp">100</span></div><button class="spawn" onclick="summonBattleDice()">소환 · SP 50</button><button class="speed" id="speedButton" onclick="toggleSpeed()">1.0x</button></div>
+    <div class="battleBottom">${esc(playerName)} · ${opponentType==='ai'?'AI와 협동':'다른 플레이어와 실시간 협동'} · 각자의 길을 따라 이동하며 <b style="color:#ffcf4b;margin-left:4px">먼저 기지가 파괴되면 종료</b></div>
   </div>`;
   navBattle();setupBattle();
 }
-
 function navBattle(){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById('page-battle').classList.add('active')}
-function setupBattle(){appState.sp=100;appState.wave=1;appState.gameSec=20;appState.speed=1;appState.kills=0;appState.enemies=[];appState.selected=null;appState.diceGrid=appState.deck.map((type,i)=>({type:type,lvl:1,id:i+1}));last=0;lastAttack=0;renderBattleDice();for(let i=0;i<8;i++)setTimeout(addEnemy,i*320);requestAnimationFrame(battleLoop)}
-let last=0,lastAttack=0;
-function renderBattleDice(){const el=document.getElementById('battleDice');if(!el)return;el.innerHTML='';for(let i=0;i<15;i++){const s=document.createElement('div');s.className='slot';const d=appState.diceGrid[i]||((i<5)?{type:appState.deck[i],lvl:1}:null);if(d){const div=document.createElement('div');div.innerHTML=diceHTML(d,1);div.firstChild.style.cursor='pointer';div.onclick=()=>battleDieClick(i);s.appendChild(div)}else{s.onclick=()=>summonBattleDice()};el.appendChild(s)}}
-function battleDieClick(i){
-  const d=appState.diceGrid[i];
-  if(!d)return;
-  if(appState.selected===null){appState.selected=i;renderBattleDice();return}
-  if(appState.selected===i){appState.selected=null;renderBattleDice();return}
-  const a=appState.diceGrid[appState.selected],b=appState.diceGrid[i];
-  if(a&&b&&a.type===b.type&&a.lvl===b.lvl){
-    appState.diceGrid[appState.selected]={type:a.type,lvl:Math.min(7,a.lvl+1),id:Date.now()};
-    appState.diceGrid[i]=null;
-    appState.selected=null;
-    appState.sp+=15;
-    renderBattleDice();
-    updateBattleHUD();
-    toast('같은 주사위 합성!');
-  }else{
-    appState.selected=i;
-    renderBattleDice();
-    toast('같은 종류 · 같은 레벨의 주사위를 선택하세요');
+function setupBattle(){
+  appState.sp=100;appState.wave=1;appState.gameSec=20;appState.speed=1;appState.kills=0;appState.enemies=[];appState.oppEnemies=[];appState.selected=null;
+  appState.diceGrid=(appState.deck||['blue','blue','blue','blue','blue']).map((type,i)=>({type:type,lvl:1,id:i+1}));
+  appState.battle.myBase=150;appState.battle.opponentBase=150;appState.battle.opponentSpeed=1;
+  appState.battle.opponentDice=appState.opponentType==='ai'?(appState.deck||[]).map((type,i)=>({type,lvl:1,id:'ai'+i})):appState.battle.opponentDice||[];
+  last=0;lastAttack=0;lastOpponentAttack=0;renderBattleDice();updateBattleHUD();
+  for(let i=0;i<6;i++){setTimeout(()=>addEnemyFor('me'),i*260);setTimeout(()=>addEnemyFor('opp'),i*260)}
+  if(appState.opponentType==='player'&&appState.matchId)sendBattle({type:'battle_join',matchId:appState.matchId,grid:appState.diceGrid,speed:appState.speed});
+  window.rd2BattleRaf=requestAnimationFrame(battleLoop);
+}
+let last=0,lastAttack=0,lastOpponentAttack=0;
+function renderCoopGrid(arr,id,clickable=false,selectedIndex=null){
+  const el=document.getElementById(id);if(!el)return;el.innerHTML='';
+  for(let i=0;i<15;i++){
+    const s=document.createElement('div');s.className='slot';const d=arr[i];
+    if(d){const n=document.createElement('div');n.innerHTML=diceHTML(d,1);n.firstChild.style.width='min(44px,82%)';if(selectedIndex===i)n.firstChild.classList.add('selected');if(clickable)n.firstChild.onclick=(ev)=>{ev.stopPropagation();battleDieClick(i)};s.appendChild(n)}
+    el.appendChild(s);
   }
 }
-function summonBattleDice(){if(appState.sp<50)return toast('SP가 부족합니다');const empty=[...Array(15).keys()].find(i=>!appState.diceGrid[i]);if(empty===undefined)return toast('빈 칸이 없습니다');appState.sp-=50;appState.diceGrid[empty]={type:appState.deck[Math.floor(Math.random()*appState.deck.length)],lvl:1,id:Date.now()+empty};renderBattleDice();updateBattleHUD()}
-function addEnemy(boss=false){const layer=document.getElementById('enemyLayer');if(!layer)return;const e=document.createElement('div');e.className='enemy'+(boss?' boss':'');e.textContent=boss?'B':'●';e.style.left='-45px';e.style.top=(37+Math.random()*5)+'%';e.dataset.hp=boss?'1200':'220';layer.appendChild(e);appState.enemies.push({el:e,x:-45,hp:+e.dataset.hp,speed:20+(appState.wave*0.4)+(boss?-6:0),boss});}
-function damageEnemy(target,dmg){target.hp-=dmg;if(target.hp<=0){target.el.remove();appState.enemies=appState.enemies.filter(e=>e!==target);appState.kills++;appState.sp+=bossReward(target)}}
-function bossReward(e){return e.boss?25:5}
-function battleLoop(ts){if(!document.getElementById('page-battle').classList.contains('active'))return;const dt=Math.min(.06,(ts-(last||ts))/1000);last=ts;appState.gameSec-=dt*appState.speed;if(appState.gameSec<=0){appState.wave++;appState.gameSec=20;addEnemy(appState.wave%5===0)}const layer=document.getElementById('enemyLayer'),width=layer?layer.clientWidth:0;
- appState.enemies.slice().forEach(e=>{e.x+=e.speed*dt*appState.speed;e.el.style.left=e.x+'px';if(e.x>width-40){e.el.remove();appState.enemies=appState.enemies.filter(x=>x!==e);document.getElementById('basehp').textContent=Math.max(0,(+document.getElementById('basehp').textContent||150)-(e.boss?25:3))}});
- if(ts-lastAttack>400/appState.speed){lastAttack=ts;const all=Object.values(D);const types=appState.diceGrid.filter(Boolean).concat(appState.deck);types.forEach(t=>{const target=appState.enemies.find(e=>e.x>0&&e.x<width-70);if(target){const def=D[t]||D.blue;damageEnemy(target,def.damage);}})}
- updateBattleHUD();requestAnimationFrame(battleLoop)}
-function updateBattleHUD(){const sp=document.getElementById('sp');if(sp)sp.textContent=Math.floor(appState.sp);const s=document.getElementById('bsp');if(s)s.textContent=Math.floor(appState.sp);const w=document.getElementById('bwave');if(w)w.textContent=appState.wave;const t=document.getElementById('btime');if(t)t.textContent=Math.max(0,Math.ceil(appState.gameSec))+'s';const k=document.getElementById('bkills');if(k)k.textContent='처치 '+appState.kills}
-function toggleSpeed(){appState.speed=appState.speed===1?1.5:appState.speed===1.5?2:1;toast('게임 속도 '+appState.speed+'x')}
-function leaveBattle(){document.getElementById('page-battle').classList.remove('active');clearInterval(appState.matchTimer);appState.matchTimer=null;appState.matching=false;appState.diceGrid=[];appState.enemies=[];appState.selected=null;appState.page='lobby';document.getElementById('page-lobby').classList.add('active');drawLobby();updateRes();toast('전투를 종료하고 로비로 돌아왔습니다')}
+function renderCoopBoards(){renderCoopGrid(appState.battle?.opponentDice||[],'opponentDiceGrid',false);renderCoopGrid(appState.diceGrid||[],'myDiceGrid',true,appState.selected)}
+function renderBattleDice(){renderCoopBoards()}
+function battleDieClick(i){
+  const d=appState.diceGrid[i];if(!d)return;
+  if(appState.selected===null){appState.selected=i;renderCoopBoards();return}
+  if(appState.selected===i){appState.selected=null;renderCoopBoards();return}
+  const a=appState.diceGrid[appState.selected],b=appState.diceGrid[i];
+  if(a&&b&&a.type===b.type&&a.lvl===b.lvl){
+    const target=appState.selected;
+    appState.diceGrid[target]={type:a.type,lvl:Math.min(7,a.lvl+1),id:Date.now()};
+    appState.diceGrid[i]=null;appState.selected=null;appState.sp+=15;
+    renderCoopBoards();updateBattleHUD();sendBattle({type:'merge',matchId:appState.matchId,grid:appState.diceGrid});toast('같은 주사위 합성!');
+  }else{appState.selected=i;renderCoopBoards();toast('같은 종류 · 같은 레벨의 주사위를 선택하세요')}
+}
+function summonBattleDice(){
+  if(appState.sp<50)return toast('SP가 부족합니다');
+  const empty=[...Array(15).keys()].find(i=>!appState.diceGrid[i]);if(empty===undefined)return toast('빈 칸이 없습니다');
+  appState.sp-=50;const deck=appState.deck||['blue'];const type=deck[Math.floor(Math.random()*deck.length)];
+  appState.diceGrid[empty]={type,lvl:1,id:Date.now()+empty};renderCoopBoards();updateBattleHUD();
+  sendBattle({type:'summon',matchId:appState.matchId,index:empty,dice:appState.diceGrid[empty],grid:appState.diceGrid});
+}
+function addEnemyFor(side,boss=false){
+  const layer=document.getElementById(side==='me'?'myEnemies':'oppEnemies');if(!layer)return;
+  const el=document.createElement('div');el.className='coopEnemy'+(boss?' boss':'');el.textContent=boss?'B':'●';el.style.top=(35+Math.random()*25)+'%';layer.appendChild(el);
+  const e={el,x:-18,y:35+Math.random()*25,hp:boss?900:190+appState.wave*18,max:boss?900:190+appState.wave*18,speed:17+appState.wave*.25+(boss?-5:0),boss,side};
+  (side==='me'?appState.enemies:appState.oppEnemies).push(e);
+}
+function damageSideEnemy(e,dmg){
+ e.hp-=dmg;
+ if(e.hp<=0){e.el.remove();const arr=e.side==='me'?appState.enemies:appState.oppEnemies;const idx=arr.indexOf(e);if(idx>=0)arr.splice(idx,1);if(e.side==='me'){appState.kills++;appState.sp+=e.boss?30:5}}
+}
+function attackSide(side,now){
+ if(!appState.battle)return;
+ const types=side==='me'?appState.diceGrid.filter(Boolean):appState.battle.opponentDice.filter(Boolean);
+ if(!types.length)return;
+ const cd=420/(side==='me'?appState.speed:appState.battle.opponentSpeed);
+ if(now-(side==='me'?lastAttack:lastOpponentAttack)<cd)return;
+ if(side==='me')lastAttack=now;else lastOpponentAttack=now;
+ const arr=side==='me'?appState.enemies:appState.oppEnemies;
+ types.forEach(d=>{const target=arr.find(e=>e.x>-5&&e.x<28);if(target){const def=D[d.type]||D.blue;damageSideEnemy(target,def.damage*(1+d.lvl*.3))}});
+}
+function moveSide(side,dt){
+ const arr=side==='me'?appState.enemies:appState.oppEnemies;const layer=document.getElementById(side==='me'?'myEnemies':'oppEnemies');const width=layer?.clientWidth||38;
+ arr.slice().forEach(e=>{
+   e.x+=e.speed*dt*(side==='me'?appState.speed:appState.battle.opponentSpeed);e.el.style.left=e.x+'px';
+   if(e.x>width-4){e.el.remove();const idx=arr.indexOf(e);if(idx>=0)arr.splice(idx,1);
+     if(side==='me'){appState.battle.myBase=Math.max(0,appState.battle.myBase-(e.boss?25:3));}
+     else{appState.battle.opponentBase=Math.max(0,appState.battle.opponentBase-(e.boss?25:3));}
+     if((appState.battle.myBase<=0||appState.battle.opponentBase<=0)&&!appState.coopEnded){
+       endCoop(appState.battle.myBase<=0?'패배':'승리',appState.battle.myBase<=0?'내 기지가 먼저 파괴되었습니다.':'상대 기지가 먼저 파괴되었습니다.');
+     }
+   }
+ });
+}
+function syncOpponentGrid(grid){if(!appState.battle)return;appState.battle.opponentDice=(grid||[]).map(x=>x?{type:x.type,lvl:x.lvl,id:x.id}:null);renderCoopBoards()}
+function sendBattle(message){if(appState.opponentType!=='player'||!liveSocket||liveSocket.readyState!==WebSocket.OPEN||!appState.matchId)return;liveSocket.send(JSON.stringify(message))}
+function handleRemoteBattle(m){
+ if(!appState.battle)return;
+ if(m.matchId&&appState.matchId&&m.matchId!==appState.matchId)return;
+ if(m.type==='battle_join'){syncOpponentGrid(m.grid||[]);appState.battle.opponentSpeed=Number(m.speed)||1}
+ else if(m.type==='summon'||m.type==='merge'){syncOpponentGrid(m.grid||[])}
+ else if(m.type==='speed'){appState.battle.opponentSpeed=Number(m.speed)||1;const el=document.getElementById('oppSpeedLabel');if(el)el.textContent=appState.battle.opponentSpeed.toFixed(1)+'x'}
+ else if(m.type==='battle_game_over'){endCoop(m.result,m.reason)}
+}
+function loopBattleBots(dt){
+ if(appState.opponentType==='ai'){
+   if(!appState.battle.opponentDice.length){appState.battle.opponentDice=(appState.deck||['blue','blue','blue','blue','blue']).map((type,i)=>({type,lvl:1,id:'ai'+i}));renderCoopBoards()}
+   appState.battle.opponentSpeed=appState.speed;
+   if(appState.oppEnemies.length<Math.min(6+Math.floor(appState.wave/3),14)&&Math.random()<dt*(1+appState.wave/30))addEnemyFor('opp');
+ }
+}
+function battleLoop(ts){
+ if(!document.getElementById('page-battle').classList.contains('active'))return;
+ const dt=Math.min(.06,(ts-(last||ts))/1000);last=ts;
+ if(!appState.coopEnded&&!appState.paused){
+   appState.sp=Math.min(9999,appState.sp+dt*7*appState.speed);appState.gameSec-=dt*appState.speed;
+   if(appState.gameSec<=0){appState.wave++;appState.gameSec=20;addEnemyFor('me',appState.wave%10===0);addEnemyFor('opp',appState.wave%10===0)}
+   loopBattleBots(dt);moveSide('me',dt);moveSide('opp',dt);attackSide('me',ts);attackSide('opp',ts);
+   if(appState.enemies.length<Math.min(7+Math.floor(appState.wave/3),16)&&Math.random()<dt*(.8+appState.wave/40)*appState.speed)addEnemyFor('me');
+ }
+ updateBattleHUD();window.rd2BattleRaf=requestAnimationFrame(battleLoop)
+}
+function updateBattleHUD(){
+ const sp=document.getElementById('sp');if(sp)sp.textContent=Math.floor(appState.sp);
+ const mini=document.getElementById('miniSp');if(mini)mini.textContent=Math.floor(appState.sp);
+ const s=document.getElementById('bsp');if(s)s.textContent=Math.floor(appState.sp);
+ const w=document.getElementById('bwave');if(w)w.textContent=appState.wave;
+ const t=document.getElementById('btime');if(t)t.textContent=Math.max(0,Math.ceil(appState.gameSec))+'s';
+ const k=document.getElementById('bkills');if(k)k.textContent='처치 '+appState.kills;
+ const mb=document.getElementById('myBaseLabel'),ob=document.getElementById('oppBaseLabel');
+ if(mb)mb.textContent='❤️ '+(appState.battle?.myBase??150);if(ob)ob.textContent='❤️ '+(appState.battle?.opponentBase??150);
+ const ml=document.getElementById('mySpeedLabel'),ol=document.getElementById('oppSpeedLabel');
+ if(ml)ml.textContent=appState.speed.toFixed(1)+'x';if(ol)ol.textContent=(appState.battle?.opponentSpeed??1).toFixed(1)+'x';
+ const sb=document.getElementById('speedButton');if(sb)sb.textContent=appState.speed.toFixed(1)+'x';
+}
+function toggleSpeed(){appState.speed=appState.speed===1?1.5:appState.speed===1.5?2:1;updateBattleHUD();toast('게임 속도 '+appState.speed.toFixed(1)+'x');sendBattle({type:'speed',matchId:appState.matchId,speed:appState.speed})}
+function endCoop(result,reason){
+ if(appState.coopEnded)return;appState.coopEnded=true;cancelAnimationFrame(window.rd2BattleRaf||0);
+ const r=document.createElement('div');r.id='resultOverlay';r.className='overlay open';r.innerHTML=`<div class="modal"><h2>${esc(result)}</h2><p class="muted">${esc(reason)}</p><div class="statgrid"><div class="stat"><small>WAVE</small><b>${appState.wave}</b></div><div class="stat"><small>처치</small><b>${appState.kills}</b></div></div><button class="primary" style="width:100%" onclick="leaveBattle()">로비로</button></div>`;document.getElementById('page-battle').appendChild(r);
+ sendBattle({type:'battle_game_over',matchId:appState.matchId,result,reason});
+}
+function leaveBattle(){document.getElementById('page-battle').classList.remove('active');cancelAnimationFrame(window.rd2BattleRaf||0);clearInterval(appState.matchTimer);appState.matchTimer=null;appState.matching=false;appState.diceGrid=[];appState.enemies=[];appState.oppEnemies=[];appState.selected=null;appState.coopEnded=false;appState.page='lobby';document.getElementById('page-lobby').classList.add('active');drawLobby();updateRes();toast('전투를 종료하고 로비로 돌아왔습니다')}
 function updateRes(){['coin','dice','diamond','arenaTicket','coopTicket'].forEach(k=>{const el=document.getElementById(k);if(el)el.textContent=appState.currencies[k].toLocaleString()})}
 function closeModal(){document.getElementById('modalRoot').innerHTML=''}
 function toast(msg){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:absolute;z-index:300;left:50%;top:78px;transform:translateX(-50%);background:#25183a;border:1px solid #694f90;border-radius:12px;padding:10px 14px;font-weight:900;opacity:0;transition:.2s';document.body.appendChild(t)}t.textContent=msg;t.style.opacity=1;clearTimeout(t._tm);t._tm=setTimeout(()=>t.style.opacity=0,1500)}
@@ -541,6 +640,7 @@ function startLiveSocket(){
          if(modal&&modal.innerHTML.includes('행운의 주사위'))openLucky();
        } else if(m.type==='admin_state_update'&&appState.isAdmin&&appState.page==='admin'){drawAdmin();}
        else if(m.type==='matched'&&appState.matching){handleMatchResult(m);}
+       else if(['battle_join','summon','merge','speed','battle_game_over'].includes(m.type)){handleRemoteBattle(m);}
      }catch(e){console.warn('live socket message',e)}
    };
    liveSocket.onclose=()=>{liveSocket=null;if(serverToken&&!liveSocketRetry)liveSocketRetry=setTimeout(startLiveSocket,2000)};

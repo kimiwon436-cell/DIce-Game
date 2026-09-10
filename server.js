@@ -359,7 +359,22 @@ wss.on('connection',async(ws,req)=>{
  try{
   const u=new URL(req.url,'http://localhost');const token=u.searchParams.get('token');const p=jwt.verify(token,JWT_SECRET);const row=await rowForUser(p.id);if(!row)throw new Error('no user');
   const uid=String(p.id);if(!sockets.has(uid))sockets.set(uid,new Set());sockets.get(uid).add(ws);socketMeta.set(uid,{isAdmin:isAdminRow(row)});ws.userId=uid;
-  ws.send(JSON.stringify({type:'connected'}));ws.on('close',()=>{sockets.get(uid)?.delete(ws);if(!sockets.get(uid)?.size){sockets.delete(uid);socketMeta.delete(uid)}});
+  ws.send(JSON.stringify({type:'connected'}));
+  ws.on('message',raw=>{
+    try{
+      const m=JSON.parse(String(raw||'{}'));
+      if(!m||!['battle_join','summon','merge','speed','battle_game_over'].includes(m.type))return;
+      const match=matches.get(String(m.matchId||''));
+      if(!match||!match.players.map(String).includes(uid))return;
+      const payload=JSON.stringify({...m,fromUserId:uid});
+      for(const pid of match.players.map(String)){
+        if(pid===uid)continue;
+        const set=sockets.get(pid);if(!set)continue;
+        for(const client of set)if(client.readyState===1)client.send(payload);
+      }
+    }catch(e){console.warn('ws battle relay',e.message)}
+  });
+  ws.on('close',()=>{sockets.get(uid)?.delete(ws);if(!sockets.get(uid)?.size){sockets.delete(uid);socketMeta.delete(uid)}});
  }catch{ws.close(1008,'Unauthorized');}
 });
 setInterval(expireWaitingEntries,1000);
