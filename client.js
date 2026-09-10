@@ -10,6 +10,15 @@ const DEFAULT_CLIENT_STATE={
  passXP:0,lucky:0,quests:[0,0,0],difficulty:'normal',room:null
 };
 const appState=DEFAULT_CLIENT_STATE;
+const D={
+ blue:{name:'바람',icon:'🌀',cls:'d-blue',damage:85,rate:750},
+ cyan:{name:'얼음',icon:'❄',cls:'d-cyan',damage:50,rate:1000},
+ red:{name:'화염',icon:'🔥',cls:'d-red',damage:70,rate:820},
+ green:{name:'독',icon:'☠',cls:'d-green',damage:45,rate:1100},
+ yellow:{name:'빛',icon:'☀',cls:'d-yellow',damage:55,rate:900},
+ pink:{name:'분열',icon:'✿',cls:'d-pink',damage:40,rate:950},
+ purple:{name:'성장',icon:'✦',cls:'d-purple',damage:50,rate:1000}
+};
 async function api(path, options={}){
  const headers={'Content-Type':'application/json',...(options.headers||{})};
  if(serverToken)headers.Authorization='Bearer '+serverToken;
