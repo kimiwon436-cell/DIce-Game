@@ -180,6 +180,7 @@ wss.on('connection',(ws,req)=>{
   }catch{ws.close(1008,'Unauthorized')}
 });
 
+app.get('/',(req,res)=>res.sendFile(path.join(__dirname,'public','index.html')));
 app.get('/{*splat}',(req,res)=>{
   if(req.path.startsWith('/api/')||req.path==='/health') return res.status(404).json({error:'Not found'});
   res.sendFile(path.join(__dirname,'public','index.html'));
