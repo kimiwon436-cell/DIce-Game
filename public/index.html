@@ -62,6 +62,9 @@ button,input{font:inherit}button{cursor:pointer}
 .treeCost{position:absolute;right:-7px;top:-7px;background:#19131f;border:1px solid #77618b;border-radius:8px;padding:3px 5px;font-size:9px;font-weight:1000;color:#fff}
 .treeCheck{position:absolute;left:-6px;top:-6px;width:20px;height:20px;border-radius:50%;background:#36d89c;color:#09281f;display:grid;place-items:center;font-size:12px;font-weight:1000;border:2px solid #1c1730}
 .treeLegend{display:flex;gap:18px;justify-content:center;padding:10px 4px 2px;color:#bdb1ce;font-size:10px}
+.treeLayout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(270px,.7fr);gap:12px;align-items:start}.treeDetails{min-width:0}.treeSelected{outline:4px solid #fff0a566;transform:translate(-50%,-50%) scale(1.06);z-index:6}.treeSelected .treeLabel{color:#fff}.treeOpen .treeIcon{filter:drop-shadow(0 0 7px #6be6b0aa)}
+@media(max-width:850px){.treeLayout{grid-template-columns:1fr}.treeDetails{order:2}.treeWide{order:1}}
+
 @media(max-width:650px){.treeCanvas{height:500px;transform:scale(.92);transform-origin:top center}.treeWide{height:535px;overflow:hidden}.treeNode{width:74px;height:74px}.treeIcon{font-size:24px}.treeLabel{top:77px;font-size:8px}}
 
 .pass{display:grid;grid-template-columns:1fr 1.2fr;gap:14px}.passHero{background:linear-gradient(145deg,#3c285d,#221635);border:1px solid #60497f;border-radius:17px;padding:18px}.passTrack{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:15px}.rewardBox{border:1px solid #5d477d;background:#2d2144;border-radius:10px;padding:8px;text-align:center;font-size:10px}.rewardBox b{display:block;font-size:17px}.progress{height:10px;background:#33254b;border-radius:20px;overflow:hidden}.progress i{display:block;height:100%;background:linear-gradient(90deg,#ffc62c,#ff7b50);width:65%}
@@ -88,9 +91,10 @@ let serverToken=A.getItem('rd2_token')||'';
 const DEFAULT_CLIENT_STATE={
  user:null,page:'lobby',mode:'coop',matching:false,matchSec:0,matchTimer:null,
  sp:0,wave:1,gameSec:20,speed:1,kills:0,diceGrid:[],selected:null,enemies:[],
- currencies:{coin:100,dice:0,diamond:0,arenaTicket:0,coopTicket:0},
+ currencies:{coin:100,dice:0,diamond:0,arenaTicket:1,coopTicket:5},
+ selectedTreeNode:0,
  profile:{nickname:'',avatar:'🎲'},deck:['blue','blue','blue','blue','blue'],unlocked:[],treeUnlocked:[],diceLevels:{},
- passXP:0,lucky:0,quests:[0,0,0],difficulty:'normal',room:null,isAdmin:false,coopTicketNextIn:300000,matchQueueId:null,opponentType:null,opponentNickname:''
+ passXP:0,passRewardsClaimed:[],lucky:0,quests:[0,0,0],difficulty:'normal',room:null,isAdmin:false,coopTicketNextIn:300000,arenaTicketNextIn:1800000,matchQueueId:null,opponentType:null,opponentNickname:''
 };
 const appState=DEFAULT_CLIENT_STATE;
 const D={
@@ -110,7 +114,7 @@ async function api(path, options={}){
  if(!res.ok)throw new Error(data.error||('HTTP '+res.status));
  return data;
 }
-function snapshot(){return {user:appState.user,profile:appState.profile,currencies:appState.currencies,deck:appState.deck,unlocked:appState.unlocked,treeUnlocked:appState.treeUnlocked,diceLevels:appState.diceLevels,passXP:appState.passXP,lucky:appState.lucky,quests:appState.quests,difficulty:appState.difficulty}}
+function snapshot(){return {user:appState.user,profile:appState.profile,currencies:appState.currencies,deck:appState.deck,unlocked:appState.unlocked,treeUnlocked:appState.treeUnlocked,diceLevels:appState.diceLevels,passXP:appState.passXP,passRewardsClaimed:appState.passRewardsClaimed,lucky:appState.lucky,quests:appState.quests,difficulty:appState.difficulty,selectedTreeNode:appState.selectedTreeNode||0}}
 function saveLocal(){try{A.setItem('rd2_local_cache',JSON.stringify(snapshot()))}catch{}}
 function save(){saveLocal();if(!serverToken)return Promise.resolve();return api('/api/me/state',{method:'PUT',body:JSON.stringify(snapshot())}).catch(e=>console.warn('server save failed',e))}
 function loadLocal(){
@@ -120,11 +124,15 @@ function loadLocal(){
    Object.assign(appState,s);
   }
  }catch{}
- if(!appState.currencies)appState.currencies={coin:100,dice:0,diamond:0,arenaTicket:0,coopTicket:0};
+ if(!appState.currencies)appState.currencies={coin:100,dice:0,diamond:0,arenaTicket:1,coopTicket:5};
  if(!Array.isArray(appState.deck))appState.deck=['blue','blue','blue','blue','blue'];
  if(!Array.isArray(appState.unlocked))appState.unlocked=[];
  if(!Array.isArray(appState.treeUnlocked))appState.treeUnlocked=[];
  if(!appState.diceLevels)appState.diceLevels={};
+ if(!appState.selectedTreeNode && appState.selectedTreeNode!==0)appState.selectedTreeNode=0;
+ if(!Array.isArray(appState.passRewardsClaimed))appState.passRewardsClaimed=[];
+ if(!appState.arenaTicketNextIn)appState.arenaTicketNextIn=1800000;
+ if(!appState.coopTicketNextIn)appState.coopTicketNextIn=300000;
 }
 function clearSession(){serverToken='';A.removeItem('rd2_token');A.removeItem('rd2_local_cache');appState.user=null;}
 function mountShell(){
@@ -139,7 +147,7 @@ async function bootClient(){
  try{
   const r=await api('/api/me');
   Object.assign(appState,r.state||{});appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin);appState.coopTicketNextIn=r.coopTicketNextIn||300000;
-  mountShell();startServerSync();
+  mountShell();startServerSync();startLiveSocket();
  }catch(e){
   console.warn('session invalid',e);clearSession();mountShell();
  }
@@ -180,10 +188,10 @@ function drawAuthForm(type){
    if(!id||!pw||type==='signup'&&!n)return alert('모든 항목을 입력하세요.');
    if(type==='signup'){
      const r=await api('/api/auth/register',{method:'POST',body:JSON.stringify({username:id,password:pw,nickname:n})});
-     serverToken=r.token;A.setItem('rd2_token',serverToken);Object.assign(appState,r.state);appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin);appState.coopTicketNextIn=r.coopTicketNextIn||300000;save();mountShell();startServerSync();
+     serverToken=r.token;A.setItem('rd2_token',serverToken);Object.assign(appState,r.state);appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin);appState.coopTicketNextIn=r.coopTicketNextIn||300000;appState.arenaTicketNextIn=r.arenaTicketNextIn||1800000;save();mountShell();startServerSync();startLiveSocket();
    }else{
      const r=await api('/api/auth/login',{method:'POST',body:JSON.stringify({username:id,password:pw})});
-     serverToken=r.token;A.setItem('rd2_token',serverToken);Object.assign(appState,r.state);appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin);appState.coopTicketNextIn=r.coopTicketNextIn||300000;save();mountShell();startServerSync();
+     serverToken=r.token;A.setItem('rd2_token',serverToken);Object.assign(appState,r.state);appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin);appState.coopTicketNextIn=r.coopTicketNextIn||300000;appState.arenaTicketNextIn=r.arenaTicketNextIn||1800000;save();mountShell();startServerSync();startLiveSocket();
    }
   }catch(e){alert(e.message)}
  };
@@ -200,19 +208,19 @@ function pageShell(){
  <section id="page-battle" class="view"></section>`
 }
 function topbar(){return `<div class="brand">RANDOM DICE 2<small>ONLINE PROTOTYPE</small></div><div class="res">
- <div class="chip">🪙 <b id="coin">${appState.currencies.coin}</b></div><div class="chip">🎲 <b id="dice">${appState.currencies.dice}</b></div><div class="chip">💎 <b id="diamond">${appState.currencies.diamond}</b></div><div class="chip">🏟️ <b id="arenaTicket">${appState.currencies.arenaTicket}</b></div><div class="chip">🤝 <b id="coopTicket">${appState.currencies.coopTicket}</b> <span id="coopTicketTimer" style="font-size:9px;color:#a99dbf"></span></div></div><div class="topsp"></div>${appState.isAdmin?'<button class="topbtn" onclick="nav(&quot;admin&quot;)">🛠️</button>':''}<button class="topbtn profileBtn" onclick="nav('profile')"><span class="avatar">${appState.profile.avatar}</span>${esc(appState.profile.nickname)}</button>`}
+ <div class="chip">🪙 <b id="coin">${appState.currencies.coin}</b></div><div class="chip">🎲 <b id="dice">${appState.currencies.dice}</b></div><div class="chip">💎 <b id="diamond">${appState.currencies.diamond}</b></div><div class="chip">🏟️ <b id="arenaTicket">${appState.currencies.arenaTicket}</b> <span id="arenaTicketTimer" style="font-size:9px;color:#a99dbf"></span></div><div class="chip">🤝 <b id="coopTicket">${appState.currencies.coopTicket}</b> <span id="coopTicketTimer" style="font-size:9px;color:#a99dbf"></span></div></div><div class="topsp"></div>${appState.isAdmin?'<button class="topbtn" onclick="nav(&quot;admin&quot;)">🛠️</button>':''}<button class="topbtn profileBtn" onclick="nav('profile')"><span class="avatar">${appState.profile.avatar}</span>${esc(appState.profile.nickname)}</button>`}
 function sidebar(){return `<button class="nav active" onclick="nav('lobby')"><i>🏠</i> 로비</button>
  <button class="nav" onclick="nav('deck')"><i>🎴</i> 덱</button><button class="nav" onclick="nav('tree')"><i>🌳</i> 다이스 트리</button><button class="nav" onclick="nav('style')"><i>🎨</i> 꾸미기</button>
  <button class="nav" onclick="nav('quests')"><i>📜</i> 퀘스트 <span class="badge">3</span></button><button class="nav" onclick="nav('pass')"><i>🎫</i> 다이스 패스</button><button class="nav" onclick="openLucky()"><i>🍀</i> 행운의 주사위</button><button class="nav" onclick="nav('bounty')"><i>⚔️</i> 토벌 보상</button>
  ${appState.isAdmin?'<button class="nav" onclick="nav(&quot;admin&quot;)"><i>🛠️</i> 관리자</button>':''}
- <div class="sideBottom"><div class="mini">현재 로그인: <b>${esc(appState.profile.nickname)}</b><br>협동전 티켓은 서버에서 <b>5분마다 +1</b> 지급됩니다.<br><span id="sideTicketTimer"></span></div></div>`}
+ <div class="sideBottom"><div class="mini">현재 로그인: <b>${esc(appState.profile.nickname)}</b><br>협동전 티켓은 서버에서 <b>5분마다 +1</b>, 아레나 티켓은 <b>30분마다 +1</b> 지급됩니다.<br><span id="sideTicketTimer"></span><br><span id="sideArenaTimer"></span></div></div>`}
 function drawLobby(){
  const m=document.getElementById('main');if(!m)return;
  m.innerHTML=`<div class="hero"><div class="heroCard"><div class="muted">협동전</div><div class="bigLogo">함께 막아내자</div><div class="sub">플레이를 누르면 온라인 매칭을 시작합니다.</div><button class="play" onclick="startMatch()">▶ 플레이</button><div class="smallHint">모드 입장 시 협동전 티켓 1장 사용 · 매칭 → 로딩 → 전투 시작</div></div>
  <div class="modeCard"><h3>게임 모드</h3><div class="mode sel"><div><b>🤝 협동전</b><span>다른 플레이어와 몬스터를 함께 막는 모드</span></div><button onclick="startMatch()">플레이</button></div><div class="mode"><div><b>🎟️ 아레나</b><span>아레나 티켓을 사용하는 경쟁 모드</span></div><button onclick="toast('아레나 모드는 다음 버전에서 연결됩니다')">준비</button></div><div class="mode"><div><b>👥 친구와 하기</b><span>방 생성 / 코드 참가 / 준비</span></div><button onclick="openFriends()">열기</button></div></div></div>
  <div class="section"><div class="sectionHead"><h2>로비 바로가기</h2><span>전투 밖에서 관리하는 메뉴</span></div><div class="cardgrid">
   <div class="tile"><h3>🎴 덱</h3><p>전투에 가져갈 주사위 5개를 선택합니다.</p><button onclick="nav('deck')">덱 관리</button></div>
-  <div class="tile"><h3>🌳 다이스 트리</h3><p>보유한 다이스로 노드를 해금하고 새로운 주사위를 얻습니다.</p><button onclick="nav('tree')">트리 열기</button></div>
+  <div class="tile"><h3>🌳 다이스 트리</h3><p>주사위를 해금하고 레벨 업그레이드까지 모두 여기서 관리합니다.</p><button onclick="nav('tree')">트리 열기</button></div>
   <div class="tile"><h3>🎨 꾸미기</h3><p>프로필 아이콘과 보드 스킨을 관리합니다.</p><button onclick="nav('style')">꾸미기</button></div>
   <div class="tile"><h3>📜 퀘스트</h3><p>로비에서 진행도를 확인하고 보상을 수령합니다.</p><button onclick="nav('quests')">퀘스트</button></div>
   <div class="tile"><h3>🎫 다이스 패스</h3><p>경험치를 모아 단계별 무료 보상을 받습니다.</p><button onclick="nav('pass')">패스 보기</button></div>
@@ -222,117 +230,113 @@ function drawLobby(){
 }
 function diceHTML(type,lvl=1){const d=D[type]||D.blue;return `<div class="dice ${d.cls}">${d.icon}<small>${lvl}</small></div>`}
 function upgradeCost(level){
- return (level%5===0)?{coin:0,dice:8}:{coin:Math.max(50,level*50),dice:0};
+ const next=level+1;
+ return (next%5===0)?{coin:0,dice:8}:{coin:Math.max(50,level*50),dice:0};
 }
-function upgradeDice(type){
- const level=appState.diceLevels?.[type]||1;
- const c=upgradeCost(level);
- if(c.dice && appState.currencies.dice<c.dice)return toast(`레벨 ${level+1} 업그레이드에는 🎲 ${c.dice}개가 필요합니다`);
- if(c.coin && appState.currencies.coin<c.coin)return toast(`코인이 부족합니다 · 필요 🪙 ${c.coin}`);
- if(c.dice)appState.currencies.dice-=c.dice;
- if(c.coin)appState.currencies.coin-=c.coin;
- if(!appState.diceLevels)appState.diceLevels={};
- appState.diceLevels[type]=level+1;
- save();updateRes();drawDeck();toast(`${D[type].name} 레벨 ${level+1} 업그레이드 완료`);
-}
+function upgradeCostText(level){const c=upgradeCost(level);return c.dice?`🎲 ${c.dice}`:`🪙 ${c.coin}`;}
 function drawDeck(){
  if(!appState.diceLevels)appState.diceLevels={};
  document.getElementById('main').innerHTML=`<div class="sectionHead"><h2>덱</h2><span>로비 메뉴</span></div>
- <div class="tile" style="margin-bottom:12px"><b>전투 덱</b><p>전투 시작 전에만 변경됩니다.</p></div>
- <div class="deck" style="max-width:600px">${appState.deck.map((x,i)=>`<div class="slot" style="background:#1f1531;min-height:100px"><div onclick="cycleDeck(${i})" style="width:76%;cursor:pointer">${diceHTML(x,1)}</div></div>`).join('')}</div>
+ <div class="tile" style="margin-bottom:12px"><b>전투 덱</b><p>전투에 가져갈 주사위 5개를 선택합니다. <b>해금과 주사위 업그레이드는 다이스 트리에서만</b> 진행합니다.</p></div>
+ <div class="deck" style="max-width:600px">${appState.deck.map((x,i)=>`<div class="slot" style="background:#1f1531;min-height:100px"><div onclick="cycleDeck(${i})" style="width:76%;cursor:pointer">${diceHTML(x,appState.diceLevels?.[x]||1)}</div></div>`).join('')}</div>
  <div class="section"><div class="sectionHead"><h2>보유 주사위</h2><span>${appState.unlocked.length} / 40</span></div>
- <div class="cardgrid">${appState.unlocked.map((x,i)=>{const d=D[x];const lv=appState.diceLevels[x]||1;const c=upgradeCost(lv);const costText=c.dice?`🎲 ${c.dice}`:`🪙 ${c.coin}`;return `<div class="tile"><div class="row"><div style="width:48px;height:48px">${diceHTML(x,lv)}</div><div><b>${d.name}</b><div class="muted">레벨 ${lv}</div></div></div><button onclick="addDeck('${x}')">${appState.deck.includes(x)?'덱에 있음':'덱에 추가'}</button><button class="primary" onclick="upgradeDice('${x}')">업그레이드 · ${costText}</button></div>`}).join('')}</div>
- <div class="tile" style="margin-top:12px"><b>업그레이드 규칙</b><p>일반 레벨업은 코인으로 진행하고, <b>5 / 10 / 15 / ...</b>처럼 5의 배수 레벨로 넘어갈 때는 코인 대신 <b>🎲 주사위 재화 8개</b>가 들어갑니다.</p></div>`;
+ <div class="cardgrid">${appState.unlocked.map((x)=>{const d=D[x];const lv=appState.diceLevels[x]||1;return `<div class="tile"><div class="row"><div style="width:48px;height:48px">${diceHTML(x,lv)}</div><div><b>${d.name}</b><div class="muted">레벨 ${lv}</div></div></div><button onclick="addDeck('${x}')">${appState.deck.includes(x)?'덱에 있음':'덱에 추가'}</button><button class="topbtn" onclick="nav('tree')">다이스 트리에서 관리</button></div>`}).join('')}</div>`;
 }
 function cycleDeck(i){const choices=appState.unlocked;const idx=Math.max(0,choices.indexOf(appState.deck[i]));appState.deck[i]=choices[(idx+1)%choices.length];save();drawDeck()}
 function addDeck(x){const idx=appState.deck.findIndex((d,i)=>!appState.unlocked.includes(d)||!d);if(idx>=0)appState.deck[idx]=x;else appState.deck[appState.deck.length-1]=x;save();drawDeck();toast('덱이 저장되었습니다')}
 const treeNodes=[
- {id:0,x:48,y:48,icon:'🎲',label:'시작',cost:0,coin:0,next:[1,2]},
- {id:1,x:37,y:39,icon:'🌀',label:'바람 주사위',cost:8,coin:0,next:[3,4]},
- {id:2,x:59,y:39,icon:'❄️',label:'얼음 주사위',cost:8,coin:0,next:[4,5]},
- {id:3,x:27,y:30,icon:'🔥',label:'화염 주사위',cost:8,coin:0,next:[6]},
- {id:4,x:48,y:29,icon:'☀️',label:'빛 주사위',cost:8,coin:0,next:[6,7]},
- {id:5,x:68,y:30,icon:'☘️',label:'독 주사위',cost:8,coin:0,next:[7]},
- {id:6,x:36,y:19,icon:'✿',label:'분열 주사위',cost:8,coin:0,next:[8]},
- {id:7,x:60,y:19,icon:'✦',label:'성장 주사위',cost:8,coin:0,next:[8]},
- {id:8,x:48,y:9,icon:'👑',label:'왕관 주사위',cost:8,coin:0,next:[]}
+ {id:0,x:48,y:48,icon:'🎲',label:'시작',cost:0,next:[1,2],type:null},
+ {id:1,x:34,y:40,icon:'🌀',label:'바람 주사위',cost:8,next:[3,4],type:'blue'},
+ {id:2,x:62,y:40,icon:'❄️',label:'얼음 주사위',cost:8,next:[4,5],type:'cyan'},
+ {id:3,x:21,y:29,icon:'🔥',label:'화염 주사위',cost:8,next:[6],type:'red'},
+ {id:4,x:48,y:30,icon:'☀️',label:'빛 주사위',cost:8,next:[6,7],type:'yellow'},
+ {id:5,x:75,y:29,icon:'☘️',label:'독 주사위',cost:8,next:[7],type:'green'},
+ {id:6,x:35,y:18,icon:'✿',label:'분열 주사위',cost:8,next:[8],type:'pink'},
+ {id:7,x:61,y:18,icon:'✦',label:'성장 주사위',cost:8,next:[8],type:'purple'},
+ {id:8,x:48,y:8,icon:'👑',label:'왕관 주사위',cost:8,next:[],type:'yellow'}
 ];
-function treeUnlocked(id){
- if(id===0)return true;
- if(id===1||id===2)return true;
- return appState.treeUnlocked?.includes(id) || false;
+function treeUnlocked(id){return id===0 || appState.treeUnlocked?.includes(id);}
+function treeNode(id){return treeNodes.find(x=>x.id===id);}
+function treeNext(id){const n=treeNode(id);return n?n.next:[];}
+function treeParents(id){return treeNodes.filter(n=>n.next.includes(id));}
+function treeIsNext(id){return !treeUnlocked(id)&&treeParents(id).some(p=>treeUnlocked(p.id));}
+function treeIsReachable(id){return id===0||treeUnlocked(id)||treeIsNext(id);}
+function ensureTreeState(){if(!Array.isArray(appState.treeUnlocked))appState.treeUnlocked=[];if(!Array.isArray(appState.unlocked))appState.unlocked=[];if(!appState.diceLevels)appState.diceLevels={};}
+function selectTreeNode(id){appState.selectedTreeNode=id;drawTree();}
+function treeUpgradeCost(level){const next=level+1;return next%5===0?{coin:0,dice:8}:{coin:Math.max(50,level*50),dice:0};}
+async function upgradeTreeDice(type){
+ try{
+   const r=await api('/api/tree/upgrade',{method:'POST',body:JSON.stringify({type})});
+   applyServerResponse(r);drawTree();updateRes();
+   const lv=r.state?.diceLevels?.[type]||1;toast(`${D[type].name} 레벨 ${lv} 업그레이드 완료`);
+ }catch(e){toast(e.message)}
 }
-function nextTreeName(id){
- const n=treeNodes.find(x=>x.id===id); return n?n.label:'다음 주사위';
+async function buyTree(id){
+ ensureTreeState();const node=treeNode(id);if(!node)return;
+ if(treeUnlocked(id)){
+   if(node.type){appState.selectedTreeNode=id;drawTree();}
+   else toast('시작 노드입니다');
+   return;
+ }
+ if(!treeIsNext(id)){toast('먼저 연결된 앞의 주사위를 해금하세요');return;}
+ try{
+   const r=await api('/api/tree/unlock',{method:'POST',body:JSON.stringify({nodeId:id})});
+   applyServerResponse(r);appState.selectedTreeNode=id;drawTree();updateRes();toast(`${node.label} 해금 완료 · 🎲 -8`);
+ }catch(e){toast(e.message)}
 }
-function ensureTreeState(){
- if(!Array.isArray(appState.treeUnlocked)) appState.treeUnlocked=[];
- if(!treeUnlocked(0)) appState.treeUnlocked.push(0);
+function treeDetails(node){
+ if(!node||!node.type)return `<div class="tile"><b>다이스 트리</b><p>연결된 노드를 선택하면 해금하거나 해당 주사위의 업그레이드를 이곳에서 관리할 수 있습니다.</p><p style="margin-top:7px">해금 비용은 <b>🎲 8개</b>입니다.</p></div>`;
+ const type=node.type,lv=appState.diceLevels?.[type]||1, unlocked=treeUnlocked(node.id), c=treeUpgradeCost(lv);
+ return `<div class="tile"><div class="row"><div style="width:64px">${diceHTML(type,lv)}</div><div class="grow"><h3 style="margin:0">${node.label}</h3><div class="muted">현재 레벨 ${lv}</div></div></div>
+ ${unlocked?`<p style="margin-top:10px">다음 레벨: <b>${lv+1}</b> · 비용 <b>${c.dice?`🎲 ${c.dice}`:`🪙 ${c.coin}`}</b></p><button class="primary" style="width:100%" onclick="upgradeTreeDice('${type}')">레벨 ${lv+1}로 업그레이드</button><p class="muted" style="margin-top:8px">5·10·15·… 레벨에 도달하는 업그레이드는 주사위 재화 8개를 사용합니다. 그 외 레벨은 코인을 사용합니다.</p>`:`<p style="margin-top:10px">이 주사위는 아직 해금되지 않았습니다.</p><button class="primary" style="width:100%" onclick="buyTree(${node.id})">🎲 8개로 해금</button>`}</div>`;
 }
 function drawTree(){
  ensureTreeState();
+ if(!appState.selectedTreeNode)appState.selectedTreeNode=0;
  const edges=[];
- treeNodes.forEach(n=>n.next.forEach(to=>{
-   const t=treeNodes.find(x=>x.id===to);
-   if(t) edges.push(`<div class="treeEdge" style="left:${n.x}%;top:${n.y}%;width:${Math.hypot((t.x-n.x)*10,(t.y-n.y)*10)}px;transform:rotate(${Math.atan2((t.y-n.y),(t.x-n.x))*180/Math.PI}deg)"></div>`);
- }));
- const nodes=treeNodes.map(n=>{
-   const open=treeUnlocked(n.id);
-   const reachable=n.id===0 || n.id===1 || n.id===2 || n.next.length===0
-     ? open
-     : n.next.some(p=>treeUnlocked(p)) || treeNodes.some(p=>p.next.includes(n.id)&&treeUnlocked(p.id));
-   const isNext=!open && treeNodes.some(p=>p.next.includes(n.id)&&treeUnlocked(p.id));
-   const status=open?'해금됨':isNext?'다음 해금':'잠김';
-   return `<div class="treeNode ${open?'treeOpen':isNext?'treeNext':'treeLocked'}" style="left:${n.x}%;top:${n.y}%" onclick="buyTree(${n.id})">
-     <div class="treeIcon">${n.icon}</div><div class="treeLevel">${status}</div><div class="treeLabel">${n.label}</div>
-     ${open&&n.id>0?'<div class="treeCheck">✓</div>':''}
-     ${!open?`<div class="treeCost">🎲 ${n.cost}</div>`:''}
-   </div>`;
- }).join('');
- document.getElementById('main').innerHTML=`
- <div class="sectionHead"><h2>다이스 트리</h2><span>노드 하나를 해금하면 연결된 다음 노드가 표시됩니다</span></div>
- <div class="treeWide"><div class="treeCanvas">${edges.join('')}${nodes}</div>
-   <div class="treeLegend"><span>🟢 해금</span><span>🟡 다음 해금</span><span>⚫ 잠김</span></div>
- </div>
- <div class="section"><div class="tile"><b>다이스 트리 규칙</b>
- <p>주사위 1개 해금 비용은 <b>🎲 8개</b>입니다. 현재 선택 가능한 다음 노드를 누르면 해금할 수 있고, 해금하면 그 뒤에 연결된 다음 주사위가 공개됩니다.</p>
- <p style="margin-top:7px">현재 주사위 재화: <b>${appState.currencies.dice.toLocaleString()}</b></p>
- </div></div>`;
+ treeNodes.forEach(n=>n.next.forEach(to=>{const t=treeNode(to);if(t){edges.push(`<div class="treeEdge" style="left:${n.x}%;top:${n.y}%;width:${Math.hypot((t.x-n.x)*10,(t.y-n.y)*10)}px;transform:rotate(${Math.atan2(t.y-n.y,t.x-n.x)*180/Math.PI}deg)"></div>`);}}));
+ const nodes=treeNodes.map(n=>{const open=treeUnlocked(n.id),next=treeIsNext(n.id),selected=appState.selectedTreeNode===n.id;return `<div class="treeNode ${open?'treeOpen':next?'treeNext':'treeLocked'} ${selected?'treeSelected':''}" style="left:${n.x}%;top:${n.y}%" onclick="selectTreeNode(${n.id})">
+   <div class="treeIcon">${n.icon}</div><div class="treeLevel">${open?'해금됨':next?'다음 해금':'잠김'}</div><div class="treeLabel">${n.label}</div>
+   ${open&&n.id>0?'<div class="treeCheck">✓</div>':''}${!open?`<div class="treeCost">🎲 ${n.cost}</div>`:''}
+ </div>`;}).join('');
+ document.getElementById('main').innerHTML=`<div class="sectionHead"><h2>다이스 트리</h2><span>해금과 업그레이드를 모두 여기서 관리</span></div>
+ <div class="treeLayout"><div class="treeWide"><div class="treeCanvas">${edges.join('')}${nodes}</div><div class="treeLegend"><span>🟢 해금</span><span>🟡 다음 해금</span><span>⚫ 잠김</span></div></div><div class="treeDetails">${treeDetails(treeNode(appState.selectedTreeNode))}</div></div>
+ <div class="section"><div class="tile"><b>다이스 트리 규칙</b><p>주사위 해금은 <b>🎲 8개</b>, 업그레이드는 <b>코인</b>이 기본입니다. 단, <b>레벨 5·10·15·…에 도달하는 업그레이드</b>는 🎲 주사위 재화 8개를 사용합니다. 해금하면 연결된 다음 주사위가 공개됩니다.</p><p style="margin-top:7px">현재 주사위 재화: <b>${appState.currencies.dice.toLocaleString()}</b> · 코인: <b>${appState.currencies.coin.toLocaleString()}</b></p></div></div>`;
 }
-function buyTree(id){
- ensureTreeState();
- if(treeUnlocked(id)){toast('이미 해금된 주사위입니다');return;}
- const node=treeNodes.find(n=>n.id===id);
- if(!node)return;
- const parent=treeNodes.find(p=>p.next.includes(id));
- if(!parent || !treeUnlocked(parent.id)){
-   toast('먼저 앞의 주사위를 해금하세요');
-   return;
- }
- if(appState.currencies.dice<8){
-   toast('주사위 재화가 부족합니다 · 필요 8');
-   return;
- }
- appState.currencies.dice-=8;
- appState.treeUnlocked.push(id);
- // 새로 해금된 주사위를 보유 목록에 추가
- const typeMap={1:'blue',2:'cyan',3:'red',4:'yellow',5:'green',6:'pink',7:'purple',8:'blue'};
- const type=typeMap[id];
- if(type && !appState.unlocked.includes(type))appState.unlocked.push(type);
- save();updateRes();drawTree();
- const next=node.next.length?` 다음 해금: ${node.next.map(nextTreeName).join(', ')}`:' 모든 트리 노드를 확인했습니다.';
- toast(`${node.label} 해금! 🎲 -8${next}`);
-}
-function buyTree(i){if(i<appState.unlocked.length)return toast('이미 해금된 노드입니다');if(appState.currencies.dice<800)return toast('주사위가 부족합니다');appState.currencies.dice-=800;const x=Object.keys(D)[i%Object.keys(D).length];if(!appState.unlocked.includes(x))appState.unlocked.push(x);save();drawTree();updateRes();toast('다이스 트리 노드를 해금했습니다')}
 function drawStyle(){document.getElementById('main').innerHTML=`<div class="sectionHead"><h2>꾸미기</h2><span>로비에서만 변경 가능</span></div><div class="skinGrid">
  ${['🎲','🌀','❄️','🔥','🌈','🧊','⚡','🌸'].map((a,i)=>`<div class="skin"><div class="art" style="background:hsl(${i*42},55%,35%)">${a}</div><b>${i===0?'기본':`스킨 ${i}`}</b><button class="topbtn" style="margin-top:8px;width:100%" onclick="toast('${i===0?'기본 꾸미기 적용':'꾸미기를 적용했습니다'}')">사용</button></div>`).join('')}
  </div>`}
-function drawPass(){const xp=appState.passXP;document.getElementById('main').innerHTML=`<div class="sectionHead"><h2>다이스 패스</h2><span>시즌 진행도</span></div><div class="pass"><div class="passHero"><div class="muted">무료 패스</div><h2 style="margin:5px 0 12px">7일간의 여정</h2><div class="progress"><i style="width:${xp}%"></i></div><div class="row" style="margin-top:8px"><b>${xp}/100</b><span class="muted grow">다음 보상까지 ${100-xp} XP</span></div><button class="primary" style="margin-top:14px;width:100%" onclick="claimPass()">보상 받기</button></div><div class="tile"><h3>보상 트랙</h3><div class="passTrack">${['🪙1000','🎲500','💎50','🍀1','🤝2','🎁'].map((r,i)=>`<div class="rewardBox"><b>${r.split(/(?=\\d|$)/)[0]}</b><span>단계 ${i+1}</span></div>`).join('')}</div><p>협동전, 퀘스트 등 로비 활동으로 패스 XP를 획득하고 단계별 보상을 받습니다.</p></div></div>`}
-function claimPass(){if(appState.passXP<50)return toast('아직 받을 수 있는 패스 보상이 없습니다');appState.currencies.coin+=1000;appState.passXP=Math.min(100,appState.passXP+10);save();updateRes();drawPass();toast('다이스 패스 보상을 받았습니다')}
+const PASS_REWARDS_CLIENT=[
+ {xp:10,label:'코인 200',icon:'🪙',kind:'coin',value:200},
+ {xp:20,label:'주사위 50',icon:'🎲',kind:'dice',value:50},
+ {xp:30,label:'보석 10',icon:'💎',kind:'diamond',value:10},
+ {xp:40,label:'행운의 주사위 1',icon:'🍀',kind:'lucky',value:1},
+ {xp:50,label:'협동전 티켓 1',icon:'🤝',kind:'coopTicket',value:1},
+ {xp:60,label:'코인 500',icon:'🪙',kind:'coin',value:500},
+ {xp:70,label:'주사위 100',icon:'🎲',kind:'dice',value:100},
+ {xp:80,label:'보석 20',icon:'💎',kind:'diamond',value:20},
+ {xp:90,label:'행운의 주사위 2',icon:'🍀',kind:'lucky',value:2},
+ {xp:100,label:'코인 1000',icon:'🪙',kind:'coin',value:1000}
+];
+function drawPass(){
+ const xp=appState.passXP;const claimed=appState.passRewardsClaimed||[];
+ const next=PASS_REWARDS_CLIENT.find(r=>xp>=r.xp&&!claimed.includes(r.xp));
+ document.getElementById('main').innerHTML=`<div class="sectionHead"><h2>다이스 패스</h2><span>관리자로 XP를 받아도 서버에서 다음 보상을 추적합니다</span></div>
+ <div class="pass"><div class="passHero"><div class="muted">무료 패스</div><h2 style="margin:5px 0 12px">시즌 보상</h2><div class="progress"><i style="width:${xp}%"></i></div><div class="row" style="margin-top:8px"><b>${xp}/100</b><span class="muted grow">${next?`다음 보상 Lv.${next.xp}`:'모든 보상 수령 완료'}</span></div>
+ <button class="primary" style="margin-top:14px;width:100%" onclick="claimPass()">${next?'다음 보상 받기':'받을 보상 없음'}</button></div>
+ <div class="tile"><h3>보상 트랙</h3><div class="passTrack">${PASS_REWARDS_CLIENT.map(r=>`<div class="rewardBox" style="opacity:${xp>=r.xp?.9:.45}"><b>${r.icon}</b><span>${r.xp} XP</span><small>${claimed.includes(r.xp)?'✓ 수령':xp>=r.xp?'받기 가능':'잠김'}</small></div>`).join('')}</div><p>관리자 또는 게임 활동으로 XP가 올라가면 서버에 저장된 미수령 보상을 순서대로 받을 수 있습니다.</p></div></div>`;
+}
+async function claimPass(){
+ try{const r=await api('/api/pass/claim-next',{method:'POST'});applyServerResponse(r);drawPass();toast(r.reward?.label?`다이스 패스: ${r.reward.label}`:'다이스 패스 보상을 받았습니다');}
+ catch(e){toast(e.message)}
+}
 function drawQuests(){const qs=[['협동전 1회 완료',0,1,'🤝'],['적 50마리 처치',appState.quests[1],50,'⚔️'],['주사위 10회 합성',appState.quests[2],10,'🎲']];document.getElementById('main').innerHTML=`<div class="sectionHead"><h2>퀘스트</h2><span>로비에서 진행 / 보상 수령</span></div><div class="quest">${qs.map((q,i)=>`<div class="q"><div style="font-size:22px">${q[3]}</div><div class="grow"><b>${q[0]}</b><div class="muted" style="margin:3px 0">${q[1]} / ${q[2]}</div><div class="qbar"><i style="width:${Math.min(100,q[1]/q[2]*100)}%"></i></div></div><button class="primary" onclick="claimQuest(${i})">${q[1]>=q[2]?'받기':'진행'}</button></div>`).join('')}</div>`}
 function claimQuest(i){if(i===0){appState.currencies.coopTicket+=2;appState.quests[0]=1}else if(i===1&&appState.quests[1]>=50){appState.currencies.coin+=1500}else if(i===2&&appState.quests[2]>=10){appState.currencies.dice+=700}else return toast('아직 완료되지 않은 퀘스트입니다');save();updateRes();drawQuests();toast('퀘스트 보상을 받았습니다')}
-function openLucky(){document.getElementById('modalRoot').innerHTML=`<div class="overlay"><div class="modal"><button class="close" onclick="closeModal()">닫기</button><h2>🍀 행운의 주사위</h2><div class="muted">로비에서만 사용하는 랜덤 보너스입니다.</div><div style="margin:20px 0;text-align:center;font-size:58px">🎲</div><div class="tile"><b>보유 행운의 주사위 ${appState.lucky}개</b><p>1개를 사용하면 코인, 다이스, 패스 XP 중 하나를 랜덤으로 획득합니다.</p></div><button class="primary" style="width:100%;margin-top:12px" onclick="useLucky()">행운의 주사위 1개 사용</button></div></div>`}
-function useLucky(){if(appState.lucky<=0)return toast('행운의 주사위가 없습니다');appState.lucky--;const r=Math.floor(Math.random()*3);if(r===0){appState.currencies.coin+=2000;toast('🍀 코인 2,000 획득!')}else if(r===1){appState.currencies.dice+=1200;toast('🍀 주사위 1,200 획득!')}else{appState.passXP=Math.min(100,appState.passXP+10);toast('🍀 다이스 패스 XP +10!')}save();closeModal();updateRes()}
+function openLucky(){document.getElementById('modalRoot').innerHTML=`<div class="overlay"><div class="modal"><button class="close" onclick="closeModal()">닫기</button><h2>🍀 행운의 주사위</h2><div class="muted">서버에서 보유량과 보상을 판정합니다.</div><div style="margin:20px 0;text-align:center;font-size:58px">🎲</div><div class="tile"><b>보유 행운의 주사위 ${appState.lucky}개</b><p>사용할 때마다 서버에서 코인, 주사위, 패스 XP 중 하나의 보너스를 확정합니다.</p></div><button class="primary" style="width:100%;margin-top:12px" onclick="useLucky()">행운의 주사위 1개 사용</button></div></div>`}
+async function useLucky(){
+ try{const r=await api('/api/lucky/use',{method:'POST'});applyServerResponse(r);closeModal();toast(r.reward?.label||'🍀 행운의 보상을 받았습니다');}
+ catch(e){toast(e.message)}
+}
 function drawBounty(){const rewards={easy:['🪙 800','🎲 300'],normal:['🪙 1600','🎲 800','🍀 1'],hard:['🪙 3200','🎲 1500','🤝 3']};document.getElementById('main').innerHTML=`<div class="sectionHead"><h2>토벌 보상</h2><span>난이도 선택 → 보상 획득</span></div><div class="cardgrid">${[['easy','쉬움'],['normal','보통'],['hard','어려움']].map(x=>`<div class="tile" style="${appState.difficulty===x[0]?'outline:3px solid #ffd83b55':''}"><h3>${x[1]}</h3><p>토벌 난이도 ${x[1]} · 완료 시 보상이 증가합니다.</p><div style="margin:8px 0">${rewards[x[0]].map(r=>`<span class="chip" style="display:inline-block;margin:3px">${r}</span>`).join('')}</div><button class="${appState.difficulty===x[0]?'primary':'topbtn'}" onclick="selectBounty('${x[0]}')">${appState.difficulty===x[0]?'선택됨':'선택'}</button></div>`).join('')}</div><div class="section"><div class="tile"><h3>선택 난이도: ${appState.difficulty}</h3><p>토벌 보상은 전투가 아니라 로비에서 난이도를 선택하고 받을 수 있도록 구성되어 있습니다.</p><button class="primary" onclick="claimBounty()">보상 받기</button></div></div>`}
 function selectBounty(x){appState.difficulty=x;drawBounty()}
 function claimBounty(){const amt={easy:800,normal:1600,hard:3200}[appState.difficulty];if(appState.currencies.coin<0)return;appState.currencies.coin+=amt;save();updateRes();toast('토벌 보상으로 코인 '+amt.toLocaleString()+' 획득!')}
@@ -359,7 +363,8 @@ async function startMatch(fromFriend=false){
    const r=await api('/api/match/join',{method:'POST',body:'{}'});
    appState.matchQueueId=r.queueId||null;
    if(r.state){appState.currencies=r.state.currencies;}
-   if(r.coopTicketNextIn)appState.coopTicketNextIn=r.coopTicketNextIn;
+   if(r.coopTicketNextIn!=null)appState.coopTicketNextIn=Number(r.coopTicketNextIn);
+ if(r.arenaTicketNextIn!=null)appState.arenaTicketNextIn=Number(r.arenaTicketNextIn);
    updateRes();
    if(r.status==='matched')handleMatchResult(r);else pollMatchStatus();
  }catch(e){appState.matching=false;closeModal();toast(e.message)}
@@ -375,7 +380,18 @@ function pollMatchStatus(){
      if(mt){const sec=Math.min(30,appState.matchSec);mt.textContent=`0:${String(sec).padStart(2,'0')}`}
      if(st){st.textContent=r.status==='waiting'?`상대 플레이어 검색 중... ${Math.max(0,Number(r.remaining||0))}초`:'매칭 완료 · 게임 준비 중...'}
      if(r.status==='matched'||r.status==='ai')handleMatchResult(r);
-   }catch(e){console.warn('match poll',e)}
+   }catch(e){
+     console.warn('match poll',e);
+     if(appState.matchSec>=30){
+       clearInterval(appState.matchTimer);
+       appState.matchTimer=null;
+       appState.matching=false;
+       appState.opponentType='ai';
+       appState.opponentNickname='AI 플레이어';
+       toast('30초 동안 플레이어가 없어 AI로 시작합니다');
+       beginLoading('ai','AI 플레이어');
+     }
+   }
  },1000);
 }
 function handleMatchResult(r){
@@ -440,12 +456,14 @@ function applyServerResponse(r){
    appState.treeUnlocked=r.state.treeUnlocked||appState.treeUnlocked;
    appState.diceLevels=r.state.diceLevels||appState.diceLevels;
    appState.passXP=Number(r.state.passXP??appState.passXP);
+   appState.passRewardsClaimed=Array.isArray(r.state.passRewardsClaimed)?r.state.passRewardsClaimed:appState.passRewardsClaimed;
    appState.lucky=Number(r.state.lucky??appState.lucky);
    appState.quests=r.state.quests||appState.quests;
    appState.difficulty=r.state.difficulty||appState.difficulty;
  }
  if(r.user){appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin)}
- if(r.coopTicketNextIn)appState.coopTicketNextIn=r.coopTicketNextIn;
+ if(r.coopTicketNextIn!=null)appState.coopTicketNextIn=Number(r.coopTicketNextIn);
+ if(r.arenaTicketNextIn!=null)appState.arenaTicketNextIn=Number(r.arenaTicketNextIn);
  updateRes();
  if(document.getElementById('coopTicketTimer'))updateTicketTimer();
 }
@@ -456,18 +474,50 @@ async function syncMe(){
 }
 function startServerSync(){
  clearInterval(window.rd2ServerSync);
- window.rd2ServerSync=setInterval(syncMe,10000);
+ window.rd2ServerSync=setInterval(syncMe,20000);
  syncMe();
 }
+function formatCountdown(ms){const sec=Math.max(0,Math.ceil(Number(ms||0)/1000));return `+1 ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`}
 function updateTicketTimer(){
- const ms=Math.max(0,Number(appState.coopTicketNextIn||300000));
- const sec=Math.ceil(ms/1000);const text=`+1 ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
- const t=document.getElementById('coopTicketTimer');if(t)t.textContent=text;
- const s=document.getElementById('sideTicketTimer');if(s)s.textContent=`다음 협동전 티켓 ${text}`;
- appState.coopTicketNextIn=Math.max(0,ms-1000);
+ const coopMs=Math.max(0,Number(appState.coopTicketNextIn||300000));
+ const arenaMs=Math.max(0,Number(appState.arenaTicketNextIn||1800000));
+ const coopText=formatCountdown(coopMs), arenaText=formatCountdown(arenaMs);
+ const t=document.getElementById('coopTicketTimer');if(t)t.textContent=coopText;
+ const a=document.getElementById('arenaTicketTimer');if(a)a.textContent=arenaText;
+ const s=document.getElementById('sideTicketTimer');if(s)s.textContent=`다음 협동전 티켓 ${coopText}`;
+ const sa=document.getElementById('sideArenaTimer');if(sa)sa.textContent=`다음 아레나 티켓 ${arenaText}`;
+ appState.coopTicketNextIn=Math.max(0,coopMs-1000);
+ appState.arenaTicketNextIn=Math.max(0,arenaMs-1000);
+}
+let liveSocket=null,liveSocketRetry=null;
+function startLiveSocket(){
+ if(!serverToken)return;
+ if(liveSocket && (liveSocket.readyState===WebSocket.OPEN||liveSocket.readyState===WebSocket.CONNECTING))return;
+ const proto=location.protocol==='https:'?'wss':'ws';
+ try{
+   liveSocket=new WebSocket(`${proto}://${location.host}/ws?token=${encodeURIComponent(serverToken)}`);
+   liveSocket.onopen=()=>{if(liveSocketRetry){clearTimeout(liveSocketRetry);liveSocketRetry=null} };
+   liveSocket.onmessage=(ev)=>{
+     try{const m=JSON.parse(ev.data||'{}');
+       if(m.type==='state_update'){
+         applyServerResponse(m);
+         if(appState.page==='pass')drawPass();
+         else if(appState.page==='admin'&&appState.isAdmin)drawAdmin();
+         else if(appState.page==='lobby')drawLobby();
+         else if(appState.page==='deck')drawDeck();
+         else if(appState.page==='tree')drawTree();
+         const modal=document.getElementById('modalRoot');
+         if(modal&&modal.innerHTML.includes('행운의 주사위'))openLucky();
+       } else if(m.type==='admin_state_update'&&appState.isAdmin&&appState.page==='admin'){drawAdmin();}
+       else if(m.type==='matched'&&appState.matching){handleMatchResult(m);}
+     }catch(e){console.warn('live socket message',e)}
+   };
+   liveSocket.onclose=()=>{liveSocket=null;if(serverToken&&!liveSocketRetry)liveSocketRetry=setTimeout(startLiveSocket,2000)};
+   liveSocket.onerror=()=>{};
+ }catch(e){console.warn('live socket',e)}
 }
 setInterval(updateTicketTimer,1000);
-window.addEventListener('focus',syncMe);
+window.addEventListener('focus',()=>{syncMe();startLiveSocket()});
 
 async function drawAdmin(){
  const main=document.getElementById('main');if(!main)return;
@@ -484,11 +534,11 @@ async function drawAdmin(){
 }
 async function adminAdjust(encoded,sign){
  const username=decodeURIComponent(encoded);const currency=document.getElementById('acur-'+encoded).value;const amount=Math.abs(Number(document.getElementById('aamt-'+encoded).value||0));if(!Number.isInteger(amount))return toast('정수를 입력하세요');
- try{await api('/api/admin/users/'+encodeURIComponent(username)+'/adjust',{method:'POST',body:JSON.stringify({currency,delta:sign*amount})});toast('재화를 변경했습니다');drawAdmin();if(username===appState.user)syncMe();}catch(e){toast(e.message)}
+ try{const r=await api('/api/admin/users/'+encodeURIComponent(username)+'/adjust',{method:'POST',body:JSON.stringify({currency,delta:sign*amount})});if(username===appState.user)applyServerResponse({state:r.state,user:{username:appState.user,isAdmin:true}});toast('재화를 변경했습니다');drawAdmin();}catch(e){toast(e.message)}
 }
 async function adminSet(encoded){
  const username=decodeURIComponent(encoded);const currency=document.getElementById('acur-'+encoded).value;const value=Number(document.getElementById('aamt-'+encoded).value||0);if(!Number.isInteger(value)||value<0)return toast('0 이상의 정수를 입력하세요');
- try{await api('/api/admin/users/'+encodeURIComponent(username)+'/set-currency',{method:'POST',body:JSON.stringify({currency,value})});toast('재화 값을 설정했습니다');drawAdmin();if(username===appState.user)syncMe();}catch(e){toast(e.message)}
+ try{const r=await api('/api/admin/users/'+encodeURIComponent(username)+'/set-currency',{method:'POST',body:JSON.stringify({currency,value})});if(username===appState.user)applyServerResponse({state:r.state,user:{username:appState.user,isAdmin:true}});toast('재화 값을 설정했습니다');drawAdmin();}catch(e){toast(e.message)}
 }
 bootClient();
 </script>
