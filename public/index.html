@@ -90,7 +90,7 @@ const DEFAULT_CLIENT_STATE={
  sp:0,wave:1,gameSec:20,speed:1,kills:0,diceGrid:[],selected:null,enemies:[],
  currencies:{coin:100,dice:0,diamond:0,arenaTicket:0,coopTicket:0},
  profile:{nickname:'',avatar:'🎲'},deck:['blue','blue','blue','blue','blue'],unlocked:[],treeUnlocked:[],diceLevels:{},
- passXP:0,lucky:0,quests:[0,0,0],difficulty:'normal',room:null
+ passXP:0,lucky:0,quests:[0,0,0],difficulty:'normal',room:null,isAdmin:false,coopTicketNextIn:300000,matchQueueId:null,opponentType:null,opponentNickname:''
 };
 const appState=DEFAULT_CLIENT_STATE;
 const D={
@@ -138,8 +138,8 @@ async function bootClient(){
  if(!serverToken){appState.user=null;mountShell();return;}
  try{
   const r=await api('/api/me');
-  Object.assign(appState,r.state||{});appState.user=r.user.username;
-  mountShell();
+  Object.assign(appState,r.state||{});appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin);appState.coopTicketNextIn=r.coopTicketNextIn||300000;
+  mountShell();startServerSync();
  }catch(e){
   console.warn('session invalid',e);clearSession();mountShell();
  }
@@ -180,14 +180,14 @@ function drawAuthForm(type){
    if(!id||!pw||type==='signup'&&!n)return alert('모든 항목을 입력하세요.');
    if(type==='signup'){
      const r=await api('/api/auth/register',{method:'POST',body:JSON.stringify({username:id,password:pw,nickname:n})});
-     serverToken=r.token;A.setItem('rd2_token',serverToken);Object.assign(appState,r.state);appState.user=r.user.username;save();mountShell();
+     serverToken=r.token;A.setItem('rd2_token',serverToken);Object.assign(appState,r.state);appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin);appState.coopTicketNextIn=r.coopTicketNextIn||300000;save();mountShell();startServerSync();
    }else{
      const r=await api('/api/auth/login',{method:'POST',body:JSON.stringify({username:id,password:pw})});
-     serverToken=r.token;A.setItem('rd2_token',serverToken);Object.assign(appState,r.state);appState.user=r.user.username;save();mountShell();
+     serverToken=r.token;A.setItem('rd2_token',serverToken);Object.assign(appState,r.state);appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin);appState.coopTicketNextIn=r.coopTicketNextIn||300000;save();mountShell();startServerSync();
    }
   }catch(e){alert(e.message)}
  };
-}function nav(page){appState.page=page;document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+page)?.classList.add('active');if(page==='lobby')drawLobby();if(page==='deck')drawDeck();if(page==='tree')drawTree();if(page==='style')drawStyle();if(page==='pass')drawPass();if(page==='quests')drawQuests();if(page==='profile')drawProfile();if(page==='bounty')drawBounty();}
+}function nav(page){appState.page=page;document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+page)?.classList.add('active');if(page==='lobby')drawLobby();if(page==='deck')drawDeck();if(page==='tree')drawTree();if(page==='style')drawStyle();if(page==='pass')drawPass();if(page==='quests')drawQuests();if(page==='profile')drawProfile();if(page==='bounty')drawBounty();if(page==='admin'&&appState.isAdmin)drawAdmin();}
 function renderGame(){
  return `<div class="app">
   <div id="pages">${pageShell()}</div>
@@ -200,11 +200,12 @@ function pageShell(){
  <section id="page-battle" class="view"></section>`
 }
 function topbar(){return `<div class="brand">RANDOM DICE 2<small>ONLINE PROTOTYPE</small></div><div class="res">
- <div class="chip">🪙 <b id="coin">${appState.currencies.coin}</b></div><div class="chip">🎲 <b id="dice">${appState.currencies.dice}</b></div><div class="chip">💎 <b id="diamond">${appState.currencies.diamond}</b></div><div class="chip">🏟️ <b id="arenaTicket">${appState.currencies.arenaTicket}</b></div><div class="chip">🤝 <b id="coopTicket">${appState.currencies.coopTicket}</b></div></div><div class="topsp"></div><button class="topbtn profileBtn" onclick="nav('profile')"><span class="avatar">${appState.profile.avatar}</span>${esc(appState.profile.nickname)}</button>`}
+ <div class="chip">🪙 <b id="coin">${appState.currencies.coin}</b></div><div class="chip">🎲 <b id="dice">${appState.currencies.dice}</b></div><div class="chip">💎 <b id="diamond">${appState.currencies.diamond}</b></div><div class="chip">🏟️ <b id="arenaTicket">${appState.currencies.arenaTicket}</b></div><div class="chip">🤝 <b id="coopTicket">${appState.currencies.coopTicket}</b> <span id="coopTicketTimer" style="font-size:9px;color:#a99dbf"></span></div></div><div class="topsp"></div>${appState.isAdmin?'<button class="topbtn" onclick="nav(&quot;admin&quot;)">🛠️</button>':''}<button class="topbtn profileBtn" onclick="nav('profile')"><span class="avatar">${appState.profile.avatar}</span>${esc(appState.profile.nickname)}</button>`}
 function sidebar(){return `<button class="nav active" onclick="nav('lobby')"><i>🏠</i> 로비</button>
  <button class="nav" onclick="nav('deck')"><i>🎴</i> 덱</button><button class="nav" onclick="nav('tree')"><i>🌳</i> 다이스 트리</button><button class="nav" onclick="nav('style')"><i>🎨</i> 꾸미기</button>
  <button class="nav" onclick="nav('quests')"><i>📜</i> 퀘스트 <span class="badge">3</span></button><button class="nav" onclick="nav('pass')"><i>🎫</i> 다이스 패스</button><button class="nav" onclick="openLucky()"><i>🍀</i> 행운의 주사위</button><button class="nav" onclick="nav('bounty')"><i>⚔️</i> 토벌 보상</button>
- <div class="sideBottom"><div class="mini">현재 로그인: <b>${esc(appState.profile.nickname)}</b><br>온라인 기능은 이 프로토타입에서 방 코드 기반으로 구성되어 있습니다.</div></div>`}
+ ${appState.isAdmin?'<button class="nav" onclick="nav(&quot;admin&quot;)"><i>🛠️</i> 관리자</button>':''}
+ <div class="sideBottom"><div class="mini">현재 로그인: <b>${esc(appState.profile.nickname)}</b><br>협동전 티켓은 서버에서 <b>5분마다 +1</b> 지급됩니다.<br><span id="sideTicketTimer"></span></div></div>`}
 function drawLobby(){
  const m=document.getElementById('main');if(!m)return;
  m.innerHTML=`<div class="hero"><div class="heroCard"><div class="muted">협동전</div><div class="bigLogo">함께 막아내자</div><div class="sub">플레이를 누르면 온라인 매칭을 시작합니다.</div><button class="play" onclick="startMatch()">▶ 플레이</button><div class="smallHint">모드 입장 시 협동전 티켓 1장 사용 · 매칭 → 로딩 → 전투 시작</div></div>
@@ -350,13 +351,46 @@ function openFriends(){document.getElementById('modalRoot').innerHTML=`<div clas
 function createRoom(){appState.room=Math.random().toString(36).slice(2,8).toUpperCase();document.getElementById('friendArea').innerHTML=`<div class="tile"><div class="muted">내 방 코드</div><div style="font-size:34px;font-weight:1000;letter-spacing:5px;text-align:center;margin:10px">${appState.room}</div><div class="row"><button class="topbtn grow" onclick="navigator.clipboard?.writeText('${appState.room}');toast('방 코드 복사')">코드 복사</button><button class="primary grow" onclick="startMatch(true)">준비 / 시작</button></div></div>`}
 function joinRoom(){const area=document.getElementById('friendArea');area.innerHTML=`<div class="row"><input class="input grow" id="roomInput" placeholder="6자리 방 코드"><button class="primary" onclick="joinConfirm()">참가</button></div>`}
 function joinConfirm(){const x=(document.getElementById('roomInput').value||'').trim().toUpperCase();if(x.length<4)return toast('방 코드를 확인하세요');appState.room=x;document.getElementById('friendArea').innerHTML=`<div class="tile"><b>방 ${x}</b><p>호스트가 시작할 때까지 준비 상태로 대기합니다.</p><button class="primary" style="width:100%" onclick="startMatch(true)">준비 완료</button></div>`}
-function startMatch(fromFriend=false){if(appState.currencies.coopTicket<=0)return toast('협동전 티켓이 부족합니다');appState.currencies.coopTicket--;save();document.getElementById('modalRoot').innerHTML=`<div class="overlay"><div class="match"><div class="muted">협동전 온라인 매칭</div><h1>플레이어 찾는 중</h1><div class="spinner"></div><div class="matchtime" id="matchTime">0:00</div><div class="matchstate" id="matchState">매칭 서버에 연결 중...</div><button class="cancel" onclick="cancelMatch()">취소</button></div></div>`;
- appState.matching=true;appState.matchSec=0;clearInterval(appState.matchTimer);appState.matchTimer=setInterval(()=>{appState.matchSec++;const mt=document.getElementById('matchTime');const st=document.getElementById('matchState');if(mt)mt.textContent=`0:${String(appState.matchSec).padStart(2,'0')}`;if(st)st.textContent=appState.matchSec<3?'상대 플레이어 검색 중...':appState.matchSec<6?'상대 발견 · 연결 중...':'매칭 완료 · 게임 준비 중...';if(appState.matchSec>=7){clearInterval(appState.matchTimer);beginLoading()}},1000)}
-function cancelMatch(){clearInterval(appState.matchTimer);appState.matching=false;closeModal();appState.currencies.coopTicket++;save();updateRes()}
-function beginLoading(){closeModal();const l=document.getElementById('loading');l.classList.add('active');let p=0;const bar=document.getElementById('loadBar'),txt=document.getElementById('loadText');const iv=setInterval(()=>{p+=10;bar.style.width=p+'%';txt.textContent=p<30?'상대 플레이어 정보를 불러오는 중...':p<70?'전투 덱을 준비하는 중...':p<100?'맵과 적을 준비하는 중...':'전투 시작!';if(p>=100){clearInterval(iv);setTimeout(()=>{l.classList.remove('active');startBattle()},400)}},180)}
-function startBattle(){
-  document.getElementById('page-battle').innerHTML=`<div class="battle"><div class="battleTop"><button class="topbtn" onclick="leaveBattle()">‹</button><b id="bwave">1</b><div class="pill">🤝 협동전</div><div class="pill" id="btime">20s</div><div class="pill">SP <span id="bsp">100</span></div><div class="pill right" id="bkills">처치 0</div></div><div class="arena"><div class="hp">적 기지 HP <span id="basehp">150</span><i id="hpbar" style="width:100%"></i></div><div class="lane"></div><div class="gate">⚡<small>150</small></div><div id="enemyLayer"></div><div id="battleDice" class="battleDice"></div></div><div class="battlebar"><div class="sp">✦ <span id="sp">100</span></div><button class="spawn" onclick="summonBattleDice()">소환 · SP 50</button><button class="speed" onclick="toggleSpeed()">1.0x</button></div><div class="battleBottom">게임 내 재화는 <b style="color:#65e5ff;margin-left:4px">SP만 사용</b> · 덱/다이스 트리/꾸미기는 전투 종료 후 로비에서 관리</div></div>`;
-  navBattle();setupBattle()
+async function startMatch(fromFriend=false){
+ if(appState.matching)return;
+ appState.matching=true;appState.matchSec=0;appState.matchQueueId=null;appState.opponentType=null;appState.opponentNickname='';
+ document.getElementById('modalRoot').innerHTML=`<div class="overlay"><div class="match"><div class="muted">협동전 온라인 매칭</div><h1>플레이어 찾는 중</h1><div class="spinner"></div><div class="matchtime" id="matchTime">0:00</div><div class="matchstate" id="matchState">매칭 서버에 연결 중...</div><div class="muted" id="matchRule">30초 동안 다른 플레이어를 찾습니다. 찾지 못하면 AI와 시작합니다.</div><button class="cancel" onclick="cancelMatch()">취소</button></div></div>`;
+ try{
+   const r=await api('/api/match/join',{method:'POST',body:'{}'});
+   appState.matchQueueId=r.queueId||null;
+   if(r.state){appState.currencies=r.state.currencies;}
+   if(r.coopTicketNextIn)appState.coopTicketNextIn=r.coopTicketNextIn;
+   updateRes();
+   if(r.status==='matched')handleMatchResult(r);else pollMatchStatus();
+ }catch(e){appState.matching=false;closeModal();toast(e.message)}
+}
+function pollMatchStatus(){
+ clearInterval(appState.matchTimer);
+ appState.matchTimer=setInterval(async()=>{
+   if(!appState.matching||!appState.matchQueueId)return;
+   try{
+     const r=await api('/api/match/status/'+encodeURIComponent(appState.matchQueueId));
+     appState.matchSec=Number(r.elapsed||appState.matchSec);
+     const mt=document.getElementById('matchTime'),st=document.getElementById('matchState');
+     if(mt){const sec=Math.min(30,appState.matchSec);mt.textContent=`0:${String(sec).padStart(2,'0')}`}
+     if(st){st.textContent=r.status==='waiting'?`상대 플레이어 검색 중... ${Math.max(0,Number(r.remaining||0))}초`:'매칭 완료 · 게임 준비 중...'}
+     if(r.status==='matched'||r.status==='ai')handleMatchResult(r);
+   }catch(e){console.warn('match poll',e)}
+ },1000);
+}
+function handleMatchResult(r){
+ clearInterval(appState.matchTimer);appState.matchTimer=null;appState.matching=false;
+ appState.opponentType=r.opponentType||'ai';appState.opponentNickname=r.opponentNickname|| (r.opponentType==='player'?'플레이어':'AI 플레이어');
+ beginLoading(appState.opponentType,appState.opponentNickname);
+}
+async function cancelMatch(){
+ clearInterval(appState.matchTimer);appState.matchTimer=null;
+ try{const r=await api('/api/match/cancel',{method:'POST'});if(r.state)appState.currencies=r.state.currencies;updateRes()}catch(e){console.warn(e)}
+ appState.matching=false;appState.matchQueueId=null;closeModal();
+} 
+function beginLoading(opponentType='ai',opponentNickname='AI 플레이어'){
+ closeModal();const l=document.getElementById('loading');l.classList.add('active');let p=0;const bar=document.getElementById('loadBar'),txt=document.getElementById('loadText');
+ const iv=setInterval(()=>{p+=10;bar.style.width=p+'%';txt.textContent=p<30?`${opponentType==='player'?'플레이어':'AI'} 정보를 불러오는 중...`:p<70?'전투 덱을 준비하는 중...':p<100?'맵과 적을 준비하는 중...':'전투 시작!';if(p>=100){clearInterval(iv);setTimeout(()=>{l.classList.remove('active');startBattle()},400)}},180)
 }
 function navBattle(){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById('page-battle').classList.add('active')}
 function setupBattle(){appState.sp=100;appState.wave=1;appState.gameSec=20;appState.speed=1;appState.kills=0;appState.enemies=[];appState.diceGrid=appState.deck.map((type,i)=>({type:type,lvl:1,id:i+1}));renderBattleDice();for(let i=0;i<8;i++)setTimeout(addEnemy,i*320);requestAnimationFrame(battleLoop)}
@@ -397,6 +431,65 @@ function updateRes(){['coin','dice','diamond','arenaTicket','coopTicket'].forEac
 function closeModal(){document.getElementById('modalRoot').innerHTML=''}
 function toast(msg){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:absolute;z-index:300;left:50%;top:78px;transform:translateX(-50%);background:#25183a;border:1px solid #694f90;border-radius:12px;padding:10px 14px;font-weight:900;opacity:0;transition:.2s';document.body.appendChild(t)}t.textContent=msg;t.style.opacity=1;clearTimeout(t._tm);t._tm=setTimeout(()=>t.style.opacity=0,1500)}
 function esc(x){return String(x||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function applyServerResponse(r){
+ if(r.state){
+   appState.profile=r.state.profile||appState.profile;
+   appState.currencies=r.state.currencies||appState.currencies;
+   appState.deck=r.state.deck||appState.deck;
+   appState.unlocked=r.state.unlocked||appState.unlocked;
+   appState.treeUnlocked=r.state.treeUnlocked||appState.treeUnlocked;
+   appState.diceLevels=r.state.diceLevels||appState.diceLevels;
+   appState.passXP=Number(r.state.passXP??appState.passXP);
+   appState.lucky=Number(r.state.lucky??appState.lucky);
+   appState.quests=r.state.quests||appState.quests;
+   appState.difficulty=r.state.difficulty||appState.difficulty;
+ }
+ if(r.user){appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin)}
+ if(r.coopTicketNextIn)appState.coopTicketNextIn=r.coopTicketNextIn;
+ updateRes();
+ if(document.getElementById('coopTicketTimer'))updateTicketTimer();
+}
+async function syncMe(){
+ if(!serverToken)return;
+ try{const r=await api('/api/me');applyServerResponse(r);if(appState.page==='admin'&&appState.isAdmin)drawAdmin();}
+ catch(e){console.warn('sync',e)}
+}
+function startServerSync(){
+ clearInterval(window.rd2ServerSync);
+ window.rd2ServerSync=setInterval(syncMe,10000);
+ syncMe();
+}
+function updateTicketTimer(){
+ const ms=Math.max(0,Number(appState.coopTicketNextIn||300000));
+ const sec=Math.ceil(ms/1000);const text=`+1 ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+ const t=document.getElementById('coopTicketTimer');if(t)t.textContent=text;
+ const s=document.getElementById('sideTicketTimer');if(s)s.textContent=`다음 협동전 티켓 ${text}`;
+ appState.coopTicketNextIn=Math.max(0,ms-1000);
+}
+setInterval(updateTicketTimer,1000);
+window.addEventListener('focus',syncMe);
+
+async function drawAdmin(){
+ const main=document.getElementById('main');if(!main)return;
+ if(!appState.isAdmin){toast('관리자 권한이 없습니다');return nav('lobby')}
+ main.innerHTML=`<div class="sectionHead"><h2>관리자</h2><span>kimsiwon 전용</span></div><div class="tile"><b>재화 관리</b><p>서버 DB에 저장된 사용자의 재화를 추가/차감하거나 원하는 값으로 설정할 수 있습니다. 서버에서도 관리자 권한을 다시 확인합니다.</p></div><div id="adminList" class="section"><div class="muted">사용자 목록을 불러오는 중...</div></div>`;
+ try{
+   const r=await api('/api/admin/users');
+   const list=document.getElementById('adminList');
+   list.innerHTML=`<table class="table"><tbody>${r.users.map(u=>{
+     const safe=encodeURIComponent(u.username);const s=u.state||{};const c=s.currencies||{};
+     return `<tr><td><b>${esc(u.nickname||u.username)}</b><div class="muted">${esc(u.username)} ${u.isAdmin?'· 관리자':''}</div></td><td><div>🪙 ${c.coin??0} · 🎲 ${c.dice??0} · 💎 ${c.diamond??0}</div><div>🏟️ ${c.arenaTicket??0} · 🤝 ${c.coopTicket??0} · 🍀 ${c.lucky??0} · PASS ${s.passXP??0}</div><div class="row" style="margin-top:7px;flex-wrap:wrap"><select class="input" id="acur-${safe}" style="max-width:150px"><option value="coin">코인</option><option value="dice">주사위</option><option value="diamond">보석</option><option value="arenaTicket">아레나 티켓</option><option value="coopTicket">협동전 티켓</option><option value="lucky">행운의 주사위</option><option value="passXP">패스 XP</option></select><input class="input" id="aamt-${safe}" value="100" type="number" style="max-width:120px"><button class="primary" onclick="adminAdjust('${safe}',1)">+ 추가</button><button class="danger" onclick="adminAdjust('${safe}',-1)">− 차감</button><button class="topbtn" onclick="adminSet('${safe}')">값 설정</button></div></td></tr>`;
+   }).join('')}</tbody></table>`;
+ }catch(e){document.getElementById('adminList').innerHTML=`<div class="tile">관리자 데이터를 불러오지 못했습니다.<br><small>${esc(e.message)}</small></div>`}
+}
+async function adminAdjust(encoded,sign){
+ const username=decodeURIComponent(encoded);const currency=document.getElementById('acur-'+encoded).value;const amount=Math.abs(Number(document.getElementById('aamt-'+encoded).value||0));if(!Number.isInteger(amount))return toast('정수를 입력하세요');
+ try{await api('/api/admin/users/'+encodeURIComponent(username)+'/adjust',{method:'POST',body:JSON.stringify({currency,delta:sign*amount})});toast('재화를 변경했습니다');drawAdmin();if(username===appState.user)syncMe();}catch(e){toast(e.message)}
+}
+async function adminSet(encoded){
+ const username=decodeURIComponent(encoded);const currency=document.getElementById('acur-'+encoded).value;const value=Number(document.getElementById('aamt-'+encoded).value||0);if(!Number.isInteger(value)||value<0)return toast('0 이상의 정수를 입력하세요');
+ try{await api('/api/admin/users/'+encodeURIComponent(username)+'/set-currency',{method:'POST',body:JSON.stringify({currency,value})});toast('재화 값을 설정했습니다');drawAdmin();if(username===appState.user)syncMe();}catch(e){toast(e.message)}
+}
 bootClient();
 </script>
 </body>
