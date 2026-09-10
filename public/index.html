@@ -408,8 +408,39 @@ function beginLoading(opponentType='ai',opponentNickname='AI 플레이어'){
  closeModal();const l=document.getElementById('loading');l.classList.add('active');let p=0;const bar=document.getElementById('loadBar'),txt=document.getElementById('loadText');
  const iv=setInterval(()=>{p+=10;bar.style.width=p+'%';txt.textContent=p<30?`${opponentType==='player'?'플레이어':'AI'} 정보를 불러오는 중...`:p<70?'전투 덱을 준비하는 중...':p<100?'맵과 적을 준비하는 중...':'전투 시작!';if(p>=100){clearInterval(iv);setTimeout(()=>{l.classList.remove('active');startBattle()},400)}},180)
 }
+function startBattle(){
+  const opponentType=appState.opponentType||'ai';
+  const opponentName=appState.opponentNickname|| (opponentType==='player'?'플레이어':'AI 플레이어');
+  const playerName=appState.profile.nickname||appState.user||'플레이어';
+  document.getElementById('page-battle').innerHTML=`<div class="battle">
+    <div class="battleTop">
+      <button class="topbtn" onclick="leaveBattle()">‹</button>
+      <div style="min-width:72px"><b id="bwave">1</b><div style="font-size:8px;color:#b9adca">WAVE</div></div>
+      <div class="pill">🤝 협동전</div>
+      <div class="pill">상대: ${esc(opponentName)}</div>
+      <div class="pill" id="btime">20s</div>
+      <div class="pill right">SP <span id="bsp">100</span></div>
+      <div class="pill" id="bkills">처치 0</div>
+    </div>
+    <div class="arena">
+      <div class="hp">적 기지 HP <span id="basehp">150</span><i id="hpbar" style="width:100%"></i></div>
+      <div class="lane"></div>
+      <div class="gate">⚡<small>150</small></div>
+      <div id="enemyLayer"></div>
+      <div id="battleDice" class="battleDice"></div>
+    </div>
+    <div class="battlebar">
+      <div class="sp">✦ <span id="sp">100</span></div>
+      <button class="spawn" onclick="summonBattleDice()">소환 · SP 50</button>
+      <button class="speed" onclick="toggleSpeed()">1.0x</button>
+    </div>
+    <div class="battleBottom">${esc(playerName)} · ${opponentType==='ai'?'AI와 협동':'다른 플레이어와 협동'} · 게임 내 사용 재화: <b style="color:#65e5ff">SP</b></div>
+  </div>`;
+  navBattle();setupBattle();
+}
+
 function navBattle(){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById('page-battle').classList.add('active')}
-function setupBattle(){appState.sp=100;appState.wave=1;appState.gameSec=20;appState.speed=1;appState.kills=0;appState.enemies=[];appState.diceGrid=appState.deck.map((type,i)=>({type:type,lvl:1,id:i+1}));renderBattleDice();for(let i=0;i<8;i++)setTimeout(addEnemy,i*320);requestAnimationFrame(battleLoop)}
+function setupBattle(){appState.sp=100;appState.wave=1;appState.gameSec=20;appState.speed=1;appState.kills=0;appState.enemies=[];appState.selected=null;appState.diceGrid=appState.deck.map((type,i)=>({type:type,lvl:1,id:i+1}));last=0;lastAttack=0;renderBattleDice();for(let i=0;i<8;i++)setTimeout(addEnemy,i*320);requestAnimationFrame(battleLoop)}
 let last=0,lastAttack=0;
 function renderBattleDice(){const el=document.getElementById('battleDice');if(!el)return;el.innerHTML='';for(let i=0;i<15;i++){const s=document.createElement('div');s.className='slot';const d=appState.diceGrid[i]||((i<5)?{type:appState.deck[i],lvl:1}:null);if(d){const div=document.createElement('div');div.innerHTML=diceHTML(d,1);div.firstChild.style.cursor='pointer';div.onclick=()=>battleDieClick(i);s.appendChild(div)}else{s.onclick=()=>summonBattleDice()};el.appendChild(s)}}
 function battleDieClick(i){
@@ -442,7 +473,7 @@ function battleLoop(ts){if(!document.getElementById('page-battle').classList.con
  updateBattleHUD();requestAnimationFrame(battleLoop)}
 function updateBattleHUD(){const sp=document.getElementById('sp');if(sp)sp.textContent=Math.floor(appState.sp);const s=document.getElementById('bsp');if(s)s.textContent=Math.floor(appState.sp);const w=document.getElementById('bwave');if(w)w.textContent=appState.wave;const t=document.getElementById('btime');if(t)t.textContent=Math.max(0,Math.ceil(appState.gameSec))+'s';const k=document.getElementById('bkills');if(k)k.textContent='처치 '+appState.kills}
 function toggleSpeed(){appState.speed=appState.speed===1?1.5:appState.speed===1.5?2:1;toast('게임 속도 '+appState.speed+'x')}
-function leaveBattle(){document.getElementById('page-battle').classList.remove('active');clearInterval(appState.matchTimer);appState.diceGrid=[];appState.page='lobby';document.getElementById('page-lobby').classList.add('active');drawLobby();updateRes();toast('전투를 종료하고 로비로 돌아왔습니다')}
+function leaveBattle(){document.getElementById('page-battle').classList.remove('active');clearInterval(appState.matchTimer);appState.matchTimer=null;appState.matching=false;appState.diceGrid=[];appState.enemies=[];appState.selected=null;appState.page='lobby';document.getElementById('page-lobby').classList.add('active');drawLobby();updateRes();toast('전투를 종료하고 로비로 돌아왔습니다')}
 function updateRes(){['coin','dice','diamond','arenaTicket','coopTicket'].forEach(k=>{const el=document.getElementById(k);if(el)el.textContent=appState.currencies[k].toLocaleString()})}
 function closeModal(){document.getElementById('modalRoot').innerHTML=''}
 function toast(msg){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:absolute;z-index:300;left:50%;top:78px;transform:translateX(-50%);background:#25183a;border:1px solid #694f90;border-radius:12px;padding:10px 14px;font-weight:900;opacity:0;transition:.2s';document.body.appendChild(t)}t.textContent=msg;t.style.opacity=1;clearTimeout(t._tm);t._tm=setTimeout(()=>t.style.opacity=0,1500)}
