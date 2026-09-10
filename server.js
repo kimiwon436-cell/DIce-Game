@@ -130,8 +130,10 @@ app.put('/api/me/state', auth, async (req,res)=>{
 app.put('/api/me/profile', auth, async (req,res)=>{
   const nickname=String(req.body.nickname||'').trim();
   if(nickname.length<1 || nickname.length>12) return res.status(400).json({error:'닉네임은 1~12자여야 합니다.'});
-  await pool.query('UPDATE users SET nickname=$1,state=jsonb_set(state,ARRAY[''profile'',''nickname'']::text[],$2::jsonb),updated_at=NOW() WHERE id=$3',
-    [nickname,JSON.stringify(nickname),req.auth.id]);
+  await pool.query(
+    "UPDATE users SET nickname=$1, state=jsonb_set(state, ARRAY['profile','nickname']::text[], $2::jsonb), updated_at=NOW() WHERE id=$3",
+    [nickname, JSON.stringify(nickname), req.auth.id]
+  );
   res.json({ok:true,nickname});
 });
 
@@ -178,7 +180,7 @@ wss.on('connection',(ws,req)=>{
   }catch{ws.close(1008,'Unauthorized')}
 });
 
-app.get('*',(req,res)=>{
+app.get('/{*splat}',(req,res)=>{
   if(req.path.startsWith('/api/')||req.path==='/health') return res.status(404).json({error:'Not found'});
   res.sendFile(path.join(__dirname,'public','index.html'));
 });
