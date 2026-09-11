@@ -448,7 +448,7 @@ function tryBattleMerge(a,b){
  if(!A||!B)return toast('두 칸 모두 주사위가 있어야 합니다.');
  if(A.type!==B.type||A.rank!==B.rank)return toast('같은 주사위 + 같은 성끼리만 합칠 수 있습니다.');
  if(A.rank>=7)return toast('7성은 더 합칠 수 없습니다.');
- const merged={type:B.type,rank:Math.min(7,B.rank+1),id:'merge-'+Date.now()+'-'+Math.random().toString(36).slice(2)};
+ const mergeDeck=(Array.isArray(appState.deck)&&appState.deck.length)?appState.deck:Object.keys(D);const mergedType=mergeDeck[Math.floor(Math.random()*mergeDeck.length)]||B.type;const merged={type:mergedType,rank:Math.min(7,B.rank+1),id:'merge-'+Date.now()+'-'+Math.random().toString(36).slice(2)};
  // 합성은 빈칸을 자동 보충하지 않습니다. 출발 칸은 반드시 비워둡니다.
  appState.diceGrid[a]=null;
  appState.diceGrid[b]=merged;

@@ -145,7 +145,7 @@ button,input{font:inherit}button{cursor:pointer}
 .app.stageLobby{width:1200px;height:700px;min-width:1200px;min-height:700px}
 .dice.star7{clip-path:polygon(50% 0%,61% 34%,98% 38%,70% 59%,79% 96%,50% 74%,21% 96%,30% 59%,2% 38%,39% 34%);border-radius:4px!important;font-size:31px;background:linear-gradient(145deg,#fff0a3,#e9a928)!important;color:#fff;text-shadow:0 2px 5px #6d4300}
 .dice.star7 small{display:none}
-.dice.dragging{opacity:.25}
+.dice.dragging{visibility:hidden!important}.battleDieHolder{touch-action:none;position:relative}
 .dragGhost{position:fixed;z-index:1000;pointer-events:none;transform:translate(-50%,-50%);filter:drop-shadow(0 8px 8px #0008)}
 .coopGrid .slot.dropTarget{outline:3px solid #fff05b;outline-offset:-2px;background:#ffeaa533}
 .battleDieHolder{width:92%;height:92%;display:grid;place-items:center;min-width:0;min-height:0;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}.battleDieHolder:active{cursor:grabbing}.battleSlot{touch-action:none}
@@ -898,35 +898,42 @@ function bindBattleGridInteractions(el){
  if(el.dataset.bound==='1')return;el.dataset.bound='1';
  el.addEventListener('pointerdown',e=>{
    const holder=e.target.closest('.battleDieHolder[data-die-index]'); if(!holder)return;
-   const from=Number(holder.dataset.dieIndex); if(!appState.diceGrid?.[from])return;
-   battlePointer={from,startX:e.clientX,startY:e.clientY,moved:false,ghost:null};
+   const from=Number(holder.dataset.dieIndex); const die=appState.diceGrid?.[from]; if(!die)return;
+   battlePointer={from,startX:e.clientX,startY:e.clientY,moved:false,ghost:null,holder,sourceDie:die};
    try{holder.setPointerCapture(e.pointerId)}catch{}
-   holder.classList.add('dragging');
-   const ghost=document.createElement('div');ghost.className='dragGhost';ghost.innerHTML=battleDiceHTML(appState.diceGrid[from]);ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';document.body.appendChild(ghost);battlePointer.ghost=ghost;e.preventDefault();
- });
- el.addEventListener('pointermove',e=>{
-   if(!battlePointer)return;
-   const dx=e.clientX-battlePointer.startX,dy=e.clientY-battlePointer.startY;
-   if(Math.hypot(dx,dy)>8)battlePointer.moved=true;
-   if(battlePointer.ghost){battlePointer.ghost.style.left=e.clientX+'px';battlePointer.ghost.style.top=e.clientY+'px';}
-   el.querySelectorAll('.dropTarget').forEach(x=>x.classList.remove('dropTarget'));
-   const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('#myDiceGrid .slot');
-   if(target&&battlePointer.moved)target.classList.add('dropTarget');
+   const source=holder.querySelector('.battleDie'); if(source)source.classList.add('dragging');
+   const ghost=document.createElement('div');ghost.className='dragGhost';ghost.innerHTML=battleDiceHTML(die);ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';document.body.appendChild(ghost);battlePointer.ghost=ghost;
    e.preventDefault();
  });
+ const move=e=>{
+   if(!battlePointer)return;
+   const dx=e.clientX-battlePointer.startX,dy=e.clientY-battlePointer.startY;
+   if(Math.hypot(dx,dy)>6)battlePointer.moved=true;
+   if(battlePointer.ghost){battlePointer.ghost.style.left=e.clientX+'px';battlePointer.ghost.style.top=e.clientY+'px';}
+   el.querySelectorAll('.dropTarget').forEach(x=>x.classList.remove('dropTarget'));
+   const target=document.elementFromPoint(e.clientX,e.clientY)?.closest?.('#myDiceGrid .slot');
+   if(target&&battlePointer.moved)target.classList.add('dropTarget');
+   e.preventDefault();
+ };
  const finish=e=>{
    if(!battlePointer)return;
+   const state=battlePointer;
    el.querySelectorAll('.dropTarget').forEach(x=>x.classList.remove('dropTarget'));
-   const from=battlePointer.from, moved=battlePointer.moved; if(battlePointer.ghost)battlePointer.ghost.remove();battlePointer=null;
+   if(state.ghost)state.ghost.remove();
+   const from=state.from,moved=state.moved;
+   const source=state.holder?.querySelector('.battleDie'); if(source)source.classList.remove('dragging');
+   battlePointer=null;
    if(!moved){battleSelect(from);return;}
-   const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('#myDiceGrid .slot');
+   const target=document.elementFromPoint(e.clientX,e.clientY)?.closest?.('#myDiceGrid .slot');
    if(!target)return;
-   const to=Number(target.dataset.slot); if(!Number.isInteger(to))return;
+   const to=Number(target.dataset.slot); if(!Number.isInteger(to)||to===from)return;
    const A=appState.diceGrid[from],B=appState.diceGrid[to];
-   if(A&&B&&from!==to&&A.type===B.type&&A.rank===B.rank){tryBattleMerge(from,to);}
-   else if(to!==from)toast('같은 주사위 + 같은 성 칸으로 옮겨야 합성됩니다.');
+   if(A&&B&&A.type===B.type&&A.rank===B.rank){tryBattleMerge(from,to);}
+   else{toast('같은 주사위 + 같은 성으로 옮겨야 합성됩니다.');}
  };
- el.addEventListener('pointerup',finish);el.addEventListener('pointercancel',finish);el.addEventListener('pointerleave',e=>{if(battlePointer&&e.buttons===0)finish(e)});
+ el.addEventListener('pointermove',move);
+ el.addEventListener('pointerup',finish);
+ el.addEventListener('pointercancel',finish);
 }
 function battleSelect(i){if(!appState.diceGrid?.[i])return;if(appState.selected!=null&&appState.selected!==i){const a=appState.selected,b=i;const A=appState.diceGrid[a],B=appState.diceGrid[b];if(A&&B&&A.type===B.type&&A.rank===B.rank){tryBattleMerge(a,b);return;}toast('같은 주사위 + 같은 성을 선택하면 합성됩니다.');return;}appState.selected=appState.selected===i?null:i;renderBattleDice();}
 function tryBattleMerge(a,b){
@@ -935,7 +942,7 @@ function tryBattleMerge(a,b){
  if(!A||!B)return toast('주사위가 있는 두 칸을 사용하세요');
  if(A.type!==B.type||A.rank!==B.rank)return toast('같은 주사위 + 같은 성끼리만 합칠 수 있습니다.');
  if(A.rank>=7)return toast('7성은 더 합칠 수 없습니다.');
- const merged={type:B.type,rank:Math.min(7,B.rank+1),id:'merge-'+Date.now()+'-'+Math.random().toString(36).slice(2)};
+ const mergeDeck=(Array.isArray(appState.deck)&&appState.deck.length)?appState.deck:Object.keys(D);const mergedType=mergeDeck[Math.floor(Math.random()*mergeDeck.length)]||B.type;const merged={type:mergedType,rank:Math.min(7,B.rank+1),id:'merge-'+Date.now()+'-'+Math.random().toString(36).slice(2)};
  // 합성 후 빈칸은 그대로 둡니다. 소환 버튼을 눌렀을 때만 빈칸을 채웁니다.
  appState.diceGrid[a]=null;
  appState.diceGrid[b]=merged;
