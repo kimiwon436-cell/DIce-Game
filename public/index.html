@@ -1267,4 +1267,15 @@ bootClient();
   #page-battle .battlebar{height:188px!important;bottom:8px!important;}
   #page-battle .battleDice{bottom:205px!important;}
 }
+
+/* v58: die illustrations + stable text alignment */
+.dieArt{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);width:24%;height:24%;display:grid;place-items:center;opacity:.92;pointer-events:none;color:#fff;text-shadow:0 1px 2px #0005;z-index:1}
+.dieArt svg{width:100%;height:100%;display:block}
+.dice>.pips,.dice>.starMark{position:relative;z-index:2}
+.dice small{z-index:4;line-height:1;white-space:nowrap;display:block}
+.battleDie .dieArt{width:22%;height:22%;bottom:8%}
+button,.topbtn,.nav,.mode,.tile,.treeNode,.slot{line-height:1.1;vertical-align:middle}
+button{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;white-space:nowrap}
+.row{align-items:center}
+.qicon,.qtext{display:inline-flex;align-items:center;line-height:1;vertical-align:middle}
 </style>
