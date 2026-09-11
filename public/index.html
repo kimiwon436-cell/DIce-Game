@@ -468,6 +468,14 @@ button,input{font:inherit}button{cursor:pointer}
   #page-battle .battleDieUpgradeCard{height:75px;min-height:75px}
   .coopArena{bottom:172px!important}
 }
+
+/* v55: die faces are visual dice, not emoji; darker pips */
+.diceFace{width:72%;height:72%;position:relative;display:grid;place-items:center}
+.diceFace .pips{width:100%;height:100%;position:relative}
+.diceFace .pip,.battleDie .pip{background:#17121b!important;box-shadow:0 2px 3px rgba(0,0,0,.38),inset 0 0 0 1px rgba(255,255,255,.12)!important}
+.diceTypeMark{position:absolute;right:-2px;bottom:-2px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.84);color:#21172b;font-size:10px;font-weight:1000;box-shadow:0 1px 3px rgba(0,0,0,.32)}
+.battleDie .pips{width:72%!important;height:72%!important}
+.battleDie .pip{width:17%!important;height:17%!important}
 </style>
 
 <style>
@@ -789,13 +797,13 @@ function drawLobby(){
  const pos={1:['c'],2:['tl','br'],3:['tl','c','br'],4:['tl','tr','bl','br'],5:['tl','tr','c','bl','br'],6:['tl','tr','ml','mr','bl','br']}[r];
  return `<div class="pips">${pos.map(x=>`<i class="pip ${x}"></i>`).join('')}</div>`;
 }
-function diceHTML(type,lvl=1){const d=D[type]||D.blue||{cls:'d-blue',icon:'◉',name:'바람 주사위',damage:50};return `<div class="dice ${d.cls}">${d.icon}<small>Lv.${Math.max(1,Math.min(50,Number(lvl)||1))}</small></div>`;}
+function diceHTML(type,lvl=1){const d=D[type]||D.blue||{cls:'d-blue',icon:'',name:'바람 주사위',damage:50};return `<div class="dice ${d.cls}" aria-label="${esc(d.name||type)}"><div class="diceFace"><div class="pips">${['c'].map(x=>`<i class="pip ${x}"></i>`).join('')}</div><div class="diceTypeMark">${String(d.name||type).replace(' 주사위','').slice(0,1)}</div></div><small>Lv.${Math.max(1,Math.min(50,Number(lvl)||1))}</small></div>`;}
 function battleDiceHTML(die,selected=false){if(!die)return '';const d=D[die.type]||D.blue||{cls:'d-blue',icon:'◉',name:'바람 주사위',damage:50},r=Math.max(1,Math.min(7,Number(die.rank)||1));if(r>=7)return `<div class="dice battleDie ${d.cls} ${selected?'battleSelected':''}" title="7성 · 합성 불가"><div class="starMark">★</div></div>`;return `<div class="dice battleDie ${d.cls} ${selected?'battleSelected':''}" title="${d.name} · ${r}성">${battlePips(r)}</div>`;}
 function upgradeCost(level){const lv=Math.max(1,Number(level)||1);if(lv>=50)return {coin:0,dice:0};const next=lv+1;return next%5===0?{coin:0,dice:8}:{coin:Math.max(100,Math.floor(75*lv*1.15)),dice:0};}
 function upgradeCostText(level){const c=upgradeCost(level);return c.dice?`🎲 ${c.dice}`:`🪙 ${c.coin}`;}
 function battleUpgradeCost(level){return 50+Math.max(0,level)*50;}
 function battleUpgradeLevel(type){return Math.max(0,Math.min(10,Number(appState.battleUpgradeLevels?.[type]||0)));}
-function drawBattleUpgrades(){const box=document.getElementById('battleDieUpgradeList');if(!box)return;const types=(Array.isArray(appState.deck)?appState.deck:[]).slice(0,5);box.innerHTML=types.map(type=>{const d=D[type]||D.blue,lv=battleUpgradeLevel(type),cost=battleUpgradeCost(lv);return `<div class="battleDieUpgradeCard"><div class="battleDieUpgradeImage">${diceHTML(type,appState.diceLevels?.[type]||1)}</div><b>${esc(d.name||type)}</b><small>Lv.${lv}/10</small>${lv<10?`<button class="battleDieUpgradeBtn" onclick="buyBattleDamageUpgrade('${type}')">업그레이드 · SP ${cost}</button>`:`<button class="battleDieUpgradeBtn" disabled>MAX</button>`}</div>`}).join('');}
+function drawBattleUpgrades(){const box=document.getElementById('battleDieUpgradeList');if(!box)return;const types=(Array.isArray(appState.deck)?appState.deck:[]).slice(0,5);box.innerHTML=types.map(type=>{const d=D[type]||D.blue,lv=battleUpgradeLevel(type),cost=battleUpgradeCost(lv);return `<div class="battleDieUpgradeCard"><div class="battleDieUpgradeImage">${battleDiceHTML({type,rank:1},false)}</div><b>${esc(d.name||type)}</b><small>Lv.${lv}/10</small>${lv<10?`<button class="battleDieUpgradeBtn" onclick="buyBattleDamageUpgrade('${type}')">업그레이드 · SP ${cost}</button>`:`<button class="battleDieUpgradeBtn" disabled>MAX</button>`}</div>`}).join('');}
 function drawDeck(){
  if(!appState.diceLevels)appState.diceLevels={};
  const names=appState.unlocked.map(x=>D[x]?.name||x);
@@ -1243,4 +1251,13 @@ bootClient();
 #page-battle .battleDieUpgradeCard>b{font-size:8px!important;max-width:90px;overflow:hidden;text-overflow:ellipsis;}
 #page-battle .battleDieUpgradeCard>small{font-size:8px!important;}
 #page-battle .battleDieUpgradeBtn{font-size:7px!important;padding:4px 2px!important;}
+</style>
+<style>
+/* v56: desktop battle controls must never cover the 3x5 dice board. */
+@media(min-width:701px){
+  #page-battle .coopArena{bottom:200px!important;}
+  #page-battle .coopPlayer{height:46%!important;}
+  #page-battle .battlebar{height:188px!important;bottom:8px!important;}
+  #page-battle .battleDice{bottom:205px!important;}
+}
 </style>
