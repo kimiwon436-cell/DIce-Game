@@ -115,3 +115,18 @@ v15: fixed missing fitStage declaration order and enforced desktop/mobile fixed 
 - Cleaned viewport fitting so there is exactly one fitStage definition.
 - Uses ResizeObserver plus browser viewport/fullscreen/orientation/page visibility events.
 - Desktop fits a landscape canvas; mobile uses the real browser viewport with portrait layout.
+
+
+## v25 Kill/Boss/Reward rules
+- Coop completion is 5000 total kills, not waves.
+- A boss spawns every 150 kills.
+- Boss count increases as the kill count gets higher.
+- Bosses have distinct skills: charge, absorb, split, freeze, bombard, enrage.
+- Coop bounty rewards are claimable every 100 kills.
+- Kill progress is shown in the coop HUD.
+
+
+## v26
+- Viewport fitting is recalculated automatically on browser resize, fullscreen changes, visibility, pageshow, orientation changes, visualViewport resize/scroll, and ResizeObserver changes.
+- Initial load performs delayed refits so Chrome/Edge browser chrome settling does not require toggling fullscreen.
+- Added a Back button to lobby sub-pages.
