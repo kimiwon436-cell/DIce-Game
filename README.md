@@ -1,7 +1,4 @@
-# Random Dice 2 Web v40
+# RANDOM DICE 2 WEB - v45
 
-v39 기반 업데이트.
-
-전투 주사위 15칸은 항상 3×5 설치 칸으로 존재하며, 합성 시 출발 칸을 자동으로 채우지 않습니다. 합성으로 생긴 빈칸은 다음 `소환` 버튼을 눌렀을 때만 빈칸 중 랜덤 위치에 새 1성 주사위가 생성됩니다.
-
-Render/GitHub 배포용 프로젝트입니다.
+Battle dice now use the same visual style as lobby dice, while retaining 1-7 star ranks.
+Battle-only upgrades are per-die and appear below summon/speed controls, with dice image, current level, and upgrade button.
