@@ -1179,6 +1179,16 @@ async function adminSet(encoded){
 }
 bootClient();
 </script>
+
+<style>
+/* v53: battle dice use the same pip-face visual as lobby dice */
+#page-battle .battleDie{display:grid;place-items:center;position:relative;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;}
+#page-battle .battleDie .pips{width:68%;height:68%;position:relative;}
+#page-battle .battleDie .pip{position:absolute;width:16%;height:16%;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0006;}
+#page-battle .battleDie .starMark{font-size:42px;line-height:1;}
+#page-battle .battleDie small{position:absolute;right:5px;top:4px;background:#0009;color:#fff;border-radius:7px;padding:1px 4px;font-size:8px;font-weight:1000;}
+.dragGhost{pointer-events:none!important;opacity:.96;box-shadow:0 14px 28px #0008!important;}
+</style>
 </body>
 </html>
 <style>

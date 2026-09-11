@@ -1,2 +1,7 @@
-# Random Dice 2 Render v52
-Menu unresponsive hotfix. Removed self-triggering MutationObserver on #main, removed focus-triggered server sync, and reduced background sync interval.
+# Random Dice 2 Render Server v53
+
+v52 기반 전투 주사위 시각/드래그 개선 버전입니다.
+- 로비/전투 주사위에 흰색 pip 1~6 표시, 7성은 별표
+- 전투 주사위 전체를 끌어 이동하는 드래그 고스트
+- 잘못 놓으면 원래 자리 복귀
+- 기존 기능 유지

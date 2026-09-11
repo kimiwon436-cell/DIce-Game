@@ -286,8 +286,22 @@ function drawLobby(){
  const pos={1:['c'],2:['tl','br'],3:['tl','c','br'],4:['tl','tr','bl','br'],5:['tl','tr','c','bl','br'],6:['tl','tr','ml','mr','bl','br']}[r];
  return `<div class="pips">${pos.map(x=>`<i class="pip ${x}"></i>`).join('')}</div>`;
 }
-function diceHTML(type,lvl=1){const d=D[type]||D.blue;return `<div class="dice ${d.cls}">${d.icon}<small>Lv.${Math.max(1,Math.min(50,Number(lvl)||1))}</small></div>`;}
-function battleDiceHTML(die,selected=false){const d=D[die.type]||D.blue,r=Math.max(1,Math.min(7,Number(die.rank)||1));if(r>=7)return `<div class="dice battleDie ${d.cls} ${selected?'battleSelected':''} battleRank7" title="${d.name} · 7성"><div class="starMark">★</div><small>7성</small></div>`;return `<div class="dice battleDie ${d.cls} ${selected?'battleSelected':''}" title="${d.name} · ${r}성"><div class="battleLobbyIcon">${d.icon}</div><small>${r}성</small></div>`;}
+function dicePips(rank){const r=Math.max(1,Math.min(6,Number(rank)||1));const pos={1:['c'],2:['tl','br'],3:['tl','c','br'],4:['tl','tr','bl','br'],5:['tl','tr','c','bl','br'],6:['tl','tr','ml','mr','bl','br']}[r]||['c'];return `<div class="pips">${pos.map(x=>`<i class="pip ${x}"></i>`).join('')}</div>`;}
+function diceHTML(type,lvl=1,rank=1){const d=D[type]||D.blue;const safeRank=Math.max(1,Math.min(7,Number(rank)||1));const face=safeRank===7?`<div class="starMark">★</div>`:dicePips(safeRank);return `<div class="dice ${d.cls}" data-dice-type="${esc(type)}">${face}<small>Lv.${Math.max(1,Math.min(50,Number(lvl)||1))}</small></div>`;}
+
+function battleDiceHTML(die,selected=false){const d=D[die.type]||D.blue,r=Math.max(1,Math.min(7,Number(die.rank)||1));const face=r>=7?`<div class="starMark">★</div>`:dicePips(r);return `<div class="dice battleDie ${d.cls} ${selected?'battleSelected':''}" title="${d.name} · ${r}성">${face}<small>${r>=7?'★ 7성':r+'성'}</small></div>`;}
+function renderBattleDice(){
+ const draw=(id,grid,clickable,prefix)=>{
+  const el=document.getElementById(id);if(!el)return;
+  const safe=ensureBattleGrid(grid,prefix);
+  el.innerHTML=safe.map((die,i)=>`<div class="slot battleSlot" data-slot="${i}"><div class="battleDieHolder" ${clickable&&die?`onpointerdown="battleDragStart(event,${i})" onclick="battleSelect(${i})"`:''}>${die?battleDiceHTML(die,clickable&&appState.selected===i):''}</div></div>`).join('');
+ };
+ appState.diceGrid=ensureBattleGrid(appState.diceGrid,'me');
+ if(appState.battle)appState.battle.opponentDice=ensureBattleGrid(appState.battle.opponentDice,'opp');
+ draw('myDiceGrid',appState.diceGrid,true,'me');
+ draw('opponentDiceGrid',appState.battle?.opponentDice||[],false,'opp');
+}
+
 function upgradeCost(level){const lv=Math.max(1,Number(level)||1);if(lv>=50)return {coin:0,dice:0};const next=lv+1;return next%5===0?{coin:0,dice:8}:{coin:Math.max(100,Math.floor(75*lv*1.15)),dice:0};}
 function upgradeCostText(level){const c=upgradeCost(level);return c.dice?`🎲 ${c.dice}`:`🪙 ${c.coin}`;}
 function battleUpgradeCost(level){return 50+Math.max(0,level)*50;}
@@ -427,28 +441,33 @@ function navBattle(){document.querySelectorAll('.view').forEach(x=>x.classList.r
 function makeFullGrid(deck,prefix='die'){const source=(Array.isArray(deck)&&deck.length?deck:['blue']);return Array.from({length:15},(_,i)=>({type:source[Math.floor(Math.random()*source.length)]||'blue',rank:1,id:prefix+'-'+Date.now()+'-'+Math.random().toString(36).slice(2)+i}));}
 function randomBattleDie(prefix='refill'){const deck=appState.deck?.length?appState.deck:['blue'];return {type:deck[Math.floor(Math.random()*deck.length)]||'blue',rank:1,id:prefix+'-'+Date.now()+'-'+Math.random().toString(36).slice(2)};}
 function ensureBattleGrid(grid,prefix='keep'){const arr=Array.isArray(grid)?grid.slice(0,15):[];while(arr.length<15)arr.push(null);for(let i=0;i<15;i++){const die=arr[i];if(die&&!D[die.type])arr[i]=null;}arr.length=15;return arr;}
-let battleDrag={active:false,from:null,pointerId:null,moved:false};
-function renderBattleDice(){const draw=(id,grid,clickable,prefix)=>{const el=document.getElementById(id);if(!el)return;const safe=ensureBattleGrid(grid,prefix);el.innerHTML=safe.map((die,i)=>`<div class="slot battleSlot" data-slot="${i}"><div class="battleDieHolder" ${clickable?`onclick="battleSelect(${i})" onpointerdown="battleDragStart(event,${i})"`:''}>${die?battleDiceHTML(die,clickable&&appState.selected===i):'<div class="emptyBattleSlot"></div>'}</div></div>`).join('')};appState.diceGrid=ensureBattleGrid(appState.diceGrid,'me');if(appState.battle)appState.battle.opponentDice=ensureBattleGrid(appState.battle.opponentDice,'opp');draw('myDiceGrid',appState.diceGrid,true,'me');draw('opponentDiceGrid',appState.battle?.opponentDice||[],false,'opp');}
-function getEmptyBattleSlots(){const grid=ensureBattleGrid(appState.diceGrid,'me');const empty=[];for(let i=0;i<15;i++)if(grid[i]==null)empty.push(i);return empty;}
-function summonBattleDice(){
- if(appState.sp<50)return toast('SP가 부족합니다.');
- appState.diceGrid=ensureBattleGrid(appState.diceGrid,'me');
- const empty=getEmptyBattleSlots();
- if(!empty.length)return toast('칸이 가득 차서 소환할 수 없습니다.');
- appState.sp-=50;
- const idx=empty[Math.floor(Math.random()*empty.length)];
- const spawned=randomBattleDie('summon');
- appState.diceGrid[idx]=spawned;
- appState.selected=null;
- renderBattleDice();
- sendBattle({type:'summon',slot:idx,die:spawned});
- updateBattleHUD();
- toast(`${D[spawned.type]?.name||'주사위'} 1성 소환`);
+let battleDrag={active:false,from:null,pointerId:null,moved:false,ghost:null,startX:0,startY:0};
+function removeBattleDragGhost(){if(battleDrag.ghost){battleDrag.ghost.remove();battleDrag.ghost=null;}}
+function updateBattleDragGhost(x,y){if(!battleDrag.ghost)return;battleDrag.ghost.style.left=x+'px';battleDrag.ghost.style.top=y+'px';}
+function battleDragStart(event,i){
+ if(event.button!=null&&event.button!==0)return;
+ const die=appState.diceGrid?.[i];if(!die)return;
+ battleDrag={active:true,from:i,pointerId:event.pointerId,moved:false,ghost:null,startX:event.clientX||0,startY:event.clientY||0};
+ const source=event.currentTarget?.querySelector?.('.dice');
+ if(source){
+   const ghost=source.cloneNode(true);ghost.classList.add('dragGhost');ghost.removeAttribute('onclick');
+   ghost.style.position='fixed';ghost.style.zIndex='9999';ghost.style.pointerEvents='none';ghost.style.margin='0';ghost.style.width=Math.min(76,source.getBoundingClientRect().width)+'px';ghost.style.height=ghost.style.width;ghost.style.left=(event.clientX||0)+'px';ghost.style.top=(event.clientY||0)+'px';ghost.style.transform='translate(-50%,-50%) scale(1.06)';document.body.appendChild(ghost);battleDrag.ghost=ghost;source.style.visibility='hidden';
+ }
+ document.addEventListener('pointermove',battleDragMove,{passive:false});
+ document.addEventListener('pointerup',battleDragEnd,{once:true});
+ document.addEventListener('pointercancel',battleDragCancel,{once:true});
+ event.preventDefault();event.stopPropagation();
 }
-function battleSelect(i){if(battleDrag.moved){battleDrag.moved=false;return;}if(!appState.diceGrid?.[i])return;if(appState.selected!=null&&appState.selected!==i){const a=appState.selected,b=i;const A=appState.diceGrid[a],B=appState.diceGrid[b];if(A&&B&&A.type===B.type&&A.rank===B.rank){tryBattleMerge(a,b);return;}toast('같은 주사위 + 같은 성을 드래그해서 합성하세요.');return;}appState.selected=appState.selected===i?null:i;renderBattleDice();}
-function battleDragStart(event,i){if(!appState.diceGrid?.[i])return;if(event.pointerId!=null&&event.currentTarget?.setPointerCapture){try{event.currentTarget.setPointerCapture(event.pointerId)}catch{}}battleDrag={active:true,from:i,pointerId:event.pointerId,moved:false};event.preventDefault();document.addEventListener('pointerup',battleDragEnd,{once:true});document.addEventListener('pointercancel',battleDragCancel,{once:true});}
-function battleDragEnd(event){if(!battleDrag.active)return;const from=battleDrag.from;const point=document.elementFromPoint(event.clientX,event.clientY);const holder=point?.closest?.('#myDiceGrid .battleDieHolder');const slot=holder?.closest?.('.battleSlot');const to=slot?Number(slot.dataset.slot):-1;battleDrag.active=false;battleDrag.pointerId=null;if(to>=0&&to!==from){battleDrag.moved=true;const A=appState.diceGrid[from],B=appState.diceGrid[to];if(A&&B&&A.type===B.type&&A.rank===B.rank){tryBattleMerge(from,to);}else{toast('같은 주사위 + 같은 성으로 옮겨야 합성됩니다.');}}else{battleDrag.moved=false;}}
-function battleDragCancel(){battleDrag.active=false;battleDrag.pointerId=null;battleDrag.moved=false;}
+function battleDragMove(event){if(!battleDrag.active)return;const dx=(event.clientX||0)-battleDrag.startX,dy=(event.clientY||0)-battleDrag.startY;if(Math.hypot(dx,dy)>5)battleDrag.moved=true;updateBattleDragGhost(event.clientX||0,event.clientY||0);event.preventDefault();}
+function battleDragEnd(event){
+ if(!battleDrag.active)return;
+ const from=battleDrag.from,point=document.elementFromPoint(event.clientX,event.clientY),holder=point?.closest?.('#myDiceGrid .battleDieHolder'),slotEl=holder?.closest?.('.battleSlot'),to=slotEl?Number(slotEl.dataset.slot):-1;
+ battleDrag.active=false;battleDrag.pointerId=null;document.removeEventListener('pointermove',battleDragMove);removeBattleDragGhost();
+ const holderEl=document.querySelector(`#myDiceGrid .battleSlot[data-slot="${from}"] .battleDieHolder .dice`);if(holderEl)holderEl.style.visibility='';
+ if(to>=0&&to!==from){battleDrag.moved=true;const A=appState.diceGrid[from],B=appState.diceGrid[to];if(A&&B&&A.type===B.type&&A.rank===B.rank){tryBattleMerge(from,to);}else{toast('같은 주사위 + 같은 성으로 옮겨야 합성됩니다.');renderBattleDice();}}
+ else {battleDrag.moved=false;renderBattleDice();}
+}
+function battleDragCancel(){if(!battleDrag.active)return;battleDrag.active=false;battleDrag.pointerId=null;document.removeEventListener('pointermove',battleDragMove);removeBattleDragGhost();const from=battleDrag.from;const holderEl=document.querySelector(`#myDiceGrid .battleSlot[data-slot="${from}"] .battleDieHolder .dice`);if(holderEl)holderEl.style.visibility='';renderBattleDice();battleDrag.moved=false;}
 function tryBattleMerge(a,b){
  if(a===b)return toast('서로 다른 칸으로 옮겨주세요.');
  const A=appState.diceGrid[a],B=appState.diceGrid[b];
