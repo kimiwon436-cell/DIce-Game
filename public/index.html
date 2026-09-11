@@ -148,7 +148,7 @@ button,input{font:inherit}button{cursor:pointer}
 .dice.dragging{opacity:.25}
 .dragGhost{position:fixed;z-index:1000;pointer-events:none;transform:translate(-50%,-50%);filter:drop-shadow(0 8px 8px #0008)}
 .coopGrid .slot.dropTarget{outline:3px solid #fff05b;outline-offset:-2px;background:#ffeaa533}
-.battleDieHolder{width:92%;height:92%;display:grid;place-items:center;min-width:0;min-height:0}
+.battleDieHolder{width:92%;height:92%;display:grid;place-items:center;min-width:0;min-height:0;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}.battleDieHolder:active{cursor:grabbing}.battleSlot{touch-action:none}
 .battleDieHolder .dice{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important}
 
 .app{width:100vw;height:100vh;min-height:620px;border-radius:0;border:0}.body{grid-template-columns:1fr}.side{display:none}.top{height:62px}.main{height:calc(100% - 62px);padding:12px}.bigLogo{font-size:34px}.cardgrid{grid-template-columns:1fr}.deck{grid-template-columns:repeat(5,1fr);gap:6px}.heroCard{padding:18px}.res .chip{padding:6px 7px;font-size:10px}.topbtn{padding:8px}.pass{grid-template-columns:1fr}.skinGrid{grid-template-columns:repeat(2,1fr)}}
@@ -439,6 +439,8 @@ button,input{font:inherit}button{cursor:pointer}
   .coopGrid .slot{border-radius:10px}
   .coopGrid .dice{width:100%;height:100%;border-radius:10px;font-size:20px}
 }
+
+.emptyBattleSlot{width:100%;height:100%;min-width:0;min-height:0;background:transparent;border:none;pointer-events:none}
 </style>
 </head>
 <body>
