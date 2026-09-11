@@ -441,6 +441,26 @@ button,input{font:inherit}button{cursor:pointer}
 }
 
 .emptyBattleSlot{width:100%;height:100%;min-width:0;min-height:0;background:transparent;border:none;pointer-events:none}
+
+/* v46 battle bottom layout: compact summon button and per-die upgrades strictly below speed row */
+#page-battle .battlebar{height:168px;bottom:8px;display:flex;flex-direction:column;gap:7px;z-index:50}
+#page-battle .battleControlsRow{height:44px;min-height:44px;flex:0 0 44px;align-items:stretch}
+#page-battle .battleControlsRow .sp{height:44px;box-sizing:border-box;padding:0 10px}
+#page-battle .battleControlsRow .spawn{height:44px;min-height:44px;line-height:1;padding:0 10px;font-size:15px}
+#page-battle .battleControlsRow .speed{height:44px;min-height:44px;padding:0 12px}
+#page-battle .battleUpgrade{position:static!important;width:100%;height:108px;min-height:108px;max-height:108px;box-sizing:border-box;margin:0;border-radius:12px;padding:5px 6px;overflow:hidden}
+#page-battle .battleDieUpgradeList{height:77px;overflow-x:auto;overflow-y:hidden;align-items:stretch;margin-top:3px}
+#page-battle .battleDieUpgradeCard{height:72px;min-height:72px}
+@media(max-width:700px){
+  #page-battle .battlebar{height:160px;bottom:7px}
+  #page-battle .battleControlsRow{height:40px;min-height:40px;flex-basis:40px}
+  #page-battle .battleControlsRow .sp,#page-battle .battleControlsRow .spawn,#page-battle .battleControlsRow .speed{height:40px;min-height:40px}
+  #page-battle .battleControlsRow .spawn{font-size:13px}
+  #page-battle .battleUpgrade{height:112px;min-height:112px;max-height:112px}
+  #page-battle .battleDieUpgradeList{height:80px}
+  #page-battle .battleDieUpgradeCard{height:75px;min-height:75px}
+  .coopArena{bottom:172px!important}
+}
 </style>
 </head>
 <body>
