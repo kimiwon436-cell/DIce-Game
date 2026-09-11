@@ -348,42 +348,50 @@ const DEFAULT_CLIENT_STATE={
 };
 const appState=DEFAULT_CLIENT_STATE;
 
+
+
 function getBrowserViewport(){
-  // Use the browser's layout/visual viewport, not the physical screen dimensions.
   const vv=window.visualViewport;
-  const w=Math.max(1,Math.floor(vv?.width || document.documentElement.clientWidth || window.innerWidth));
-  const h=Math.max(1,Math.floor(vv?.height || document.documentElement.clientHeight || window.innerHeight));
-  return {w,h};
+  const doc=document.documentElement;
+  return {
+    w:Math.max(1,Math.floor(vv?.width || doc.clientWidth || window.innerWidth)),
+    h:Math.max(1,Math.floor(vv?.height || doc.clientHeight || window.innerHeight))
+  };
 }
 function fitStage(mode){
   const app=document.querySelector('.app');
   if(!app)return;
+
   const vp=getBrowserViewport();
   const mobile=vp.w<=700;
   const battle=(mode==='battle');
 
+  // Mobile: portrait on every page. Desktop: landscape on every page.
+  const logicalW=mobile?430:1200;
+  const logicalH=mobile?900:700;
+
+  app.classList.toggle('stageBattle',battle);
+  app.classList.toggle('stageLobby',!battle);
+
   if(mobile){
-    const logicalW=430,logicalH=900;
-    app.classList.toggle('stageBattle',battle);
-    app.classList.toggle('stageLobby',!battle);
-    app.style.width='100vw';
-    app.style.height='100dvh';
+    // Use the actual browser viewport directly: no transform = no right-edge clipping.
+    app.style.width='100%';
+    app.style.height='100%';
     app.style.minWidth='0';
     app.style.minHeight='0';
-    app.style.maxWidth='100vw';
-    app.style.maxHeight='100dvh';
+    app.style.maxWidth='100%';
+    app.style.maxHeight='100%';
     app.style.margin='0';
     app.style.transform='none';
     app.style.transformOrigin='center center';
     return;
   }
 
-  const logicalW=1200,logicalH=700;
-  app.classList.toggle('stageBattle',battle);
-  app.classList.toggle('stageLobby',!battle);
-
   const margin=8;
-  const scale=Math.min((vp.w-margin*2)/logicalW,(vp.h-margin*2)/logicalH);
+  const scale=Math.min(
+    (vp.w-margin*2)/logicalW,
+    (vp.h-margin*2)/logicalH
+  );
 
   app.style.width=logicalW+'px';
   app.style.height=logicalH+'px';
@@ -398,12 +406,19 @@ function fitStage(mode){
 function refitCurrentViewport(){
   fitStage(document.getElementById('page-battle')?.classList.contains('active')?'battle':'lobby');
 }
-
-window.addEventListener('resize',refitCurrentViewport);
-window.addEventListener('orientationchange',function(){setTimeout(refitCurrentViewport,120)});
+window.addEventListener('resize',refitCurrentViewport,{passive:true});
+window.addEventListener('orientationchange',()=>setTimeout(refitCurrentViewport,60),{passive:true});
+window.addEventListener('fullscreenchange',()=>setTimeout(refitCurrentViewport,60));
+window.addEventListener('pageshow',()=>setTimeout(refitCurrentViewport,60));
+window.addEventListener('visibilitychange',()=>setTimeout(refitCurrentViewport,60));
 if(window.visualViewport){
-  window.visualViewport.addEventListener('resize',refitCurrentViewport);
-  window.visualViewport.addEventListener('scroll',refitCurrentViewport);
+  window.visualViewport.addEventListener('resize',refitCurrentViewport,{passive:true});
+  window.visualViewport.addEventListener('scroll',refitCurrentViewport,{passive:true});
+}
+if(window.ResizeObserver){
+  const viewportObserver=new ResizeObserver(refitCurrentViewport);
+  viewportObserver.observe(document.documentElement);
+  viewportObserver.observe(document.body);
 }
 
 const D={

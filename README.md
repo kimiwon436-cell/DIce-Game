@@ -103,3 +103,15 @@ v15: fixed missing fitStage declaration order and enforced desktop/mobile fixed 
 - PC lobby main content is vertically scrollable.
 - Lower lobby sections no longer get clipped by a short browser viewport.
 - Mobile behavior is preserved.
+
+
+## v23 viewport update
+- Added ResizeObserver and fullscreen/pageshow/visibility/orientation listeners.
+- Refit also runs shortly after initial page load to catch browser UI/fullscreen viewport changes.
+- Browser viewport dimensions are recalculated every time before fitting.
+
+
+## v24
+- Cleaned viewport fitting so there is exactly one fitStage definition.
+- Uses ResizeObserver plus browser viewport/fullscreen/orientation/page visibility events.
+- Desktop fits a landscape canvas; mobile uses the real browser viewport with portrait layout.
