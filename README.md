@@ -83,3 +83,17 @@ v15: fixed missing fitStage declaration order and enforced desktop/mobile fixed 
 - Gameplay remains fixed with no page scroll.
 - Mobile logical canvas reduced from 430px to 412px wide with extra viewport margin to prevent right-edge clipping.
 - Mobile lobby supports vertical scrolling while hiding horizontal overflow.
+
+
+## v20 mobile overflow fix
+- Mobile no longer uses a CSS transform for the entire app; it uses the actual viewport width.
+- Horizontal clipping is prevented with 100vw/max-width and hidden x-overflow.
+- Lobby keeps vertical scrolling; gameplay stays fixed.
+- Lobby cards/buttons and top controls are compacted for narrow screens.
+
+
+## v21 browser viewport responsive sizing
+- UI sizing is based on the current browser viewport (`visualViewport`/layout viewport), not physical monitor/screen size.
+- Resizing Chrome/Edge, opening DevTools, changing mobile orientation, and browser viewport changes refit the whole UI.
+- Desktop keeps one landscape layout; mobile keeps one portrait layout.
+- Mobile lobby remains vertically scrollable and horizontally clipped content is prevented.

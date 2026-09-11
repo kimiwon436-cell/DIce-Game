@@ -247,6 +247,65 @@ button,input{font:inherit}button{cursor:pointer}
   .resourceBar .chip{font-size:8px;padding:4px 5px}
 }
 
+
+@media(max-width:700px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  #root{width:100vw;max-width:100%;height:100%;min-height:100%;display:block;overflow-x:hidden;overflow-y:hidden;padding:0}
+  .app{
+    width:100vw!important;
+    min-width:0!important;
+    max-width:100vw!important;
+    height:100dvh!important;
+    min-height:100dvh!important;
+    max-height:none!important;
+    margin:0!important;
+    border:0!important;
+    border-radius:0!important;
+    transform:none!important;
+    box-shadow:none!important;
+    overflow:hidden!important;
+  }
+  .top{height:58px;padding:5px 7px;gap:4px}
+  .brand{font-size:14px}
+  .profileBtn{font-size:9px;max-width:120px;overflow:hidden}
+  .body{display:block!important;height:calc(100dvh - 58px)!important;overflow:hidden!important}
+  .side{display:none!important}
+  #page-lobby .main{
+    width:100%!important;
+    height:100%!important;
+    padding:10px 10px 20px!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch;
+  }
+  #page-lobby .hero{display:flex!important;flex-direction:column!important;gap:8px!important;width:100%!important}
+  #page-lobby .heroCard,#page-lobby .modeCard{width:100%!important;min-width:0!important}
+  #page-lobby .quickNav{grid-template-columns:repeat(4,minmax(0,1fr))!important;width:100%!important}
+  #page-lobby .quickNav button{min-width:0!important;width:100%!important}
+  #page-lobby .quickNav .qtext{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  #page-lobby .deckStrip{width:100%!important;grid-template-columns:repeat(5,minmax(0,1fr))!important}
+  #page-lobby .deckStrip .dice{width:min(42px,100%)!important}
+  #page-lobby .resourceBar{width:100%!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none}
+  #page-lobby .resourceBar::-webkit-scrollbar{display:none}
+  #page-battle{
+    width:100%!important;height:100%!important;overflow:hidden!important;
+  }
+}
+
+
+@media(max-width:700px){
+  #page-lobby .heroCard{padding:13px!important}
+  #page-lobby .modeCard{padding:10px!important}
+  #page-lobby .bigLogo{font-size:28px!important}
+  #page-lobby .sub{font-size:12px!important}
+  #page-lobby .play{padding:11px 20px!important;font-size:15px!important}
+  #page-lobby .mode b{font-size:12px!important}
+  #page-lobby .mode span{font-size:9px!important}
+  #page-lobby .mode button{padding:6px 8px!important;font-size:10px!important}
+  #page-lobby .sectionHead h2{font-size:15px!important}
+  #page-lobby .sectionHead span{font-size:8px!important}
+}
+
 </style>
 </head>
 <body>
@@ -273,26 +332,35 @@ const DEFAULT_CLIENT_STATE={
 };
 const appState=DEFAULT_CLIENT_STATE;
 
+function getBrowserViewport(){
+  // Use the browser's layout/visual viewport, not the physical screen dimensions.
+  const vv=window.visualViewport;
+  const w=Math.max(1,Math.floor(vv?.width || document.documentElement.clientWidth || window.innerWidth));
+  const h=Math.max(1,Math.floor(vv?.height || document.documentElement.clientHeight || window.innerHeight));
+  return {w,h};
+}
 function fitStage(mode){
   const app=document.querySelector('.app');
   if(!app)return;
-  const mobile=window.innerWidth<=700;
+
+  const vp=getBrowserViewport();
+  // Breakpoint is based on the current browser viewport width.
+  const mobile=vp.w<=700;
   const battle=(mode==='battle');
 
-  let logicalW,logicalH;
-  if(mobile){
-    logicalW=412; logicalH=900;
-  }else{
-    logicalW=1200; logicalH=700;
-  }
+  // Mobile: every screen is portrait. Desktop/tablet: every screen is landscape.
+  const logicalW=mobile?430:1200;
+  const logicalH=mobile?900:700;
 
   app.classList.toggle('stageBattle',battle);
   app.classList.toggle('stageLobby',!battle);
 
-  const vw=Math.max(1,window.innerWidth);
-  const vh=Math.max(1,window.innerHeight);
-  const margin=mobile?6:8;
-  const scale=Math.min((vw-margin*2)/logicalW,(vh-margin*2)/logicalH);
+  // Fit entirely inside the browser viewport. Nothing depends on monitor size.
+  const margin=mobile?4:8;
+  const scale=Math.min(
+    (vp.w-margin*2)/logicalW,
+    (vp.h-margin*2)/logicalH
+  );
 
   app.style.width=logicalW+'px';
   app.style.height=logicalH+'px';
@@ -300,17 +368,20 @@ function fitStage(mode){
   app.style.minHeight=logicalH+'px';
   app.style.maxWidth='none';
   app.style.maxHeight='none';
+  app.style.margin='0';
   app.style.transformOrigin='center center';
-  app.style.transform='scale('+Math.max(.2,scale)+')';
+  app.style.transform='scale('+Math.max(.15,scale)+')';
 }
-window.addEventListener('resize',function(){
+function refitCurrentViewport(){
   fitStage(document.getElementById('page-battle')?.classList.contains('active')?'battle':'lobby');
-});
-window.addEventListener('orientationchange',function(){
-  setTimeout(function(){
-    fitStage(document.getElementById('page-battle')?.classList.contains('active')?'battle':'lobby');
-  },100);
-});
+}
+
+window.addEventListener('resize',refitCurrentViewport);
+window.addEventListener('orientationchange',function(){setTimeout(refitCurrentViewport,120)});
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',refitCurrentViewport);
+  window.visualViewport.addEventListener('scroll',refitCurrentViewport);
+}
 
 const D={
  blue:{name:'바람',icon:'🌀',cls:'d-blue',damage:85,rate:750},
