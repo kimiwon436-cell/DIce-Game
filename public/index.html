@@ -44,7 +44,7 @@ button,input{font:inherit}button{cursor:pointer}
 .loading{position:absolute;inset:0;background:#0d0916;z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column}.loading.active{display:flex}.bar{width:min(430px,80%);height:10px;background:#281d3c;border-radius:20px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#42d9ff,#9a6cff);width:0}
 .battle{background:#ddc28e;position:absolute;inset:0}.battleTop{height:58px;background:#191325e8;display:flex;align-items:center;gap:9px;padding:8px 12px}.battleTop b{font-size:22px}.battleTop .pill{background:#312548;border:1px solid #614b82;border-radius:10px;padding:7px 9px;font-size:11px;font-weight:1000}.battleTop .right{margin-left:auto}.arena{position:absolute;top:58px;left:0;right:0;bottom:124px;overflow:hidden;background:linear-gradient(90deg,#e1c18b,#ecd09d 50%,#dfbf87)}.lane{position:absolute;left:0;right:0;top:39%;height:86px;background:linear-gradient(#e9ce9e,#dcb97f);border-top:2px solid #b58e5b77;border-bottom:2px solid #b58e5b77}.enemy{position:absolute;width:34px;height:34px;border-radius:12px;background:linear-gradient(145deg,#8f7a9e,#43344e);border:2px solid #ffffff77;display:grid;place-items:center;font-size:12px;font-weight:1000;box-shadow:0 5px 12px #0004}.enemy.boss{width:49px;height:49px;background:linear-gradient(145deg,#b84cf0,#65209d)}.gate{position:absolute;right:12px;top:35%;width:63px;height:80px;border-radius:16px;background:#4b4052;border:5px solid #28202d;display:grid;place-items:center;font-size:28px}.gate small{position:absolute;bottom:-18px;background:#23192f;border-radius:8px;padding:2px 7px;font-size:10px}.hp{position:absolute;left:50%;transform:translateX(-50%);top:10px;background:#22172f;border:2px solid #5e4a78;border-radius:12px;padding:5px 10px;font-weight:1000;min-width:160px;text-align:center}.hp i{display:block;height:7px;background:#4fe6ff;border-radius:20px;margin-top:3px}.battleDice{position:absolute;left:18px;right:18px;bottom:10px;height:51%;display:grid;grid-template-columns:repeat(5,1fr);gap:9px;z-index:5}.slot{display:grid;place-items:center;border:2px dashed #6d563866;border-radius:11px}.battleDice .dice{width:min(58px,90%);cursor:pointer}.battlebar{position:absolute;left:10px;right:10px;bottom:62px;height:55px;display:flex;gap:9px;z-index:9}.sp{background:#21162d;border:2px solid #624a7f;border-radius:13px;padding:9px 12px;font-weight:1000;display:flex;align-items:center}.spawn{flex:1;border:0;border-radius:13px;background:linear-gradient(#44e5a8,#13b979);font-weight:1000;color:#052117;box-shadow:0 6px 0 #08734f}.speed{border:2px solid #614b80;background:#2d2240;color:#fff;border-radius:13px;padding:0 13px;font-weight:1000}
 .battleBottom{position:absolute;bottom:0;left:0;right:0;height:62px;background:#21172d;border-top:1px solid #513d6c;display:flex;align-items:center;justify-content:center;color:#bcb1cf;font-size:11px}
-.coopArena{position:absolute;top:58px;left:0;right:0;bottom:124px;overflow:hidden;background:linear-gradient(180deg,#e7cd9a 0 49.5%,#c8a56d 49.5% 50.5%,#e7cd9a 50.5% 100%)}
+.modeBattleNote{font-size:9px;color:#c9bdd0;margin-top:3px}.battleSharedPath{position:absolute;left:0;right:0;top:49%;height:9%;transform:translateY(-50%);background:linear-gradient(#e8cb96,#d7b276);border-top:2px solid #b18a55aa;border-bottom:2px solid #b18a55aa;z-index:2;overflow:hidden}.battleSharedPath:after{content:"";position:absolute;left:0;right:0;top:50%;height:3px;background:#b78f59aa}.battleSplitPath{position:absolute;left:0;right:0;height:13%;background:linear-gradient(#e8cb96,#d7b276);border-top:2px solid #b18a55aa;border-bottom:2px solid #b18a55aa;z-index:2;overflow:hidden}.battleSplitPath.topLane{top:42%}.battleSplitPath.bottomLane{top:58%}.coopArena{position:absolute;top:58px;left:0;right:0;bottom:124px;overflow:hidden;background:linear-gradient(180deg,#e7cd9a 0 49.5%,#c8a56d 49.5% 50.5%,#e7cd9a 50.5% 100%)}
 .coopPlayer{position:absolute;left:0;right:0;height:50%;padding:7px 10px 4px;display:flex;flex-direction:column}
 .coopPlayer.opponent{top:0;border-bottom:1px solid #b59362}
 .coopPlayer.me{bottom:0;border-top:1px solid #f2d8aa}
@@ -236,7 +236,7 @@ function sidebar(){return `<button class="nav active" onclick="nav('lobby')"><i>
 function drawLobby(){
  const m=document.getElementById('main');if(!m)return;
  m.innerHTML=`<div class="hero"><div class="heroCard"><div class="muted">협동전</div><div class="bigLogo">함께 막아내자</div><div class="sub">플레이를 누르면 온라인 매칭을 시작합니다.</div><button class="play" onclick="startMatch()">▶ 플레이</button><div class="smallHint">모드 입장 시 협동전 티켓 1장 사용 · 매칭 → 로딩 → 전투 시작</div></div>
- <div class="modeCard"><h3>게임 모드</h3><div class="mode sel"><div><b>🤝 협동전</b><span>다른 플레이어와 몬스터를 함께 막는 모드</span></div><button onclick="startMatch()">플레이</button></div><div class="mode"><div><b>🎟️ 아레나</b><span>아레나 티켓을 사용하는 경쟁 모드</span></div><button onclick="toast('아레나 모드는 다음 버전에서 연결됩니다')">준비</button></div><div class="mode"><div><b>👥 친구와 하기</b><span>방 생성 / 코드 참가 / 준비</span></div><button onclick="openFriends()">열기</button></div></div></div>
+ <div class="modeCard"><h3>게임 모드</h3><div class="mode sel"><div><b>🤝 협동전</b><span>다른 플레이어와 몬스터를 함께 막는 모드</span></div><button onclick="startMatch()">플레이</button></div><div class="mode"><div><b>⚔️ 대전</b><span>각자의 길에서 먼저 기지가 파괴되면 패배</span></div><button onclick="startMatch(false,'battle')">플레이</button></div><div class="mode"><div><b>👥 친구와 하기</b><span>방 생성 / 코드 참가 / 준비</span></div><button onclick="openFriends()">열기</button></div></div></div>
  <div class="section"><div class="sectionHead"><h2>로비 바로가기</h2><span>전투 밖에서 관리하는 메뉴</span></div><div class="cardgrid">
   <div class="tile"><h3>🎴 덱</h3><p>전투에 가져갈 주사위 5개를 선택합니다.</p><button onclick="nav('deck')">덱 관리</button></div>
   <div class="tile"><h3>🌳 다이스 트리</h3><p>주사위를 해금하고 레벨 업그레이드까지 모두 여기서 관리합니다.</p><button onclick="nav('tree')">트리 열기</button></div>
@@ -374,9 +374,9 @@ function openFriends(){document.getElementById('modalRoot').innerHTML=`<div clas
 function createRoom(){appState.room=Math.random().toString(36).slice(2,8).toUpperCase();document.getElementById('friendArea').innerHTML=`<div class="tile"><div class="muted">내 방 코드</div><div style="font-size:34px;font-weight:1000;letter-spacing:5px;text-align:center;margin:10px">${appState.room}</div><div class="row"><button class="topbtn grow" onclick="navigator.clipboard?.writeText('${appState.room}');toast('방 코드 복사')">코드 복사</button><button class="primary grow" onclick="startMatch(true)">준비 / 시작</button></div></div>`}
 function joinRoom(){const area=document.getElementById('friendArea');area.innerHTML=`<div class="row"><input class="input grow" id="roomInput" placeholder="6자리 방 코드"><button class="primary" onclick="joinConfirm()">참가</button></div>`}
 function joinConfirm(){const x=(document.getElementById('roomInput').value||'').trim().toUpperCase();if(x.length<4)return toast('방 코드를 확인하세요');appState.room=x;document.getElementById('friendArea').innerHTML=`<div class="tile"><b>방 ${x}</b><p>호스트가 시작할 때까지 준비 상태로 대기합니다.</p><button class="primary" style="width:100%" onclick="startMatch(true)">준비 완료</button></div>`}
-async function startMatch(fromFriend=false){
+async function startMatch(fromFriend=false,mode='coop'){
  if(appState.matching)return;
- appState.matching=true;appState.matchSec=0;appState.matchQueueId=null;appState.opponentType=null;appState.opponentNickname='';
+ appState.battleMode=mode;appState.matching=true;appState.matchSec=0;appState.matchQueueId=null;appState.opponentType=null;appState.opponentNickname='';
  document.getElementById('modalRoot').innerHTML=`<div class="overlay"><div class="match"><div class="muted">협동전 온라인 매칭</div><h1>플레이어 찾는 중</h1><div class="spinner"></div><div class="matchtime" id="matchTime">0:00</div><div class="matchstate" id="matchState">매칭 서버에 연결 중...</div><div class="muted" id="matchRule">30초 동안 다른 플레이어를 찾습니다. 찾지 못하면 AI와 시작합니다.</div><button class="cancel" onclick="cancelMatch()">취소</button></div></div>`;
  try{
    const r=await api('/api/match/join',{method:'POST',body:'{}'});
@@ -415,7 +415,7 @@ function pollMatchStatus(){
 }
 function handleMatchResult(r){
  clearInterval(appState.matchTimer);appState.matchTimer=null;appState.matching=false;
- appState.opponentType=r.opponentType||'ai';appState.opponentNickname=r.opponentNickname|| (r.opponentType==='player'?'플레이어':'AI 플레이어');appState.matchId=r.matchId||null;
+ appState.opponentType=r.opponentType||'ai';appState.opponentNickname=r.opponentNickname|| (r.opponentType==='player'?'플레이어':'AI 플레이어');appState.matchId=r.matchId||null;appState.battleMode=r.mode||appState.battleMode||'coop';
  beginLoading(appState.opponentType,appState.opponentNickname);
 }
 async function cancelMatch(){
@@ -428,39 +428,27 @@ function beginLoading(opponentType='ai',opponentNickname='AI 플레이어'){
  const iv=setInterval(()=>{p+=10;bar.style.width=p+'%';txt.textContent=p<30?`${opponentType==='player'?'플레이어':'AI'} 정보를 불러오는 중...`:p<70?'전투 덱을 준비하는 중...':p<100?'맵과 적을 준비하는 중...':'전투 시작!';if(p>=100){clearInterval(iv);setTimeout(()=>{l.classList.remove('active');startBattle()},400)}},180)
 }
 function startBattle(){
-  const opponentType=appState.opponentType||'ai';
-  const opponentName=appState.opponentNickname|| (opponentType==='player'?'플레이어':'AI 플레이어');
-  const playerName=appState.profile.nickname||appState.user||'플레이어';
-  appState.battle={matchId:appState.matchId||null,opponentType,playerName,opponentName,opponentDice:[],opponentSpeed:1,opponentBase:150,myBase:150,wave:1};
-  appState.coopEnded=false;
-  document.getElementById('page-battle').innerHTML=`<div class="battle">
-    <div class="battleTop"><button class="topbtn" onclick="leaveBattle()">‹</button><div style="min-width:60px"><b id="bwave">1</b><div style="font-size:8px;color:#b9adca">WAVE</div></div><div class="pill">🤝 협동전</div><div class="pill">상대: ${esc(opponentName)}</div><div class="pill" id="btime">20s</div><div class="pill right">SP <span id="bsp">100</span></div><div class="pill" id="bkills">처치 0</div></div>
-    <div class="coopArena">
-      <div class="coopPlayer opponent">
-        <div class="coopHeader"><span class="who">상대 · ${esc(opponentName)}</span><span id="oppSpeedLabel" class="who">1.0x</span><span class="who">${opponentType==='player'?'온라인':'AI'}</span><span id="oppBaseLabel" class="base">❤️ 150</span></div>
-        <div class="coopField"><div class="coopPath"><i></i><div id="oppEnemies"></div></div><div class="coopGrid" id="opponentDiceGrid"></div><div class="coopBase">⚡<small>150</small></div></div>
-      </div>
-      <div class="remoteBadge">상대의 주사위 소환 공간도 같이 보입니다</div>
-      <div class="coopPlayer me">
-        <div class="coopHeader"><span class="who">나 · ${esc(playerName)}</span><span id="mySpeedLabel" class="who">1.0x</span><span class="who">SP <span id="miniSp">100</span></span><span id="myBaseLabel" class="base">❤️ 150</span></div>
-        <div class="coopField"><div class="coopPath"><i></i><div id="myEnemies"></div></div><div class="coopGrid" id="myDiceGrid"></div><div class="coopBase">⚡<small>150</small></div></div>
-      </div>
-    </div>
-    <div class="battlebar"><div class="sp">✦ <span id="sp">100</span></div><button class="spawn" onclick="summonBattleDice()">소환 · SP 50</button><button class="speed" id="speedButton" onclick="toggleSpeed()">1.0x</button></div>
-    <div class="battleBottom">${esc(playerName)} · ${opponentType==='ai'?'AI와 협동':'다른 플레이어와 실시간 협동'} · 각자의 길을 따라 이동하며 <b style="color:#ffcf4b;margin-left:4px">먼저 기지가 파괴되면 종료</b></div>
-  </div>`;
-  navBattle();setupBattle();
+ const mode=appState.battleMode||'coop', opponentType=appState.opponentType||'ai', opponentName=appState.opponentNickname||(opponentType==='player'?'플레이어':'AI 플레이어'), playerName=appState.profile.nickname||appState.user||'플레이어';
+ appState.battle={mode,matchId:appState.matchId||null,opponentType,playerName,opponentName,opponentDice:[],opponentSpeed:1,opponentBase:150,myBase:150,sharedBase:150,wave:1}; appState.coopEnded=false;
+ const title=mode==='battle'?'⚔️ 대전':'🤝 협동전'; const sub=mode==='battle'?'각자의 길을 따로 사용하고 먼저 기지가 파괴되면 패배':'두 플레이어 사이의 하나의 가운데 길을 함께 사용';
+ const middle=mode==='battle'?`<div class="battleSplitPath topLane"><div id="oppEnemies"></div></div><div class="battleSplitPath bottomLane"><div id="myEnemies"></div></div>`:`<div class="battleSharedPath"><div id="sharedEnemies"></div></div>`;
+ const baseTop=mode==='battle'?'<span id="oppBaseLabel" class="base">❤️ 150</span>':'<span id="oppBaseLabel" class="base">🤝 공동 기지</span>'; const baseBottom=mode==='battle'?'<span id="myBaseLabel" class="base">❤️ 150</span>':'<span id="myBaseLabel" class="base">🤝 공동 기지</span>';
+ const sharedBase=mode==='coop'?'<div class="coopBase" id="sharedBase" style="position:absolute;right:8px;top:45%;z-index:12;height:62px">⚡<small>150</small></div>':'';
+ document.getElementById('page-battle').innerHTML=`<div class="battle"><div class="battleTop"><button class="topbtn" onclick="leaveBattle()">‹</button><div style="min-width:60px"><b id="bwave">1</b><div style="font-size:8px;color:#b9adca">WAVE</div></div><div class="pill">${title}</div><div class="pill">상대: ${esc(opponentName)}</div><div class="pill" id="btime">20s</div><div class="pill right">SP <span id="bsp">100</span></div><div class="pill" id="bkills">처치 0</div></div>`+
+ `<div class="coopArena"><div class="coopPlayer opponent"><div class="coopHeader"><span class="who">상대 · ${esc(opponentName)}</span><span id="oppSpeedLabel" class="who">1.0x</span><span class="who">${opponentType==='player'?'온라인':'AI'}</span>${baseTop}</div><div class="coopField"><div class="coopPath" style="visibility:hidden"></div><div class="coopGrid" id="opponentDiceGrid"></div><div class="coopBase" style="visibility:hidden">⚡</div></div></div>`+
+ middle+
+ `<div class="coopPlayer me"><div class="coopHeader"><span class="who">나 · ${esc(playerName)}</span><span id="mySpeedLabel" class="who">1.0x</span><span class="who">SP <span id="miniSp">100</span></span>${baseBottom}</div><div class="coopField"><div class="coopPath" style="visibility:hidden"></div><div class="coopGrid" id="myDiceGrid"></div><div class="coopBase" style="visibility:hidden">⚡</div></div></div>${sharedBase}</div>`+
+ `<div class="battlebar"><div class="sp">✦ <span id="sp">100</span></div><button class="spawn" onclick="summonBattleDice()">소환 · SP 50</button><button class="speed" id="speedButton" onclick="toggleSpeed()">1.0x</button></div><div class="battleBottom">${sub}</div></div>`;
+ navBattle();setupBattle();
 }
 function navBattle(){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById('page-battle').classList.add('active')}
 function setupBattle(){
-  appState.sp=100;appState.wave=1;appState.gameSec=20;appState.speed=1;appState.kills=0;appState.enemies=[];appState.oppEnemies=[];appState.selected=null;
-  appState.diceGrid=(appState.deck||['blue','blue','blue','blue','blue']).map((type,i)=>({type:type,lvl:1,id:i+1}));
-  appState.battle.myBase=150;appState.battle.opponentBase=150;appState.battle.opponentSpeed=1;
-  appState.battle.opponentDice=appState.opponentType==='ai'?(appState.deck||[]).map((type,i)=>({type,lvl:1,id:'ai'+i})):appState.battle.opponentDice||[];
-  last=0;lastAttack=0;lastOpponentAttack=0;renderBattleDice();updateBattleHUD();
-  for(let i=0;i<6;i++){setTimeout(()=>addEnemyFor('me'),i*260);setTimeout(()=>addEnemyFor('opp'),i*260)}
-  if(appState.opponentType==='player'&&appState.matchId)sendBattle({type:'battle_join',matchId:appState.matchId,grid:appState.diceGrid,speed:appState.speed});
-  window.rd2BattleRaf=requestAnimationFrame(battleLoop);
+ appState.sp=100;appState.wave=1;appState.gameSec=20;appState.speed=1;appState.kills=0;appState.enemies=[];appState.oppEnemies=[];appState.sharedEnemies=[];appState.selected=null;
+ appState.diceGrid=(appState.deck||['blue','blue','blue','blue','blue']).map((type,i)=>({type,lvl:1,id:i+1}));
+ appState.battle.myBase=150;appState.battle.opponentBase=150;appState.battle.sharedBase=150;appState.battle.opponentSpeed=1;
+ appState.battle.opponentDice=appState.opponentType==='ai'?(appState.deck||[]).map((type,i)=>({type,lvl:1,id:'ai'+i})):[]; last=0;lastAttack=0;lastOpponentAttack=0;renderBattleDice();updateBattleHUD();
+ if(appState.battle.mode==='coop'){for(let i=0;i<8;i++)setTimeout(()=>addEnemyFor('shared'),i*260)} else {for(let i=0;i<6;i++){setTimeout(()=>addEnemyFor('me'),i*260);setTimeout(()=>addEnemyFor('opp'),i*260)}}
+ if(appState.opponentType==='player'&&appState.matchId)sendBattle({type:'battle_join',matchId:appState.matchId,grid:appState.diceGrid,speed:appState.speed}); window.rd2BattleRaf=requestAnimationFrame(battleLoop);
 }
 let last=0,lastAttack=0,lastOpponentAttack=0;
 function renderCoopGrid(arr,id,clickable=false,selectedIndex=null){
@@ -492,40 +480,12 @@ function summonBattleDice(){
   appState.diceGrid[empty]={type,lvl:1,id:Date.now()+empty};renderCoopBoards();updateBattleHUD();
   sendBattle({type:'summon',matchId:appState.matchId,index:empty,dice:appState.diceGrid[empty],grid:appState.diceGrid});
 }
-function addEnemyFor(side,boss=false){
-  const layer=document.getElementById(side==='me'?'myEnemies':'oppEnemies');if(!layer)return;
-  const el=document.createElement('div');el.className='coopEnemy'+(boss?' boss':'');el.textContent=boss?'B':'●';el.style.top=(35+Math.random()*25)+'%';layer.appendChild(el);
-  const e={el,x:-18,y:35+Math.random()*25,hp:boss?900:190+appState.wave*18,max:boss?900:190+appState.wave*18,speed:17+appState.wave*.25+(boss?-5:0),boss,side};
-  (side==='me'?appState.enemies:appState.oppEnemies).push(e);
-}
-function damageSideEnemy(e,dmg){
- e.hp-=dmg;
- if(e.hp<=0){e.el.remove();const arr=e.side==='me'?appState.enemies:appState.oppEnemies;const idx=arr.indexOf(e);if(idx>=0)arr.splice(idx,1);if(e.side==='me'){appState.kills++;appState.sp+=e.boss?30:5}}
-}
-function attackSide(side,now){
- if(!appState.battle)return;
- const types=side==='me'?appState.diceGrid.filter(Boolean):appState.battle.opponentDice.filter(Boolean);
- if(!types.length)return;
- const cd=420/(side==='me'?appState.speed:appState.battle.opponentSpeed);
- if(now-(side==='me'?lastAttack:lastOpponentAttack)<cd)return;
- if(side==='me')lastAttack=now;else lastOpponentAttack=now;
- const arr=side==='me'?appState.enemies:appState.oppEnemies;
- types.forEach(d=>{const target=arr.find(e=>e.x>-5&&e.x<28);if(target){const def=D[d.type]||D.blue;damageSideEnemy(target,def.damage*(1+d.lvl*.3))}});
-}
-function moveSide(side,dt){
- const arr=side==='me'?appState.enemies:appState.oppEnemies;const layer=document.getElementById(side==='me'?'myEnemies':'oppEnemies');const width=layer?.clientWidth||38;
- arr.slice().forEach(e=>{
-   e.x+=e.speed*dt*(side==='me'?appState.speed:appState.battle.opponentSpeed);e.el.style.left=e.x+'px';
-   if(e.x>width-4){e.el.remove();const idx=arr.indexOf(e);if(idx>=0)arr.splice(idx,1);
-     if(side==='me'){appState.battle.myBase=Math.max(0,appState.battle.myBase-(e.boss?25:3));}
-     else{appState.battle.opponentBase=Math.max(0,appState.battle.opponentBase-(e.boss?25:3));}
-     if((appState.battle.myBase<=0||appState.battle.opponentBase<=0)&&!appState.coopEnded){
-       endCoop(appState.battle.myBase<=0?'패배':'승리',appState.battle.myBase<=0?'내 기지가 먼저 파괴되었습니다.':'상대 기지가 먼저 파괴되었습니다.');
-     }
-   }
- });
-}
-function syncOpponentGrid(grid){if(!appState.battle)return;appState.battle.opponentDice=(grid||[]).map(x=>x?{type:x.type,lvl:x.lvl,id:x.id}:null);renderCoopBoards()}
+function enemyLayerFor(side){if(appState.battle?.mode==='coop')return document.getElementById('sharedEnemies');return document.getElementById(side==='me'?'myEnemies':'oppEnemies')}
+function addEnemyFor(side,boss=false){const layer=enemyLayerFor(side);if(!layer)return;const el=document.createElement('div');el.className='coopEnemy'+(boss?' boss':'');el.textContent=boss?'B':'●';el.style.top=(25+Math.random()*45)+'%';layer.appendChild(el);const e={el,x:-22,y:25+Math.random()*45,hp:boss?900:190+appState.wave*18,max:boss?900:190+appState.wave*18,speed:17+appState.wave*.25+(boss?-5:0),boss,side};(side==='shared'?appState.sharedEnemies:side==='me'?appState.enemies:appState.oppEnemies).push(e)}
+function damageSideEnemy(e,dmg){e.hp-=dmg;if(e.hp<=0){e.el.remove();const arr=e.side==='shared'?appState.sharedEnemies:e.side==='me'?appState.enemies:appState.oppEnemies;const idx=arr.indexOf(e);if(idx>=0)arr.splice(idx,1);if(e.side==='me'||e.side==='shared'){appState.kills++;appState.sp+=e.boss?30:5}}}
+function attackSide(side,now){if(!appState.battle)return;const types=side==='me'?appState.diceGrid.filter(Boolean):appState.battle.opponentDice.filter(Boolean);if(!types.length)return;const cd=420/(side==='me'?appState.speed:appState.battle.opponentSpeed);if(now-(side==='me'?lastAttack:lastOpponentAttack)<cd)return;if(side==='me')lastAttack=now;else lastOpponentAttack=now;const arr=appState.battle.mode==='coop'?appState.sharedEnemies:(side==='me'?appState.enemies:appState.oppEnemies);types.forEach(d=>{const target=arr.find(e=>e.x>-5&&e.x<28);if(target){const def=D[d.type]||D.blue;damageSideEnemy(target,def.damage*(1+d.lvl*.3))}})}
+function moveSide(side,dt){const mode=appState.battle?.mode,arr=mode==='coop'?appState.sharedEnemies:side==='me'?appState.enemies:appState.oppEnemies,layer=enemyLayerFor(side),width=layer?.clientWidth||38;arr.slice().forEach(e=>{e.x+=e.speed*dt*(side==='me'?appState.speed:appState.battle.opponentSpeed);e.el.style.left=e.x+'px';if(e.x>width-4){e.el.remove();const idx=arr.indexOf(e);if(idx>=0)arr.splice(idx,1);if(mode==='coop')appState.battle.sharedBase=Math.max(0,appState.battle.sharedBase-(e.boss?25:3));else if(side==='me')appState.battle.myBase=Math.max(0,appState.battle.myBase-(e.boss?25:3));else appState.battle.opponentBase=Math.max(0,appState.battle.opponentBase-(e.boss?25:3));if(!appState.coopEnded){if(mode==='coop'&&appState.battle.sharedBase<=0)endCoop('패배','공동 기지가 파괴되었습니다.');if(mode==='battle'&&appState.battle.myBase<=0)endCoop('패배','내 기지가 먼저 파괴되었습니다.');if(mode==='battle'&&appState.battle.opponentBase<=0)endCoop('승리','상대 기지가 먼저 파괴되었습니다.')}}})}
+function syncOpponentGrid(grid){if(!appState.battle)return;appState.battle.opponentDice=(grid||[]).map(x=>x?{type:x.type,lvl:x.lvl,id:x.id}:null);renderBattleDice()}
 function sendBattle(message){if(appState.opponentType!=='player'||!liveSocket||liveSocket.readyState!==WebSocket.OPEN||!appState.matchId)return;liveSocket.send(JSON.stringify(message))}
 function handleRemoteBattle(m){
  if(!appState.battle)return;
@@ -535,37 +495,9 @@ function handleRemoteBattle(m){
  else if(m.type==='speed'){appState.battle.opponentSpeed=Number(m.speed)||1;const el=document.getElementById('oppSpeedLabel');if(el)el.textContent=appState.battle.opponentSpeed.toFixed(1)+'x'}
  else if(m.type==='battle_game_over'){endCoop(m.result,m.reason)}
 }
-function loopBattleBots(dt){
- if(appState.opponentType==='ai'){
-   if(!appState.battle.opponentDice.length){appState.battle.opponentDice=(appState.deck||['blue','blue','blue','blue','blue']).map((type,i)=>({type,lvl:1,id:'ai'+i}));renderCoopBoards()}
-   appState.battle.opponentSpeed=appState.speed;
-   if(appState.oppEnemies.length<Math.min(6+Math.floor(appState.wave/3),14)&&Math.random()<dt*(1+appState.wave/30))addEnemyFor('opp');
- }
-}
-function battleLoop(ts){
- if(!document.getElementById('page-battle').classList.contains('active'))return;
- const dt=Math.min(.06,(ts-(last||ts))/1000);last=ts;
- if(!appState.coopEnded&&!appState.paused){
-   appState.sp=Math.min(9999,appState.sp+dt*7*appState.speed);appState.gameSec-=dt*appState.speed;
-   if(appState.gameSec<=0){appState.wave++;appState.gameSec=20;addEnemyFor('me',appState.wave%10===0);addEnemyFor('opp',appState.wave%10===0)}
-   loopBattleBots(dt);moveSide('me',dt);moveSide('opp',dt);attackSide('me',ts);attackSide('opp',ts);
-   if(appState.enemies.length<Math.min(7+Math.floor(appState.wave/3),16)&&Math.random()<dt*(.8+appState.wave/40)*appState.speed)addEnemyFor('me');
- }
- updateBattleHUD();window.rd2BattleRaf=requestAnimationFrame(battleLoop)
-}
-function updateBattleHUD(){
- const sp=document.getElementById('sp');if(sp)sp.textContent=Math.floor(appState.sp);
- const mini=document.getElementById('miniSp');if(mini)mini.textContent=Math.floor(appState.sp);
- const s=document.getElementById('bsp');if(s)s.textContent=Math.floor(appState.sp);
- const w=document.getElementById('bwave');if(w)w.textContent=appState.wave;
- const t=document.getElementById('btime');if(t)t.textContent=Math.max(0,Math.ceil(appState.gameSec))+'s';
- const k=document.getElementById('bkills');if(k)k.textContent='처치 '+appState.kills;
- const mb=document.getElementById('myBaseLabel'),ob=document.getElementById('oppBaseLabel');
- if(mb)mb.textContent='❤️ '+(appState.battle?.myBase??150);if(ob)ob.textContent='❤️ '+(appState.battle?.opponentBase??150);
- const ml=document.getElementById('mySpeedLabel'),ol=document.getElementById('oppSpeedLabel');
- if(ml)ml.textContent=appState.speed.toFixed(1)+'x';if(ol)ol.textContent=(appState.battle?.opponentSpeed??1).toFixed(1)+'x';
- const sb=document.getElementById('speedButton');if(sb)sb.textContent=appState.speed.toFixed(1)+'x';
-}
+function loopBattleBots(dt){if(appState.opponentType==='ai'){if(!appState.battle.opponentDice.length){appState.battle.opponentDice=(appState.deck||['blue']).map((type,i)=>({type,lvl:1,id:'ai'+i}));renderBattleDice()}appState.battle.opponentSpeed=appState.speed;const arr=appState.battle.mode==='coop'?appState.sharedEnemies:appState.oppEnemies;if(arr.length<Math.min(6+Math.floor(appState.wave/3),14)&&Math.random()<dt*(1+appState.wave/30))addEnemyFor(appState.battle.mode==='coop'?'shared':'opp')}}
+function battleLoop(ts){if(!document.getElementById('page-battle').classList.contains('active'))return;const dt=Math.min(.06,(ts-(last||ts))/1000);last=ts;if(!appState.coopEnded&&!appState.paused){appState.sp=Math.min(9999,appState.sp+dt*7*appState.speed);appState.gameSec-=dt*appState.speed;if(appState.gameSec<=0){appState.wave++;appState.gameSec=20;if(appState.battle.mode==='coop')addEnemyFor('shared',appState.wave%10===0);else{addEnemyFor('me',appState.wave%10===0);addEnemyFor('opp',appState.wave%10===0)}}loopBattleBots(dt);if(appState.battle.mode==='coop'){moveSide('shared',dt);attackSide('me',ts);attackSide('opp',ts)}else{moveSide('me',dt);moveSide('opp',dt);attackSide('me',ts);attackSide('opp',ts)}const arr=appState.battle.mode==='coop'?appState.sharedEnemies:appState.enemies;if(arr.length<Math.min(7+Math.floor(appState.wave/3),16)&&Math.random()<dt*(.8+appState.wave/40)*appState.speed)addEnemyFor(appState.battle.mode==='coop'?'shared':'me')}updateBattleHUD();window.rd2BattleRaf=requestAnimationFrame(battleLoop)}
+function updateBattleHUD(){const sp=document.getElementById('sp');if(sp)sp.textContent=Math.floor(appState.sp);const mini=document.getElementById('miniSp');if(mini)mini.textContent=Math.floor(appState.sp);const s=document.getElementById('bsp');if(s)s.textContent=Math.floor(appState.sp);const w=document.getElementById('bwave');if(w)w.textContent=appState.wave;const t=document.getElementById('btime');if(t)t.textContent=Math.max(0,Math.ceil(appState.gameSec))+'s';const k=document.getElementById('bkills');if(k)k.textContent='처치 '+appState.kills;if(appState.battle?.mode==='coop'){const x=document.getElementById('sharedBase');if(x)x.querySelector('small').textContent=appState.battle.sharedBase;document.getElementById('myBaseLabel')?.replaceChildren(document.createTextNode('🤝 공동 기지'));document.getElementById('oppBaseLabel')?.replaceChildren(document.createTextNode('🤝 공동 기지'))}else{const mb=document.getElementById('myBaseLabel'),ob=document.getElementById('oppBaseLabel');if(mb)mb.textContent='❤️ '+appState.battle.myBase;if(ob)ob.textContent='❤️ '+appState.battle.opponentBase}const ml=document.getElementById('mySpeedLabel'),ol=document.getElementById('oppSpeedLabel');if(ml)ml.textContent=appState.speed.toFixed(1)+'x';if(ol)ol.textContent=(appState.battle?.opponentSpeed??1).toFixed(1)+'x';const sb=document.getElementById('speedButton');if(sb)sb.textContent=appState.speed.toFixed(1)+'x'}
 function toggleSpeed(){appState.speed=appState.speed===1?1.5:appState.speed===1.5?2:1;updateBattleHUD();toast('게임 속도 '+appState.speed.toFixed(1)+'x');sendBattle({type:'speed',matchId:appState.matchId,speed:appState.speed})}
 function endCoop(result,reason){
  if(appState.coopEnded)return;appState.coopEnded=true;cancelAnimationFrame(window.rd2BattleRaf||0);
