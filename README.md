@@ -97,3 +97,9 @@ v15: fixed missing fitStage declaration order and enforced desktop/mobile fixed 
 - Resizing Chrome/Edge, opening DevTools, changing mobile orientation, and browser viewport changes refit the whole UI.
 - Desktop keeps one landscape layout; mobile keeps one portrait layout.
 - Mobile lobby remains vertically scrollable and horizontally clipped content is prevented.
+
+
+## v22 PC lobby visibility
+- PC lobby main content is vertically scrollable.
+- Lower lobby sections no longer get clipped by a short browser viewport.
+- Mobile behavior is preserved.

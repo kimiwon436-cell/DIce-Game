@@ -306,6 +306,22 @@ button,input{font:inherit}button{cursor:pointer}
   #page-lobby .sectionHead span{font-size:8px!important}
 }
 
+
+@media(min-width:701px){
+  #page-lobby .body{height:calc(100% - 68px)!important;overflow:hidden!important}
+  #page-lobby .main{
+    height:100%!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    padding-right:18px!important;
+    scrollbar-gutter:stable;
+  }
+  #page-lobby .hero{min-height:220px!important}
+  #page-lobby .quickNav{min-height:58px!important}
+  #page-lobby .deckStrip{min-height:64px!important}
+}
+
 </style>
 </head>
 <body>
@@ -342,25 +358,32 @@ function getBrowserViewport(){
 function fitStage(mode){
   const app=document.querySelector('.app');
   if(!app)return;
-
   const vp=getBrowserViewport();
-  // Breakpoint is based on the current browser viewport width.
   const mobile=vp.w<=700;
   const battle=(mode==='battle');
 
-  // Mobile: every screen is portrait. Desktop/tablet: every screen is landscape.
-  const logicalW=mobile?430:1200;
-  const logicalH=mobile?900:700;
+  if(mobile){
+    const logicalW=430,logicalH=900;
+    app.classList.toggle('stageBattle',battle);
+    app.classList.toggle('stageLobby',!battle);
+    app.style.width='100vw';
+    app.style.height='100dvh';
+    app.style.minWidth='0';
+    app.style.minHeight='0';
+    app.style.maxWidth='100vw';
+    app.style.maxHeight='100dvh';
+    app.style.margin='0';
+    app.style.transform='none';
+    app.style.transformOrigin='center center';
+    return;
+  }
 
+  const logicalW=1200,logicalH=700;
   app.classList.toggle('stageBattle',battle);
   app.classList.toggle('stageLobby',!battle);
 
-  // Fit entirely inside the browser viewport. Nothing depends on monitor size.
-  const margin=mobile?4:8;
-  const scale=Math.min(
-    (vp.w-margin*2)/logicalW,
-    (vp.h-margin*2)/logicalH
-  );
+  const margin=8;
+  const scale=Math.min((vp.w-margin*2)/logicalW,(vp.h-margin*2)/logicalH);
 
   app.style.width=logicalW+'px';
   app.style.height=logicalH+'px';
@@ -370,7 +393,7 @@ function fitStage(mode){
   app.style.maxHeight='none';
   app.style.margin='0';
   app.style.transformOrigin='center center';
-  app.style.transform='scale('+Math.max(.15,scale)+')';
+  app.style.transform='scale('+Math.max(.2,scale)+')';
 }
 function refitCurrentViewport(){
   fitStage(document.getElementById('page-battle')?.classList.contains('active')?'battle':'lobby');
