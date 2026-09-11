@@ -215,7 +215,8 @@ function nav(page){
  if(page==='bounty')drawBounty();
  if(page==='admin'&&appState.isAdmin)drawAdmin();
  ensureBackButton(page);
- refitCurrentViewport();
+ // Menu navigation does not need a viewport recalculation. Keeping layout stable
+ // prevents an expensive style/layout pass on every menu click.
 }
 function renderGame(){
  return `<div class="app stageLobby">
@@ -315,7 +316,7 @@ function selectedTreeLevel(node){return node?.upgrade?(appState.treeLevels?.[nod
 function treeUpgradeKey(node){return node?.upgrade||node?.type||'';}
 function openTraitShop(type){const d=D[type]||D.blue,lv=Math.max(0,Number(appState.traitLevels?.[type]||0));document.getElementById('modalRoot').innerHTML=`<div class="overlay"><div class="modal"><button class="close" onclick="closeModal()">✕</button><h2>⭐ ${d.name} 특성</h2><p class="muted">다이스 트리 Lv.10에서 구매창이 열립니다.</p><div class="tile"><b>현재 특성 ${lv}/5</b><p>각 단계마다 해당 주사위의 고유 특성이 강화됩니다.</p><p>다음 구매 비용: 🪙 ${500*(lv+1)}</p></div>${lv<5?`<button class="primary" style="width:100%" onclick="buyTrait('${type}')">특성 Lv.${lv+1} 구매</button>`:'<div class="tile">MAX · 특성 5단계</div>'}</div></div>`}
 async function buyTrait(type){try{const r=await api('/api/dice/trait',{method:'POST',body:JSON.stringify({type})});applyServerResponse(r);closeModal();drawTree();updateRes();toast(`${r.trait?.label||'특성'} Lv.${r.trait?.level} 구매 완료`)}catch(e){toast(e.message)}}
-function selectTreeNode(id){const n=Number(id);if(!treeNode(n))return;appState.selectedTreeNode=n;saveLocal();drawTree();}
+function selectTreeNode(id){const n=Number(id);if(!treeNode(n))return;appState.selectedTreeNode=n;drawTree();}
 async function upgradeTreeDice(type){try{const r=await api('/api/tree/upgrade',{method:'POST',body:JSON.stringify({type})});applyServerResponse(r);drawTree();updateRes();toast(r.upgrade?.label||`${D[type]?.name||'업그레이드'} 업그레이드 완료`);}catch(e){toast(e.message)}}
 async function buyTree(id){ensureTreeState();const node=treeNode(id);if(!node)return;if(treeUnlocked(id)){appState.selectedTreeNode=id;drawTree();return;}if(!treeIsNext(id)){toast('먼저 연결된 앞의 노드를 해금하세요');return;}try{const r=await api('/api/tree/unlock',{method:'POST',body:JSON.stringify({nodeId:id})});applyServerResponse(r);appState.selectedTreeNode=id;drawTree();updateRes();toast(`${node.label} 해금 완료 · 🎲 -8`);}catch(e){toast(e.message)}}
 function treeDetails(node){if(!node||node.id===0)return `<div class="tile"><b>다이스 트리</b><p>노드 간격을 넓혀 성장 경로를 길게 구성했습니다.</p><p style="margin-top:7px">주사위 해금은 <b>🎲 8개</b>, 업그레이드는 <b>최대 50레벨</b>입니다.</p></div>`;const unlocked=treeUnlocked(node.id),key=treeUpgradeKey(node),lv=selectedTreeLevel(node),c=treeUpgradeCost(lv),isPassive=!!node.upgrade;if(!unlocked)return `<div class="tile"><div class="row"><div style="width:64px;font-size:36px">${node.icon}</div><div class="grow"><h3 style="margin:0">${node.label}</h3><div class="muted">잠긴 노드</div></div></div><p style="margin-top:10px">앞의 연결 노드를 해금하면 이 노드를 구매할 수 있습니다.</p><button class="primary" style="width:100%" onclick="buyTree(${node.id})">🎲 8개로 해금</button></div>`;const effect=isPassive?(key==='allDamage'?`모든 주사위 공격력 +${(lv-1)*5}%`:(key==='attackSpeed'?`모든 주사위 공격속도 +${(lv-1)*2}%`:`SP 획득량 +${(lv-1)*3}%`)):`주사위 자체 성장 레벨 · 전투 성급과는 별개`;return `<div class="tile"><div class="row"><div style="width:64px">${isPassive?node.icon:diceHTML(node.type,lv)}</div><div class="grow"><h3 style="margin:0">${node.label}</h3><div class="muted">현재 레벨 ${lv} / 50</div></div></div><p style="margin-top:10px">${effect}</p>${node.type&&lv>=10?`<button class="primary" style="width:100%;margin:8px 0" onclick="openTraitShop('${node.type}')">⭐ 특성 업그레이드 구매</button>`:''}${lv>=50?'<div class="tile">MAX · 50레벨</div>':`<p>다음 레벨 <b>${lv+1}</b> · 비용 <b>${c.dice?`🎲 ${c.dice}`:`🪙 ${c.coin}`}</b></p><button class="primary" style="width:100%" onclick="upgradeTreeDice('${key}')">레벨 ${lv+1}로 업그레이드</button><p class="muted" style="margin-top:8px">5·10·15·… 레벨에 도달할 때만 🎲 8개, 나머지는 코인을 사용합니다.</p>`}</div>`;}
@@ -482,14 +483,49 @@ function battleLoop(ts){if(!document.getElementById('page-battle').classList.con
 function sendBattle(msg){if(!liveSocket||liveSocket.readyState!==WebSocket.OPEN||!appState.matchId)return;try{liveSocket.send(JSON.stringify({...msg,matchId:appState.matchId}));}catch(e){console.warn('battle send',e)}}
 function handleRemoteBattle(m){if(!appState.battle||m.matchId!==appState.matchId)return;if(m.type==='battle_join'){appState.battle.opponentType='player';appState.battle.opponentDice=m.grid||[];appState.battle.opponentSpeed=Number(m.speed||1);renderBattleDice();}else if(m.type==='summon'){if(Number.isInteger(m.slot)&&m.die){appState.battle.opponentDice=ensureBattleGrid(appState.battle.opponentDice,'opp');appState.battle.opponentDice[m.slot]=m.die;renderBattleDice();}}else if(m.type==='merge'){if(Number.isInteger(m.from)&&Number.isInteger(m.to)&&m.die){appState.battle.opponentDice=ensureBattleGrid(appState.battle.opponentDice,'opp');appState.battle.opponentDice[m.from]=null;appState.battle.opponentDice[m.to]=m.die;renderBattleDice();}}else if(m.type==='speed'){const sharedSpeed=Math.max(1,Math.min(2,Number(m.speed)||1));appState.speed=sharedSpeed;if(appState.battle)appState.battle.opponentSpeed=sharedSpeed;updateBattleHUD();}else if(m.type==='battle_game_over'){appState.coopEnded=true;toast('상대가 전투를 종료했습니다.');}}
 function endCoop(title,msg){if(appState.coopEnded)return;appState.coopEnded=true;cancelAnimationFrame(window.rd2BattleRaf||0);sendBattle({type:'battle_game_over',title});document.getElementById('modalRoot').innerHTML=`<div class="overlay"><div class="modal"><h2>${esc(title)}</h2><p class="muted">${esc(msg)}</p><div class="tile"><b>${appState.battle?.mode==='coop'?'처치':'기지 상태'}: ${appState.battle?.mode==='coop'?appState.kills:(appState.battle?.myBase??0)}</b><p style="margin-top:6px">이번 판 업그레이드: 공격력 +${appState.battleUpgradeDamage||0}%</p></div><button class="primary" style="width:100%" onclick="closeModal();leaveBattle()">로비로</button></div></div>`;}
-function updateBattleHUD(){const sp=document.getElementById('sp');if(sp)sp.textContent=Math.floor(appState.sp);const mini=document.getElementById('miniSp');if(mini)mini.textContent=Math.floor(appState.sp);const s=document.getElementById('bsp');if(s)s.textContent=Math.floor(appState.sp);const w=document.getElementById('bwave');if(w)w.textContent=appState.battle?.mode==='coop'?appState.kills:Math.max(0,appState.battle?.myBase??150);const k=document.getElementById('bkills');if(k)k.textContent='처치 '+appState.kills;const kc=document.getElementById('killCount');if(kc)kc.textContent=appState.battle?.mode==='coop'?appState.kills:(appState.battle?.myBase??150);const kb=document.getElementById('killBar');if(kb)kb.style.width=(appState.battle?.mode==='coop'?Math.min(100,appState.kills/5000*100):Math.min(100,(appState.battle?.myBase??0)/150*100))+'%';const mb=document.getElementById('myBaseLabel'),ob=document.getElementById('oppBaseLabel');if(mb)mb.textContent=appState.battle?.mode==='battle'?'❤️ '+(appState.battle?.myBase??150):'🤝 공동 '+(appState.battle?.sharedBase??150);if(ob)ob.textContent=appState.battle?.mode==='battle'?'❤️ '+(appState.battle?.opponentBase??150):'🤝 공동 '+(appState.battle?.sharedBase??150);const ml=document.getElementById('mySpeedLabel'),ol=document.getElementById('oppSpeedLabel');if(ml)ml.textContent=appState.speed.toFixed(1)+'x';if(ol)ol.textContent=(appState.battle?.opponentSpeed??1).toFixed(1)+'x';const sb=document.getElementById('speedButton');if(sb)sb.textContent=appState.speed.toFixed(1)+'x';const list=document.getElementById('battleDieUpgradeList');if(list)list.innerHTML=battleUpgradeHTML();}
+let lastBattleUpgradeSignature='';
+function updateBattleHUD(){
+ const sp=Math.floor(appState.sp);
+ const el=document.getElementById('sp');if(el)el.textContent=sp;
+ const mini=document.getElementById('miniSp');if(mini)mini.textContent=sp;
+ const s=document.getElementById('bsp');if(s)s.textContent=sp;
+ const w=document.getElementById('bwave');if(w)w.textContent=appState.battle?.mode==='coop'?appState.kills:Math.max(0,appState.battle?.myBase??150);
+ const k=document.getElementById('bkills');if(k)k.textContent='처치 '+appState.kills;
+ const kc=document.getElementById('killCount');if(kc)kc.textContent=appState.battle?.mode==='coop'?appState.kills:(appState.battle?.myBase??150);
+ const kb=document.getElementById('killBar');if(kb)kb.style.width=(appState.battle?.mode==='coop'?Math.min(100,appState.kills/5000*100):Math.min(100,(appState.battle?.myBase??0)/150*100))+'%';
+ const mb=document.getElementById('myBaseLabel'),ob=document.getElementById('oppBaseLabel');
+ if(mb)mb.textContent=appState.battle?.mode==='battle'?'❤️ '+(appState.battle?.myBase??150):'🤝 공동 '+(appState.battle?.sharedBase??150);
+ if(ob)ob.textContent=appState.battle?.mode==='battle'?'❤️ '+(appState.battle?.opponentBase??150):'🤝 공동 '+(appState.battle?.sharedBase??150);
+ const ml=document.getElementById('mySpeedLabel'),ol=document.getElementById('oppSpeedLabel');
+ if(ml)ml.textContent=appState.speed.toFixed(1)+'x';if(ol)ol.textContent=(appState.battle?.opponentSpeed??1).toFixed(1)+'x';
+ const sb=document.getElementById('speedButton');if(sb)sb.textContent=appState.speed.toFixed(1)+'x';
+ const list=document.getElementById('battleDieUpgradeList');
+ if(list){
+   const sig=JSON.stringify([appState.deck,appState.battleDiceUpgrades]);
+   if(sig!==lastBattleUpgradeSignature){lastBattleUpgradeSignature=sig;list.innerHTML=battleUpgradeHTML();}
+ }
+}
 function leaveBattle(){document.getElementById('page-battle').classList.remove('active');cancelAnimationFrame(window.rd2BattleRaf||0);clearInterval(appState.matchTimer);appState.matchTimer=null;appState.matching=false;appState.diceGrid=[];appState.enemies=[];appState.oppEnemies=[];appState.sharedEnemies=[];appState.selected=null;appState.coopEnded=false;appState.page='lobby';document.getElementById('page-lobby').classList.add('active');drawLobby();updateRes();fitStage('lobby');toast('전투를 종료하고 로비로 돌아왔습니다');}
 function updateRes(){['coin','dice','diamond','arenaTicket','coopTicket'].forEach(k=>{const el=document.getElementById(k);if(el)el.textContent=appState.currencies[k].toLocaleString()})}
 function closeModal(){document.getElementById('modalRoot').innerHTML=''}
 function toast(msg){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:absolute;z-index:300;left:50%;top:78px;transform:translateX(-50%);background:#25183a;border:1px solid #694f90;border-radius:12px;padding:10px 14px;font-weight:900;opacity:0;transition:.2s';document.body.appendChild(t)}t.textContent=msg;t.style.opacity=1;clearTimeout(t._tm);t._tm=setTimeout(()=>t.style.opacity=0,1500)}
 function esc(x){return String(x||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function stateSignature(st){
+  if(!st)return '';
+  return JSON.stringify({
+    profile:st.profile,currencies:st.currencies,deck:st.deck,unlocked:st.unlocked,treeUnlocked:st.treeUnlocked,
+    diceLevels:st.diceLevels,treeLevels:st.treeLevels,passXP:st.passXP,passRewardsClaimed:st.passRewardsClaimed,
+    lucky:st.lucky,quests:st.quests,difficulty:st.difficulty,traitLevels:st.traitLevels,battleMode:st.battleMode
+  });
+}
+let lastAppliedStateSignature='';
+
 function applyServerResponse(r){
+ let stateChanged=false;
  if(r.state){
+   const sig=stateSignature(r.state);
+   stateChanged = sig!==lastAppliedStateSignature;
+   lastAppliedStateSignature=sig;
    appState.profile=r.state.profile||appState.profile;
    appState.currencies=r.state.currencies||appState.currencies;
    appState.deck=r.state.deck||appState.deck;
@@ -509,7 +545,9 @@ function applyServerResponse(r){
  if(r.arenaTicketNextIn!=null)appState.arenaTicketNextIn=Number(r.arenaTicketNextIn);
  updateRes();
  if(document.getElementById('coopTicketTimer'))updateTicketTimer();
+ return stateChanged;
 }
+
 async function syncMe(){
  if(!serverToken)return;
  try{const r=await api('/api/me');applyServerResponse(r);if(appState.page==='admin'&&appState.isAdmin)drawAdmin();}
@@ -544,12 +582,14 @@ function startLiveSocket(){
      try{const m=JSON.parse(ev.data||'{}');
        if(m.type==='state_update'){
          if(m.targetUserId && appState.userId && String(m.targetUserId)!==String(appState.userId)) return;
-         applyServerResponse(m);
-         if(appState.page==='pass')drawPass();
-         else if(appState.page==='admin'&&appState.isAdmin)drawAdmin();
-         else if(appState.page==='lobby')drawLobby();
-         else if(appState.page==='deck')drawDeck();
-         else if(appState.page==='tree')drawTree();
+         const changed=applyServerResponse(m);
+         if(changed){
+           if(appState.page==='pass')drawPass();
+           else if(appState.page==='admin'&&appState.isAdmin)drawAdmin();
+           else if(appState.page==='lobby')drawLobby();
+           else if(appState.page==='deck')drawDeck();
+           else if(appState.page==='tree')drawTree();
+         }
          } else if(m.type==='admin_state_update'&&appState.isAdmin&&appState.page==='admin'){drawAdmin();}
        else if(m.type==='matched'&&appState.matching){handleMatchResult(m);}
        else if(['battle_join','summon','merge','speed','battle_game_over'].includes(m.type)){handleRemoteBattle(m);}

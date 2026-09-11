@@ -19,6 +19,13 @@ button,input{font:inherit}button{cursor:pointer}
 .stageLobby{width:1200px;height:700px;min-width:1200px;min-height:700px}
 .stageBattle{width:430px;height:760px;min-width:430px;min-height:760px}
 .app{width:1200px;height:700px;min-width:1200px;min-height:700px;max-width:none;max-height:none;overflow:hidden;position:relative;transform-origin:center center;border:2px solid #45345f;border-radius:24px;background:#171024;box-shadow:0 30px 100px #0009}
+
+/* Performance: keep menu panels self-contained so switching views does not
+   repeatedly force the whole game canvas to recalculate layout/paint. */
+.view{contain:layout paint;}
+.main{contain:layout paint;}
+.treeCanvas{contain:layout paint;}
+.quickNav,.deck,.cardgrid,.skinGrid{contain:layout paint;}
 .view{position:absolute;inset:0;display:none;overflow:hidden}.view.active{display:block;overflow:hidden}
 .top{height:68px;background:#241935;border-bottom:1px solid #493863;display:flex;align-items:center;padding:8px 10px;gap:7px;z-index:20}
 .brand{font-weight:1000;font-size:21px}.brand small{display:block;color:#9e90ba;font-size:9px;letter-spacing:1px}
@@ -547,26 +554,17 @@ function fitStage(mode){
     app.style.transform='scale('+Math.max(.15,scale)+')';
   }
 }
-function refitCurrentViewport(){fitStage(currentPageMode())}
+let __refitQueued=false;
+function refitCurrentViewport(){
+  if(__refitQueued)return;
+  __refitQueued=true;
+  requestAnimationFrame(()=>{__refitQueued=false;fitStage(currentPageMode());});
+}
 window.addEventListener('resize',refitCurrentViewport,{passive:true});
 window.addEventListener('orientationchange',()=>setTimeout(refitCurrentViewport,50),{passive:true});
 window.addEventListener('fullscreenchange',()=>setTimeout(refitCurrentViewport,50));
 window.addEventListener('pageshow',()=>setTimeout(refitCurrentViewport,50));
-window.addEventListener('visibilitychange',()=>setTimeout(refitCurrentViewport,50));
-if(window.visualViewport){
-  window.visualViewport.addEventListener('resize',refitCurrentViewport,{passive:true});
-  window.visualViewport.addEventListener('scroll',refitCurrentViewport,{passive:true});
-}
-if(window.ResizeObserver){
-  const viewportObserver=new ResizeObserver(()=>refitCurrentViewport());
-  viewportObserver.observe(document.documentElement);
-  viewportObserver.observe(document.body);
-}
-
-const D={
- blue:{name:'바람',icon:'🌀',cls:'d-blue',damage:85,rate:750},cyan:{name:'얼음',icon:'❄',cls:'d-cyan',damage:50,rate:1000},red:{name:'화염',icon:'🔥',cls:'d-red',damage:70,rate:820},green:{name:'독',icon:'☠',cls:'d-green',damage:45,rate:1100},yellow:{name:'빛',icon:'☀',cls:'d-yellow',damage:55,rate:900},pink:{name:'분열',icon:'✿',cls:'d-pink',damage:40,rate:950},purple:{name:'성장',icon:'✦',cls:'d-purple',damage:50,rate:1000},
- orange:{name:'번개',icon:'⚡',cls:'d-yellow',damage:95,rate:720},black:{name:'암흑',icon:'🌑',cls:'d-purple',damage:115,rate:1200},white:{name:'성스러움',icon:'✧',cls:'d-cyan',damage:80,rate:880},silver:{name:'철벽',icon:'🛡️',cls:'d-blue',damage:35,rate:1300},gold:{name:'금빛',icon:'💰',cls:'d-yellow',damage:60,rate:980},aqua:{name:'파동',icon:'🌊',cls:'d-cyan',damage:70,rate:920},violet:{name:'공허',icon:'🕳️',cls:'d-purple',damage:130,rate:1400},lime:{name:'회복',icon:'💚',cls:'d-green',damage:25,rate:1500},navy:{name:'폭격',icon:'💣',cls:'d-blue',damage:120,rate:1150},coral:{name:'산호',icon:'🪸',cls:'d-pink',damage:65,rate:860},mint:{name:'민트',icon:'🌿',cls:'d-green',damage:45,rate:780},rose:{name:'장미',icon:'🌹',cls:'d-pink',damage:90,rate:930},prism:{name:'무지개',icon:'🌈',cls:'d-cyan',damage:100,rate:800},cosmic:{name:'우주',icon:'🌌',cls:'d-purple',damage:150,rate:1600}
-};
+if(window.visualViewport)window.visualViewport.addEventListener('resize',refitCurrentViewport,{passive:true});
 async function api(path, options={}){
  const headers={'Content-Type':'application/json',...(options.headers||{})};
  if(serverToken)headers.Authorization='Bearer '+serverToken;
@@ -698,8 +696,7 @@ function nav(page){
  if(page==='profile')drawProfile();
  if(page==='bounty')drawBounty();
  if(page==='admin'&&appState.isAdmin)drawAdmin();
- setTimeout(()=>ensureBackButton(page),0);setTimeout(()=>ensureBackButton(page),100);
- fitStage('lobby');
+ ensureBackButton(page);
 }
 function renderGame(){
  return `<div class="app stageLobby">
@@ -1025,14 +1022,38 @@ async function persistBattleResult(reason='finished'){
  catch(e){appState.battleFinishSaved=false;console.warn('battle finish save',e)}
 }
 function endCoop(title,msg){if(appState.coopEnded)return;appState.coopEnded=true;cancelAnimationFrame(window.rd2BattleRaf||0);persistBattleResult('finished');sendBattle({type:'battle_game_over',title});document.getElementById('modalRoot').innerHTML=`<div class="overlay"><div class="modal"><h2>${esc(title)}</h2><p class="muted">${esc(msg)}</p><div class="tile"><b>${appState.battle?.mode==='coop'?'처치':'기지 상태'}: ${appState.battle?.mode==='coop'?appState.kills:(appState.battle?.myBase??0)}</b><p style="margin-top:6px">이번 판 업그레이드: 공격력 +${appState.battleUpgradeDamage||0}%</p></div><button class="primary" style="width:100%" onclick="closeModal();leaveBattle()">로비로</button></div></div>`;}
-function updateBattleHUD(){const sp=document.getElementById('sp');if(sp)sp.textContent=Math.floor(appState.sp);const mini=document.getElementById('miniSp');if(mini)mini.textContent=Math.floor(appState.sp);const s=document.getElementById('bsp');if(s)s.textContent=Math.floor(appState.sp);const w=document.getElementById('bwave');if(w)w.textContent=appState.battle?.mode==='coop'?appState.kills:Math.max(0,appState.battle?.myBase??150);const k=document.getElementById('bkills');if(k)k.textContent='처치 '+appState.kills;const cs=document.getElementById('coopStatus');if(cs)cs.textContent=appState.battle?.mode==='coop'?`협동 처치 ${appState.kills} / 5000`:`기지 ${(appState.battle?.myBase??150)} / 150`;const mb=document.getElementById('myBaseLabel'),ob=document.getElementById('oppBaseLabel');if(mb)mb.textContent=appState.battle?.mode==='battle'?'❤️ '+(appState.battle?.myBase??150):'🤝 공동 '+(appState.battle?.sharedBase??150);if(ob)ob.textContent=appState.battle?.mode==='battle'?'❤️ '+(appState.battle?.opponentBase??150):'🤝 공동 '+(appState.battle?.sharedBase??150);const ml=document.getElementById('mySpeedLabel'),ol=document.getElementById('oppSpeedLabel');if(ml)ml.textContent=appState.speed.toFixed(1)+'x';if(ol)ol.textContent=(appState.battle?.opponentSpeed??1).toFixed(1)+'x';const sb=document.getElementById('speedButton');if(sb)sb.textContent=appState.speed.toFixed(1)+'x';const bc=document.getElementById('battleUpgradeCost');if(bc)bc.textContent=battleUpgradeCost(appState.battleUpgradeLevel||0);const bt=document.getElementById('battleUpgradeText');if(bt)bt.textContent='이번 판 전체 주사위 공격력 +'+(appState.battleUpgradeDamage||0)+'%';}
+function updateBattleHUD(){
+ const sp=document.getElementById('sp');if(sp)sp.textContent=Math.floor(appState.sp);
+ const mini=document.getElementById('miniSp');if(mini)mini.textContent=Math.floor(appState.sp);
+ const s=document.getElementById('bsp');if(s)s.textContent=Math.floor(appState.sp);
+ const w=document.getElementById('bwave');if(w)w.textContent=appState.battle?.mode==='coop'?appState.kills:Math.max(0,appState.battle?.myBase??150);
+ const k=document.getElementById('bkills');if(k)k.textContent='처치 '+appState.kills;
+ const cs=document.getElementById('coopStatus');if(cs)cs.textContent=appState.battle?.mode==='coop'?`협동 처치 ${appState.kills} / 5000`:`기지 ${(appState.battle?.myBase??150)} / 150`;
+ const mb=document.getElementById('myBaseLabel'),ob=document.getElementById('oppBaseLabel');
+ if(mb)mb.textContent=appState.battle?.mode==='battle'?'❤️ '+(appState.battle?.myBase??150):'🤝 공동 '+(appState.battle?.sharedBase??150);
+ if(ob)ob.textContent=appState.battle?.mode==='battle'?'❤️ '+(appState.battle?.opponentBase??150):'🤝 공동 '+(appState.battle?.sharedBase??150);
+ const ml=document.getElementById('mySpeedLabel'),ol=document.getElementById('oppSpeedLabel');
+ if(ml)ml.textContent=appState.speed.toFixed(1)+'x';if(ol)ol.textContent=(appState.battle?.opponentSpeed??1).toFixed(1)+'x';
+ const sb=document.getElementById('speedButton');if(sb)sb.textContent=appState.speed.toFixed(1)+'x';
+}
+
 async function leaveBattle(){await persistBattleResult('left');try{if(appState.matchId)await api('/api/match/leave',{method:'POST'});}catch(e){console.warn('leave match',e)}document.getElementById('page-battle').classList.remove('active');cancelAnimationFrame(window.rd2BattleRaf||0);clearInterval(appState.matchTimer);appState.matchTimer=null;appState.matching=false;appState.diceGrid=[];appState.enemies=[];appState.oppEnemies=[];appState.sharedEnemies=[];appState.selected=null;appState.coopEnded=false;appState.page='lobby';document.getElementById('page-lobby').classList.add('active');drawLobby();updateRes();appState.matchId=null;appState.matchQueueId=null;appState._resumeSnapshot=null;fitStage('lobby');toast('전투에서 나왔습니다. 다른 플레이어가 남아 있으면 진행 상태가 유지됩니다.');}
 function updateRes(){['coin','dice','diamond','arenaTicket','coopTicket'].forEach(k=>{const el=document.getElementById(k);if(el)el.textContent=appState.currencies[k].toLocaleString()})}
 function closeModal(){document.getElementById('modalRoot').innerHTML=''}
 function toast(msg){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:absolute;z-index:300;left:50%;top:78px;transform:translateX(-50%);background:#25183a;border:1px solid #694f90;border-radius:12px;padding:10px 14px;font-weight:900;opacity:0;transition:.2s';document.body.appendChild(t)}t.textContent=msg;t.style.opacity=1;clearTimeout(t._tm);t._tm=setTimeout(()=>t.style.opacity=0,1500)}
 function esc(x){return String(x||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function stateSignature(st){
+  if(!st)return '';
+  return JSON.stringify({profile:st.profile,currencies:st.currencies,deck:st.deck,unlocked:st.unlocked,treeUnlocked:st.treeUnlocked,diceLevels:st.diceLevels,treeLevels:st.treeLevels,passXP:st.passXP,passRewardsClaimed:st.passRewardsClaimed,lucky:st.lucky,quests:st.quests,difficulty:st.difficulty,traitLevels:st.traitLevels,bountyClaimed:st.bountyClaimed,battleMode:st.battleMode});
+}
+let lastAppliedStateSignature='';
+
 function applyServerResponse(r){
+ let stateChanged=false;
  if(r.state){
+   const sig=stateSignature(r.state);
+   stateChanged=sig!==lastAppliedStateSignature;
+   lastAppliedStateSignature=sig;
    appState.profile=r.state.profile||appState.profile;
    appState.currencies=r.state.currencies||appState.currencies;
    appState.deck=r.state.deck||appState.deck;
@@ -1053,10 +1074,12 @@ function applyServerResponse(r){
  if(r.arenaTicketNextIn!=null)appState.arenaTicketNextIn=Number(r.arenaTicketNextIn);
  updateRes();
  if(document.getElementById('coopTicketTimer'))updateTicketTimer();
+ return stateChanged;
 }
+
 async function syncMe(){
  if(!serverToken)return;
- try{const r=await api('/api/me');applyServerResponse(r);if(appState.page==='admin'&&appState.isAdmin)drawAdmin();}
+ try{const r=await api('/api/me');const changed=applyServerResponse(r);if(changed&&appState.page==='admin'&&appState.isAdmin)drawAdmin();}
  catch(e){console.warn('sync',e)}
 }
 function startServerSync(){
@@ -1088,12 +1111,14 @@ function startLiveSocket(){
      try{const m=JSON.parse(ev.data||'{}');
        if(m.type==='state_update'){
          if(m.targetUserId && appState.userId && String(m.targetUserId)!==String(appState.userId)) return;
-         applyServerResponse(m);
-         if(appState.page==='pass')drawPass();
-         else if(appState.page==='admin'&&appState.isAdmin)drawAdmin();
-         else if(appState.page==='lobby')drawLobby();
-         else if(appState.page==='deck')drawDeck();
-         else if(appState.page==='tree')drawTree();
+         const changed=applyServerResponse(m);
+         if(changed){
+           if(appState.page==='pass')drawPass();
+           else if(appState.page==='admin'&&appState.isAdmin)drawAdmin();
+           else if(appState.page==='lobby')drawLobby();
+           else if(appState.page==='deck')drawDeck();
+           else if(appState.page==='tree')drawTree();
+         }
          } else if(m.type==='admin_state_update'&&appState.isAdmin&&appState.page==='admin'){drawAdmin();}
        else if(m.type==='matched'&&appState.matching){handleMatchResult(m);}
        else if(m.type==='match_reconnected'){if(appState.matchId===m.matchId&&m.state){appState.battle.opponentType='player';appState.battle.opponentDice=m.state.diceGrid||appState.battle.opponentDice;appState.battle.opponentSpeed=Number(m.state.speed||1);renderBattleDice();toast('상대 플레이어가 다시 들어왔습니다.');}}
