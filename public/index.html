@@ -17,7 +17,7 @@ button,input{font:inherit}button{cursor:pointer}
       box-sizing:border-box;
     }
 .stageLobby{width:1200px;height:700px;min-width:1200px;min-height:700px}
-.stageBattle{width:400px;height:900px;min-width:400px;min-height:900px}
+.stageBattle{width:430px;height:760px;min-width:430px;min-height:760px}
 .app{width:1200px;height:700px;min-width:1200px;min-height:700px;max-width:none;max-height:none;overflow:hidden;position:relative;transform-origin:center center;border:2px solid #45345f;border-radius:24px;background:#171024;box-shadow:0 30px 100px #0009}
 .view{position:absolute;inset:0;display:none;overflow:hidden}.view.active{display:block;overflow:hidden}
 .top{height:68px;background:#241935;border-bottom:1px solid #493863;display:flex;align-items:center;padding:8px 10px;gap:7px;z-index:20}
@@ -141,15 +141,85 @@ button,input{font:inherit}button{cursor:pointer}
 .side{padding:8px}.nav{font-size:0;text-align:center}.nav i{width:auto;font-size:19px}.nav .badge{font-size:8px}.hero{grid-template-columns:1fr}.cardgrid{grid-template-columns:1fr 1fr}.res{margin-left:0}.top .brand small{display:none}}
 
    JS scales the whole canvas uniformly so coordinates and proportions stay identical across devices. */
-.app.stageBattle{width:400px;height:900px;min-width:400px;min-height:900px}
+.app.stageBattle{width:430px;height:760px;min-width:430px;min-height:760px}
 .app.stageLobby{width:1200px;height:700px;min-width:1200px;min-height:700px}
 .dice.star7{clip-path:polygon(50% 0%,61% 34%,98% 38%,70% 59%,79% 96%,50% 74%,21% 96%,30% 59%,2% 38%,39% 34%);border-radius:4px!important;font-size:31px;background:linear-gradient(145deg,#fff0a3,#e9a928)!important;color:#fff;text-shadow:0 2px 5px #6d4300}
 .dice.star7 small{display:none}
 .dice.dragging{opacity:.25}
 .dragGhost{position:fixed;z-index:1000;pointer-events:none;transform:translate(-50%,-50%);filter:drop-shadow(0 8px 8px #0008)}
 .coopGrid .slot.dropTarget{outline:3px solid #fff05b;outline-offset:-2px;background:#ffeaa533}
+.battleDieHolder{width:92%;height:92%;display:grid;place-items:center;min-width:0;min-height:0}
+.battleDieHolder .dice{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important}
 
 .app{width:100vw;height:100vh;min-height:620px;border-radius:0;border:0}.body{grid-template-columns:1fr}.side{display:none}.top{height:62px}.main{height:calc(100% - 62px);padding:12px}.bigLogo{font-size:34px}.cardgrid{grid-template-columns:1fr}.deck{grid-template-columns:repeat(5,1fr);gap:6px}.heroCard{padding:18px}.res .chip{padding:6px 7px;font-size:10px}.topbtn{padding:8px}.pass{grid-template-columns:1fr}.skinGrid{grid-template-columns:repeat(2,1fr)}}
+
+
+/* Portrait battle screen: only the game itself becomes a tall mobile-style rectangle. */
+#page-battle{background:#08060d!important;}
+#page-battle.active{display:block!important;}
+#page-battle .battle{
+  position:absolute;
+  left:50%;top:50%;right:auto;bottom:auto;
+  width:min(430px,calc(100% - 16px));
+  height:min(760px,calc(100% - 16px));
+  min-width:0;min-height:0;
+  transform:translate(-50%,-50%);
+  border-radius:24px;
+  overflow:hidden;
+  border:3px solid #57466a;
+  box-shadow:0 22px 70px #000b;
+  background:
+    radial-gradient(circle at 12% 8%,#7f9c56 0 9%,transparent 10%),
+    radial-gradient(circle at 92% 17%,#66894a 0 11%,transparent 12%),
+    radial-gradient(circle at 8% 85%,#789554 0 10%,transparent 11%),
+    radial-gradient(circle at 92% 90%,#6f8e4f 0 11%,transparent 12%),
+    linear-gradient(180deg,#96ba72 0%,#d7b987 20%,#edcf9c 50%,#d5b681 80%,#789c5d 100%);
+}
+#page-battle .battle:before,
+#page-battle .battle:after{content:"";position:absolute;pointer-events:none;z-index:1}
+#page-battle .battle:before{inset:58px 0 148px;background:radial-gradient(circle at 15% 30%,#ffffff20 0 2%,transparent 3%),radial-gradient(circle at 83% 70%,#00000012 0 2%,transparent 3%);background-size:90px 90px,120px 120px;opacity:.55}
+#page-battle .battleTop{height:52px;position:relative;z-index:20;padding:6px 7px;gap:5px;background:linear-gradient(#2e2440dd,#171326dd);}
+#page-battle .battleTop .topbtn{padding:6px 8px;font-size:14px;min-width:30px}
+#page-battle .battleTop b{font-size:18px}
+#page-battle .battleTop .pill{padding:5px 7px;font-size:9px;border-radius:9px;white-space:nowrap;max-width:92px;overflow:hidden;text-overflow:ellipsis}
+#page-battle .coopArena{top:52px;bottom:148px;background:linear-gradient(180deg,#b4cf8a 0 47%,#c79f69 47% 53%,#b8d28f 53% 100%);}
+#page-battle .coopPlayer{height:47%;padding:6px 8px 3px;z-index:6}
+#page-battle .coopPlayer.opponent{top:0}
+#page-battle .coopPlayer.me{bottom:0}
+#page-battle .coopHeader{height:22px;font-size:9px;gap:4px}
+#page-battle .coopHeader .who{padding:3px 5px;border-radius:7px}
+#page-battle .diceBoardRect{width:min(92%,330px);aspect-ratio:5/3;padding:7px;border-radius:14px;background:rgba(111,79,44,.26);border:2px solid rgba(255,255,255,.25);box-shadow:0 8px 16px #0002}
+#page-battle .coopField{grid-template-columns:1fr;display:flex;align-items:center;justify-content:center;min-height:0}
+#page-battle .coopGrid{gap:7px;width:100%;height:100%;aspect-ratio:5/3}
+#page-battle .coopGrid .slot{border:2px solid #6b563e88;background:rgba(246,220,169,.76);border-radius:10px;box-shadow:inset 0 1px #fff5;}
+#page-battle .coopGrid .slot>div{width:92%;height:92%;display:grid;place-items:center}
+#page-battle .coopGrid .slot>div .dice{width:100%;height:100%;}
+#page-battle .coopGrid .dice{border-radius:11px!important;min-width:0;min-height:0;font-size:18px;box-shadow:0 4px 8px #0004}
+#page-battle .battleSharedPath{top:50%;height:8%;transform:translateY(-50%);background:linear-gradient(#e8ce99,#d6b47c);border-top:2px solid #a98355aa;border-bottom:2px solid #a98355aa;z-index:4;box-shadow:inset 0 0 15px #fff2}
+#page-battle .battleSplitPath{height:11%;background:linear-gradient(#e8ce99,#d6b47c);border-top:2px solid #a98355aa;border-bottom:2px solid #a98355aa;z-index:4}
+#page-battle .battleSplitPath.topLane{top:39%}
+#page-battle .battleSplitPath.bottomLane{top:61%}
+#page-battle .killProgress{top:7px;min-width:155px;padding:4px 8px;font-size:10px;z-index:18}
+#page-battle .battlebar{left:8px;right:8px;bottom:49px;height:95px;z-index:30}
+#page-battle .battleControlsRow{gap:6px;min-height:50px}
+#page-battle .battleControlsRow .sp{padding:7px 9px;font-size:11px}
+#page-battle .battleControlsRow .spawn{font-size:16px;border-radius:14px}
+#page-battle .battleControlsRow .speed{padding:0 10px;font-size:11px}
+#page-battle .battleUpgrade{position:static;left:auto;right:auto;bottom:auto;height:39px;min-height:39px;max-height:39px;padding:4px 6px;border-radius:11px;overflow:hidden}
+#page-battle .battleUpgradeTitle{font-size:9px}
+#page-battle .battleUpgradeTitle span{display:none}
+#page-battle .battleDieUpgradeList{gap:5px;margin-top:3px;overflow:hidden}
+#page-battle .battleDieUpgradeBtn{min-width:105px;padding:3px 5px;font-size:8px}
+#page-battle .upgradeDieIcon{width:26px;height:26px;flex-basis:26px}
+#page-battle .battleBottom{height:49px;font-size:9px;background:#21172ddf;z-index:40;padding:0 8px;text-align:center}
+#page-battle .coopBase{display:none}
+#page-battle .remoteBadge{font-size:7px}
+#page-battle .bossBadge{top:50%;z-index:25}
+#page-battle .coopEnemy{width:22px;height:22px;font-size:8px}
+#page-battle .coopEnemy.boss{width:32px;height:32px}
+@media(max-width:700px){
+  #page-battle .battle{width:min(430px,calc(100vw - 8px));height:min(760px,calc(100dvh - 8px));border-width:2px;border-radius:18px}
+}
 
 /* Mobile: scale the whole logical canvas to fit width/height; no horizontal clipping,
    no page scrolling, and no internal scrolling for the main lobby panels. */
