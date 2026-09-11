@@ -804,8 +804,38 @@ function drawLobby(){
  const pos={1:['c'],2:['tl','br'],3:['tl','c','br'],4:['tl','tr','bl','br'],5:['tl','tr','c','bl','br'],6:['tl','tr','ml','mr','bl','br']}[r];
  return `<div class="pips">${pos.map(x=>`<i class="pip ${x}"></i>`).join('')}</div>`;
 }
-function diceHTML(type,lvl=1){const d=D[type]||D.blue||{cls:'d-blue',icon:'🎲',name:'주사위',damage:50};const icon=d.icon||'🎲';return `<div class="dice ${d.cls}" aria-label="${esc(d.name||type)}"><div class="diceFace"><div class="pips"><i class="pip c"></i></div><span class="diceEmoji" aria-hidden="true">${icon}</span></div><small>Lv.${Math.max(1,Math.min(50,Number(lvl)||1))}</small></div>`;}
-function battleDiceHTML(die,selected=false){if(!die)return '';const d=D[die.type]||D.blue||{cls:'d-blue',icon:'🎲',name:'주사위',damage:50},r=Math.max(1,Math.min(7,Number(die.rank)||1)),icon=d.icon||'🎲';if(r>=7)return `<div class="dice battleDie ${d.cls} ${selected?'battleSelected':''}" title="7성 · 합성 불가"><div class="starMark">★</div><span class="diceEmoji diceEmojiStar" aria-hidden="true">${icon}</span></div>`;return `<div class="dice battleDie ${d.cls} ${selected?'battleSelected':''}" title="${esc(d.name)} · ${r}성">${battlePips(r)}<span class="diceEmoji" aria-hidden="true">${icon}</span></div>`;}
+function diceArtSVG(type,small=false){
+ const S=small?24:46;
+ const common=`width="${S}" height="${S}" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"`;
+ const stroke=`stroke="rgba(255,255,255,.80)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"`;
+ const fill=`fill="rgba(255,255,255,.26)"`;
+ const art={
+  blue:`<path ${stroke} d="M13 39c10 7 25 8 37-3M17 29c7 4 15 4 22 0M12 21c6 2 10 2 15 0"/><path ${stroke} d="M46 18l6-4-2 7"/>`,
+  cyan:`<path ${stroke} d="M32 9l5 14 14-5-5 14 14 5-14 5 5 14-14-5-5 14-5-14-14 5 5-14-14-5 14-5-5-14 14 5z" ${fill}/><circle cx="32" cy="32" r="7" ${stroke}/>` ,
+  red:`<path ${stroke} d="M34 9c6 9-1 12 8 18 4 3 6 8 4 15-2 7-9 12-16 12-10 0-17-7-17-16 0-8 6-12 10-18 4-5 6-8 5-11z" ${fill}/><path ${stroke} d="M24 44c0-5 4-7 7-11 2 5 7 7 7 12 0 5-4 8-8 8s-6-3-6-9z"/>`,
+  green:`<path ${stroke} d="M32 54V26M32 34C23 34 17 29 16 19c10 0 16 5 16 15zM32 38c9 0 15-5 16-15-10 0-16 5-16 15z" ${fill}/><path ${stroke} d="M32 46C22 46 18 40 18 33c9 0 14 5 14 13z"/>`,
+  yellow:`<path ${stroke} d="M34 6L17 34h12l-2 24 20-31H35z" ${fill}/>` ,
+  pink:`<path ${stroke} d="M14 27l18-14 18 14-18 14z" ${fill}/><path ${stroke} d="M14 27v10l18 14 18-14V27M32 41v10"/>`,
+  purple:`<path ${stroke} d="M32 8v48M8 32h48M15 15l34 34M49 15L15 49"/><circle cx="32" cy="32" r="14" ${fill} ${stroke}/>` ,
+  orange:`<path ${stroke} d="M32 8l5 17 17 5-17 5-5 17-5-17-17-5 17-5z" ${fill}/><circle cx="32" cy="32" r="5"/>`,
+  black:`<path ${stroke} d="M32 8l4 8 9 1-6 6 2 9-7-4-7 4 2-9-6-6 9-1z" ${fill}/><circle cx="32" cy="40" r="11" ${fill} ${stroke}/>` ,
+  white:`<path ${stroke} d="M32 8l6 16 18 1-14 11 5 18-15-10-15 10 5-18L8 25l18-1z" ${fill}/>` ,
+  silver:`<path ${stroke} d="M32 9l16 6v13c0 11-7 20-16 27-9-7-16-16-16-27V15z" ${fill}/><path ${stroke} d="M24 31l6 6 11-12"/>`,
+  gold:`<circle cx="32" cy="32" r="20" ${fill} ${stroke}/><path ${stroke} d="M38 24c-2-3-9-4-12 0-3 4 0 7 6 8 6 1 8 4 5 8-3 4-10 3-13 0M32 19v26"/>`,
+  aqua:`<path ${stroke} d="M9 24c8-8 16 8 24 0s16 8 22 0M9 37c8-8 16 8 24 0s16 8 22 0"/>`,
+  violet:`<path ${stroke} d="M12 31c0-10 9-18 20-18s20 8 20 18-9 18-20 18-20-8-20-18z" ${fill}/><path ${stroke} d="M18 31c7-10 21-10 28 0-7 10-21 10-28 0z"/>`,
+  lime:`<circle cx="32" cy="32" r="21" ${fill} ${stroke}/><path ${stroke} d="M32 18v28M18 32h28"/>`,
+  navy:`<path ${stroke} d="M9 39l12-23 14 12 8-9 12 28H9z" ${fill}/><path ${stroke} d="M21 16l4 9-9-1M43 19l-4 8 9-1"/>`,
+  coral:`<path ${stroke} d="M15 44c6-18 20-28 34-27-1 14-11 28-34 27z" ${fill}/><path ${stroke} d="M17 43l23-23M28 39l-1-10M36 34l-8-1"/>`,
+  mint:`<path ${stroke} d="M32 53C18 45 13 34 16 19c10 2 17 8 16 19 1-7 5-13 16-16 1 14-4 24-16 31z" ${fill}/>` ,
+  rose:`<circle cx="32" cy="34" r="14" ${fill} ${stroke}/><path ${stroke} d="M32 20c-5-9-16-6-15 2 1 7 9 9 15 12M32 20c5-9 16-6 15 2-1 7-9 9-15 12M21 47c5 4 17 4 22 0"/>`,
+  prism:`<path ${stroke} d="M32 8l21 12v24L32 56 11 44V20z" ${fill}/><path ${stroke} d="M32 8v48M11 20l21 12 21-12M11 44l21-12 21 12"/>`,
+  cosmic:`<circle cx="32" cy="32" r="20" ${fill} ${stroke}/><circle cx="23" cy="24" r="3" fill="rgba(255,255,255,.8)"/><circle cx="40" cy="20" r="2" fill="rgba(255,255,255,.8)"/><path ${stroke} d="M19 41c9-15 22-18 29-14"/>`
+ };
+ return `<svg class="diceArt" ${common} aria-hidden="true">${art[type]||art.blue}</svg>`;
+}
+function diceHTML(type,lvl=1){const d=D[type]||D.blue||{cls:'d-blue',name:'주사위',damage:50};return `<div class="dice ${d.cls}" aria-label="${esc(d.name||type)}"><div class="diceFace"><div class="pips"><i class="pip c"></i></div>${diceArtSVG(type)}</div><small>Lv.${Math.max(1,Math.min(50,Number(lvl)||1))}</small></div>`;}
+function battleDiceHTML(die,selected=false){if(!die)return '';const d=D[die.type]||D.blue||{cls:'d-blue',name:'주사위',damage:50},r=Math.max(1,Math.min(7,Number(die.rank)||1));if(r>=7)return `<div class="dice battleDie ${d.cls} ${selected?'battleSelected':''}" title="7성 · 합성 불가"><div class="starMark">★</div>${diceArtSVG(die.type,true)}</div>`;return `<div class="dice battleDie ${d.cls} ${selected?'battleSelected':''}" title="${esc(d.name)} · ${r}성">${battlePips(r)}${diceArtSVG(die.type,true)}</div>`;}
 function upgradeCost(level){const lv=Math.max(1,Number(level)||1);if(lv>=50)return {coin:0,dice:0};const next=lv+1;return next%5===0?{coin:0,dice:8}:{coin:Math.max(100,Math.floor(75*lv*1.15)),dice:0};}
 function upgradeCostText(level){const c=upgradeCost(level);return c.dice?`🎲 ${c.dice}`:`🪙 ${c.coin}`;}
 function battleUpgradeCost(level){return 50+Math.max(0,level)*50;}
@@ -1281,15 +1311,14 @@ button{display:inline-flex;align-items:center;justify-content:center;box-sizing:
 </style>
 
 <style>
-/* v59: emoji dice are explicitly visible in both lobby and battle. */
+/* v60: die illustrations sit between the dark pips and the dice face */
 .diceFace{position:relative;width:100%;height:100%;display:grid;place-items:center;overflow:visible;}
-.diceEmoji{position:absolute;left:50%;bottom:8%;transform:translateX(-50%);z-index:5;display:block!important;visibility:visible!important;opacity:1!important;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:clamp(14px,3.2vw,26px);line-height:1;text-shadow:0 2px 3px rgba(0,0,0,.45);pointer-events:none;white-space:nowrap;}
 .diceFace>.pips{position:absolute;inset:14%;z-index:3;}
-.diceFace>.pips .pip{background:#17121b!important;box-shadow:0 2px 3px rgba(255,255,255,.18)!important;}
-#page-battle .battleDie{overflow:visible!important;}
-#page-battle .battleDie .pips{z-index:3;}
-#page-battle .battleDie .diceEmoji{font-size:18px;bottom:7%;z-index:6;}
-#page-battle .battleDie .diceEmojiStar{font-size:16px;bottom:9%;}
-.deck .dice .diceEmoji,.deckStrip .dice .diceEmoji{font-size:22px;}
-.battleDieUpgradeImage .diceEmoji{font-size:15px!important;}
+.diceArt{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);z-index:4;pointer-events:none;opacity:.60;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18));}
+.dice>.pips .pip,.battleDie .pip{background:#17121b!important;box-shadow:0 2px 3px rgba(255,255,255,.12)!important;}
+.diceFace>.diceArt{width:44%;height:44%;}
+#page-battle .battleDie .diceArt{width:31px;height:31px;opacity:.60;z-index:4;}
+.battleDie .pips{z-index:3;}
 </style>
+
+<style>.diceEmoji{display:none!important}</style>
