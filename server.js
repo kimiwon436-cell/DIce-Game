@@ -218,11 +218,60 @@ app.post('/api/tree/upgrade',auth,async(req,res)=>{const key=String(req.body.typ
 
 // ---------------- Matchmaking ----------------
 const waitingQueue=[];const queueEntries=new Map();const matches=new Map();
+function matchPlayerKey(id){return String(id);}
+function publicMatchForUser(match,uid){
+  const me=matchPlayerKey(uid);
+  const otherId=match.players.map(matchPlayerKey).find(x=>x!==me);
+  return {matchId:match.id,mode:match.mode,opponentType:match.opponentType||'player',opponentNickname:match.playerNames?.[otherId]||'플레이어',state:match.playerStates?.[me]||null,opponentState:match.playerStates?.[otherId]||null,startedAt:match.startedAt||match.createdAt,status:match.status};
+}
+async function leaveUserFromMatch(uid,explicit=false){
+  const id=matchPlayerKey(uid);
+  for(const match of matches.values()){
+    if(match.status!=='active'&&match.status!=='matched')continue;
+    if(!match.players.map(matchPlayerKey).includes(id))continue;
+    match.status='active';
+    match.disconnected=match.disconnected||new Set();
+    match.disconnected.add(id);
+    if(explicit)match.explicitLeft=match.explicitLeft||new Set(),match.explicitLeft.add(id);
+    if(match.players.every(x=>match.disconnected.has(matchPlayerKey(x)))){
+      match.status='ended';match.endedAt=Date.now();
+      for(const q of queueEntries.values())if(q.matchId===match.id)q.status='ended',q.updatedAt=Date.now();
+      return {ended:true,match};
+    }
+    return {ended:false,match};
+  }
+  return null;
+}
 function removeWaiting(id){const i=waitingQueue.indexOf(id);if(i>=0)waitingQueue.splice(i,1);}
 function expireWaitingEntries(){const now=Date.now();for(const id of [...waitingQueue]){const q=queueEntries.get(id);if(!q){removeWaiting(id);continue;}if(q.status==='waiting'&&now-q.createdAt>=MATCH_WAIT_MS){q.status='ai';q.updatedAt=now;removeWaiting(q.id);}}}
-app.post('/api/match/join',auth,async(req,res)=>{try{expireWaitingEntries();const mode=req.body?.mode==='battle'?'battle':'coop';const existing=[...queueEntries.values()].find(q=>q.userId===req.auth.id&&q.status==='waiting'&&q.mode===mode);if(existing){if(Date.now()-existing.createdAt>=MATCH_WAIT_MS){existing.status='ai';removeWaiting(existing.id);return res.json({status:'ai',queueId:existing.id,opponentType:'ai',opponentNickname:'AI 플레이어',mode});}return res.json({status:'waiting',queueId:existing.id,elapsed:Math.floor((Date.now()-existing.createdAt)/1000),mode});}const charged=await consumeModeTicket(req.auth.id,mode);const opponent=waitingQueue.map(id=>queueEntries.get(id)).find(q=>q&&q.status==='waiting'&&q.userId!==req.auth.id&&q.mode===mode);const queueId=crypto.randomUUID();if(opponent){removeWaiting(opponent.id);const matchId=crypto.randomUUID(),now=Date.now();const match={id:matchId,players:[opponent.userId,req.auth.id],createdAt:now,status:'matched',opponentType:'player',mode};matches.set(matchId,match);opponent.status='matched';opponent.matchId=matchId;opponent.updatedAt=now;queueEntries.set(queueId,{id:queueId,userId:req.auth.id,username:req.auth.username,createdAt:now,status:'matched',matchId,mode});const oppRow=await rowForUser(opponent.userId),nickname=oppRow?.nickname||'플레이어';const result={status:'matched',queueId,matchId,opponentType:'player',opponentNickname:nickname,mode,state:charged.state,coopTicketNextIn:charged.coopNext,arenaTicketNextIn:charged.arenaNext};broadcast(opponent.userId,{type:'matched',queueId:opponent.id,matchId,opponentType:'player',opponentNickname:charged.row.nickname||'플레이어',mode});return res.json(result);}queueEntries.set(queueId,{id:queueId,userId:req.auth.id,username:req.auth.username,createdAt:Date.now(),status:'waiting',mode});waitingQueue.push(queueId);res.json({status:'waiting',queueId,elapsed:0,mode,state:charged.state,coopTicketNextIn:charged.coopNext,arenaTicketNextIn:charged.arenaNext});}catch(e){console.error(e);res.status(400).json({error:e.message||'매칭을 시작할 수 없습니다.'});}});
+app.post('/api/match/join',auth,async(req,res)=>{try{expireWaitingEntries();const mode=req.body?.mode==='battle'?'battle':'coop';const existing=[...queueEntries.values()].find(q=>q.userId===req.auth.id&&q.status==='waiting'&&q.mode===mode);if(existing){if(Date.now()-existing.createdAt>=MATCH_WAIT_MS){existing.status='ai';removeWaiting(existing.id);return res.json({status:'ai',queueId:existing.id,opponentType:'ai',opponentNickname:'AI 플레이어',mode});}return res.json({status:'waiting',queueId:existing.id,elapsed:Math.floor((Date.now()-existing.createdAt)/1000),mode});}const charged=await consumeModeTicket(req.auth.id,mode);const opponent=waitingQueue.map(id=>queueEntries.get(id)).find(q=>q&&q.status==='waiting'&&q.userId!==req.auth.id&&q.mode===mode);const queueId=crypto.randomUUID();if(opponent){removeWaiting(opponent.id);const matchId=crypto.randomUUID(),now=Date.now();const match={id:matchId,players:[opponent.userId,req.auth.id],createdAt:now,startedAt:now,status:'active',opponentType:'player',mode,disconnected:new Set(),explicitLeft:new Set(),playerNames:{[String(opponent.userId)]:opponent.username||'플레이어',[String(req.auth.id)]:req.auth.username||'플레이어'},playerStates:{}};matches.set(matchId,match);opponent.status='matched';opponent.matchId=matchId;opponent.updatedAt=now;queueEntries.set(queueId,{id:queueId,userId:req.auth.id,username:req.auth.username,createdAt:now,status:'matched',matchId,mode});const oppRow=await rowForUser(opponent.userId),nickname=oppRow?.nickname||'플레이어';const result={status:'matched',queueId,matchId,opponentType:'player',opponentNickname:nickname,mode,state:charged.state,coopTicketNextIn:charged.coopNext,arenaTicketNextIn:charged.arenaNext};broadcast(opponent.userId,{type:'matched',queueId:opponent.id,matchId,opponentType:'player',opponentNickname:charged.row.nickname||'플레이어',mode});return res.json(result);}queueEntries.set(queueId,{id:queueId,userId:req.auth.id,username:req.auth.username,createdAt:Date.now(),status:'waiting',mode});waitingQueue.push(queueId);res.json({status:'waiting',queueId,elapsed:0,mode,state:charged.state,coopTicketNextIn:charged.coopNext,arenaTicketNextIn:charged.arenaNext});}catch(e){console.error(e);res.status(400).json({error:e.message||'매칭을 시작할 수 없습니다.'});}});
 app.get('/api/match/status/:queueId',auth,async(req,res)=>{const q=queueEntries.get(req.params.queueId);if(!q||q.userId!==req.auth.id)return res.status(404).json({error:'매칭 정보를 찾을 수 없습니다.'});if(q.status==='waiting'&&Date.now()-q.createdAt>=MATCH_WAIT_MS){q.status='ai';q.updatedAt=Date.now();removeWaiting(q.id);}if(q.status==='matched'){const match=matches.get(q.matchId),other=match?.players?.find(x=>String(x)!==String(q.userId));let nickname='플레이어';if(other){const r=await rowForUser(other);if(r)nickname=r.nickname;}return res.json({status:'matched',queueId:q.id,matchId:q.matchId,opponentType:'player',opponentNickname:nickname,mode:q.mode||match?.mode||'coop'});}if(q.status==='ai')return res.json({status:'ai',queueId:q.id,opponentType:'ai',opponentNickname:'AI 플레이어',mode:q.mode||'coop'});const elapsed=Math.floor((Date.now()-q.createdAt)/1000);res.json({status:'waiting',queueId:q.id,elapsed,remaining:Math.max(0,Math.ceil((MATCH_WAIT_MS-(Date.now()-q.createdAt))/1000)),mode:q.mode||'coop'});});
 app.get('/api/match/current',auth,async(req,res)=>{expireWaitingEntries();const q=[...queueEntries.values()].find(x=>x.userId===req.auth.id&&['waiting','matched','ai'].includes(x.status));if(!q)return res.json({status:'none'});res.json({status:q.status,queueId:q.id,matchId:q.matchId||null,elapsed:Math.floor((Date.now()-q.createdAt)/1000),mode:q.mode||'coop'});});
+app.get('/api/match/active',auth,async(req,res)=>{
+  const uid=String(req.auth.id);
+  for(const match of matches.values()){
+    if(match.status==='ended')continue;
+    if(!match.players.map(String).includes(uid))continue;
+    match.disconnected=match.disconnected||new Set();
+    match.disconnected.delete(uid);
+    match.explicitLeft?.delete(uid);
+    const payload=publicMatchForUser(match,uid);
+    res.json({ok:true,active:true,...payload});
+    // Notify the remaining player that this user has returned.
+    const otherId=match.players.map(String).find(x=>x!==uid);
+    const set=sockets?.get(otherId);
+    if(set){for(const ws of set)if(ws.readyState===1)ws.send(JSON.stringify({type:'match_reconnected',matchId:match.id,userId:uid,state:match.playerStates?.[uid]||null}));}
+    return;
+  }
+  res.json({ok:true,active:false});
+});
+app.post('/api/match/leave',auth,async(req,res)=>{
+  try{
+    const out=await leaveUserFromMatch(req.auth.id,true);
+    res.json({ok:true,active:Boolean(out&&!out.ended),ended:Boolean(out?.ended)});
+  }catch(e){res.status(400).json({error:e.message||'전투에서 나갈 수 없습니다.'});}
+});
+
 app.post('/api/match/cancel',auth,async(req,res)=>{const q=[...queueEntries.values()].find(x=>x.userId===req.auth.id&&x.status==='waiting');if(!q)return res.json({ok:true,refunded:false});q.status='cancelled';removeWaiting(q.id);queueEntries.delete(q.id);const out=await refundModeTicket(req.auth.id,q.mode||'coop');const fresh=await getFresh(req.auth.id);res.json({ok:true,refunded:true,state:fresh.state,coopTicketNextIn:fresh.coopNext,arenaTicketNextIn:fresh.arenaNext});});
 
 // ---------------- Admin ----------------
@@ -278,9 +327,16 @@ wss.on('connection',async(ws,req)=>{
   ws.on('message',raw=>{
     try{
       const m=JSON.parse(String(raw||'{}'));
-      if(!m||!['battle_join','summon','merge','speed','battle_game_over'].includes(m.type))return;
+      if(!m||!['battle_join','summon','merge','speed','battle_progress','battle_game_over'].includes(m.type))return;
       const match=matches.get(String(m.matchId||''));
       if(!match||!match.players.map(String).includes(uid))return;
+      match.disconnected=match.disconnected||new Set();
+      match.disconnected.delete(uid);
+      if(m.type==='battle_join' || m.type==='battle_progress'){
+        match.playerStates=match.playerStates||{};
+        match.playerStates[uid]={...(match.playerStates[uid]||{}),...m.stateSnapshot};
+      }
+      if(m.type==='battle_game_over'){match.status='ended';match.endedAt=Date.now();}
       const payload=JSON.stringify({...m,fromUserId:uid});
       for(const pid of match.players.map(String)){
         if(pid===uid)continue;
@@ -289,7 +345,17 @@ wss.on('connection',async(ws,req)=>{
       }
     }catch(e){console.warn('ws battle relay',e.message)}
   });
-  ws.on('close',()=>{sockets.get(uid)?.delete(ws);if(!sockets.get(uid)?.size){sockets.delete(uid);socketMeta.delete(uid)}});
+  ws.on('close',async()=>{
+    sockets.get(uid)?.delete(ws);
+    if(!sockets.get(uid)?.size){
+      sockets.delete(uid);socketMeta.delete(uid);
+      const out=await leaveUserFromMatch(uid,false);
+      if(out?.ended){
+        const payload=JSON.stringify({type:'battle_game_over',matchId:out.match.id,title:'전투 종료',reason:'both_left'});
+        for(const pid of out.match.players.map(String)){const set=sockets.get(pid);if(set)for(const c of set)if(c.readyState===1)c.send(payload);}
+      }
+    }
+  });
  }catch{ws.close(1008,'Unauthorized');}
 });
 setInterval(expireWaitingEntries,1000);
