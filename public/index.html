@@ -1215,3 +1215,11 @@ bootClient();
   .coopArena{bottom:180px!important}
 }
 </style>
+
+<style>
+/* v51 menu responsiveness: menu clicks should only swap the already active #main subtree. */
+.view:not(.active){content-visibility:hidden;}
+.quickNav button,.nav,.mode,.tile,.treeNode,.deck .slot{transition:none!important;animation:none!important;}
+.treeNode:hover{transform:translate(-50%,-50%)!important;}
+.treeLocked{filter:none!important;opacity:.68;}
+</style>
