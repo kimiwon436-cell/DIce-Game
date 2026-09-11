@@ -72,7 +72,7 @@ function cleanState(raw){
     difficulty:['easy','normal','hard'].includes(s.difficulty)?s.difficulty:'normal'
   };
 }
-function isAdminRow(row){return Boolean(row && (row.is_admin || row.username===ADMIN_USERNAME));}
+function isAdminRow(row){return Boolean(row && (row.is_admin || String(row.username||'').toLowerCase()===ADMIN_USERNAME.toLowerCase()));}
 async function rowForUser(id){
   const {rows}=await pool.query('SELECT id,username,nickname,avatar,state,is_admin,coop_ticket_at,arena_ticket_at,starter_granted FROM users WHERE id=$1',[id]);
   return rows[0];
@@ -110,6 +110,31 @@ async function accrueTicketsTx(client,userId){
   const now2=Date.now();
   return {state,coopNext:COOP_INTERVAL_MS-((now2-coopAt)%COOP_INTERVAL_MS),arenaNext:ARENA_INTERVAL_MS-((now2-arenaAt)%ARENA_INTERVAL_MS)};
 }
+
+async function consumeModeTicket(userId, mode){
+  const client=await pool.connect();
+  try{
+    await client.query('BEGIN');
+    const t=await accrueTicketsTx(client,userId);
+    if(!t) throw new Error('계정을 찾을 수 없습니다.');
+    const state=cleanState(t.state);
+    const field=mode==='battle'?'arenaTicket':'coopTicket';
+    if(Number(state.currencies[field]||0)<=0){
+      throw new Error(mode==='battle'?'아레나 티켓이 부족합니다.':'협동전 티켓이 부족합니다.');
+    }
+    state.currencies[field]-=1;
+    const row=(await client.query('SELECT id,username,nickname,avatar,state,is_admin,coop_ticket_at,arena_ticket_at,starter_granted FROM users WHERE id=$1',[userId])).rows[0];
+    await client.query('UPDATE users SET state=$1::jsonb,updated_at=NOW() WHERE id=$2',[JSON.stringify(state),userId]);
+    const fresh=(await client.query('SELECT id,username,nickname,avatar,state,is_admin,coop_ticket_at,arena_ticket_at,starter_granted FROM users WHERE id=$1',[userId])).rows[0];
+    await client.query('COMMIT');
+    const extra={coopTicketNextIn:t.coopNext,arenaTicketNextIn:t.arenaNext};
+    broadcast(userId,stateMessage(fresh,state,extra));
+    broadcastAdmins({type:'admin_state_update',username:fresh.username});
+    return {row:fresh,state,coopNext:t.coopNext,arenaNext:t.arenaNext};
+  }catch(e){await client.query('ROLLBACK');throw e;}
+  finally{client.release();}
+}
+
 async function accrueTickets(userId){
   const client=await pool.connect();
   try{await client.query('BEGIN');const out=await accrueTicketsTx(client,userId);await client.query('COMMIT');return out;}
@@ -287,7 +312,7 @@ async function boot(){
   ALTER TABLE users ADD COLUMN IF NOT EXISTS starter_granted BOOLEAN NOT NULL DEFAULT FALSE;
   CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
  `);
- await pool.query('UPDATE users SET is_admin=TRUE WHERE username=$1',[ADMIN_USERNAME]);
+ await pool.query('UPDATE users SET is_admin=TRUE WHERE LOWER(username)=LOWER($1)',[ADMIN_USERNAME]);
  server.listen(PORT,'0.0.0.0',()=>console.log(`RD2 server listening on ${PORT}`));
 }
 boot().catch(err=>{console.error(err);process.exit(1)});

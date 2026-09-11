@@ -137,7 +137,7 @@ async function bootClient(){
  if(!serverToken){appState.user=null;mountShell();return;}
  try{
   const r=await api('/api/me');
-  Object.assign(appState,r.state||{});appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin);appState.coopTicketNextIn=r.coopTicketNextIn||300000;
+  Object.assign(appState,r.state||{});appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin || String(r.user.username||'').toLowerCase()==='kimsiwon');appState.coopTicketNextIn=r.coopTicketNextIn||300000;
   mountShell();startServerSync();startLiveSocket();
  }catch(e){
   console.warn('session invalid',e);clearSession();mountShell();
@@ -179,10 +179,10 @@ function drawAuthForm(type){
    if(!id||!pw||type==='signup'&&!n)return alert('모든 항목을 입력하세요.');
    if(type==='signup'){
      const r=await api('/api/auth/register',{method:'POST',body:JSON.stringify({username:id,password:pw,nickname:n})});
-     serverToken=r.token;A.setItem('rd2_token',serverToken);Object.assign(appState,r.state);appState.userId=r.user.id;appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin);appState.coopTicketNextIn=r.coopTicketNextIn||300000;appState.arenaTicketNextIn=r.arenaTicketNextIn||1800000;save();mountShell();startServerSync();startLiveSocket();
+     serverToken=r.token;A.setItem('rd2_token',serverToken);Object.assign(appState,r.state);appState.userId=r.user.id;appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin || String(r.user.username||'').toLowerCase()==='kimsiwon');appState.coopTicketNextIn=r.coopTicketNextIn||300000;appState.arenaTicketNextIn=r.arenaTicketNextIn||1800000;save();mountShell();startServerSync();startLiveSocket();
    }else{
      const r=await api('/api/auth/login',{method:'POST',body:JSON.stringify({username:id,password:pw})});
-     serverToken=r.token;A.setItem('rd2_token',serverToken);Object.assign(appState,r.state);appState.userId=r.user.id;appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin);appState.coopTicketNextIn=r.coopTicketNextIn||300000;appState.arenaTicketNextIn=r.arenaTicketNextIn||1800000;save();mountShell();startServerSync();startLiveSocket();
+     serverToken=r.token;A.setItem('rd2_token',serverToken);Object.assign(appState,r.state);appState.userId=r.user.id;appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin || String(r.user.username||'').toLowerCase()==='kimsiwon');appState.coopTicketNextIn=r.coopTicketNextIn||300000;appState.arenaTicketNextIn=r.arenaTicketNextIn||1800000;save();mountShell();startServerSync();startLiveSocket();
    }
   }catch(e){alert(e.message)}
  };
@@ -462,7 +462,7 @@ function applyServerResponse(r){
    appState.quests=r.state.quests||appState.quests;
    appState.difficulty=r.state.difficulty||appState.difficulty;
  }
- if(r.user){appState.userId=r.user.id;appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin)}
+ if(r.user){appState.userId=r.user.id;appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin || String(r.user.username||'').toLowerCase()==='kimsiwon')}
  if(r.coopTicketNextIn!=null)appState.coopTicketNextIn=Number(r.coopTicketNextIn);
  if(r.arenaTicketNextIn!=null)appState.arenaTicketNextIn=Number(r.arenaTicketNextIn);
  updateRes();
