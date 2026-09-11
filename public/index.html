@@ -18,7 +18,7 @@ button,input{font:inherit}button{cursor:pointer}
     }
 .stageLobby{width:1200px;height:700px;min-width:1200px;min-height:700px}
 .stageBattle{width:400px;height:900px;min-width:400px;min-height:900px}
-.app{width:1200px;height:700px;min-width:1200px;min-height:700px;overflow:hidden;position:relative;transform-origin:center center;border:2px solid #45345f;border-radius:24px;background:#171024;box-shadow:0 30px 100px #0009}
+.app{width:1200px;height:700px;min-width:1200px;min-height:700px;max-width:none;max-height:none;overflow:hidden;position:relative;transform-origin:center center;border:2px solid #45345f;border-radius:24px;background:#171024;box-shadow:0 30px 100px #0009}
 .view{position:absolute;inset:0;display:none;overflow:hidden}.view.active{display:block;overflow:hidden}
 .top{height:68px;background:#241935;border-bottom:1px solid #493863;display:flex;align-items:center;padding:8px 10px;gap:7px;z-index:20}
 .brand{font-weight:1000;font-size:21px}.brand small{display:block;color:#9e90ba;font-size:9px;letter-spacing:1px}
@@ -218,8 +218,8 @@ button,input{font:inherit}button{cursor:pointer}
 .resourceBar{display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden}
 .resourceBar .chip{flex:0 0 auto}
 @media(max-width:700px){
-  .stageLobby{width:430px!important;height:900px!important;min-width:430px!important;min-height:900px!important}
-  .stageBattle{width:430px!important;height:900px!important;min-width:430px!important;min-height:900px!important}
+  .stageLobby{width:412px!important;height:900px!important;min-width:412px!important;min-height:900px!important}
+  .stageBattle{width:412px!important;height:900px!important;min-width:412px!important;min-height:900px!important}
   .body{display:block;height:calc(100% - 62px);overflow:hidden}
   .side{display:none!important}
   .top{height:62px;padding:6px 7px;gap:4px}
@@ -227,7 +227,7 @@ button,input{font:inherit}button{cursor:pointer}
   .brand small{display:none}
   .res{display:none}
   .profileBtn{font-size:9px;margin-left:auto}
-  .main{height:calc(100% - 62px);padding:10px 9px;overflow:hidden}
+  .main{height:calc(100% - 62px);padding:10px 9px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
   .hero{display:flex;flex-direction:column;gap:7px;min-height:0}
   .heroCard{min-height:165px;padding:14px}
   .modeCard{min-height:0;padding:10px}
@@ -281,9 +281,9 @@ function fitStage(mode){
 
   let logicalW,logicalH;
   if(mobile){
-    logicalW=430; logicalH=900; // all mobile screens are portrait
+    logicalW=412; logicalH=900;
   }else{
-    logicalW=1200; logicalH=700; // all desktop screens are landscape
+    logicalW=1200; logicalH=700;
   }
 
   app.classList.toggle('stageBattle',battle);
@@ -291,7 +291,7 @@ function fitStage(mode){
 
   const vw=Math.max(1,window.innerWidth);
   const vh=Math.max(1,window.innerHeight);
-  const margin=mobile?2:8;
+  const margin=mobile?6:8;
   const scale=Math.min((vw-margin*2)/logicalW,(vh-margin*2)/logicalH);
 
   app.style.width=logicalW+'px';

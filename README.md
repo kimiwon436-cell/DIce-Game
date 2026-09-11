@@ -76,3 +76,10 @@ v15: fixed missing fitStage declaration order and enforced desktop/mobile fixed 
 - Mobile: every screen uses a portrait logical canvas.
 - The entire canvas scales uniformly to fit both width and height; no page scrolling.
 - Lobby quick-access menus use compact icon + text buttons instead of large cards.
+
+
+## v19
+- Lobby content is scrollable again.
+- Gameplay remains fixed with no page scroll.
+- Mobile logical canvas reduced from 430px to 412px wide with extra viewport margin to prevent right-edge clipping.
+- Mobile lobby supports vertical scrolling while hiding horizontal overflow.
