@@ -55,3 +55,10 @@ v14: fitStage is defined before all callers and mobile/desktop view fitting uses
 
 
 v15: fixed missing fitStage declaration order and enforced desktop/mobile fixed logical canvases with uniform scaling; battle portrait and lobby landscape.
+
+
+## v16 mobile fit
+- Mobile uses the same logical canvas as desktop, but scales the entire canvas uniformly to the viewport.
+- No horizontal clipping and no document/page scrolling.
+- A small safety margin prevents edge clipping on phones with browser UI/safe areas.
+- Lobby and gameplay retain their logical layouts; only the scale changes per viewport.
