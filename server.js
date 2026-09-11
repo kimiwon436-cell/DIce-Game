@@ -31,24 +31,13 @@ const MATCH_WAIT_MS = 30 * 1000;
 const DEFAULT_STATE = {
   profile: { nickname: '', avatar: '🎲' },
   currencies: { coin: 100, dice: 0, diamond: 0, arenaTicket: 1, coopTicket: 5 },
-  deck: ['blue','blue','blue','blue','blue'],
-  unlocked: [], treeUnlocked: [], diceLevels: {}, treeLevels: {allDamage:1,attackSpeed:1,spGain:1},
+  deck: ['blue','cyan','red','green','yellow'],
+  unlocked: ['blue','cyan','red','green','yellow'], treeUnlocked: [], diceLevels: {blue:1,cyan:1,red:1,green:1,yellow:1}, traitLevels: {}, treeLevels: {allDamage:1,attackSpeed:1,spGain:1},
   passXP: 0, passRewardsClaimed: [], lucky: 0,
   quests: [0,0,0], difficulty: 'normal'
 };
 
-const PASS_REWARDS = [
-  {xp:10,label:'코인 200',field:'coin',amount:200},
-  {xp:20,label:'주사위 50',field:'dice',amount:50},
-  {xp:30,label:'보석 10',field:'diamond',amount:10},
-  {xp:40,label:'행운의 주사위 1',field:'lucky',amount:1},
-  {xp:50,label:'협동전 티켓 1',field:'coopTicket',amount:1},
-  {xp:60,label:'코인 500',field:'coin',amount:500},
-  {xp:70,label:'주사위 100',field:'dice',amount:100},
-  {xp:80,label:'보석 20',field:'diamond',amount:20},
-  {xp:90,label:'행운의 주사위 2',field:'lucky',amount:2},
-  {xp:100,label:'코인 1000',field:'coin',amount:1000}
-];
+const PASS_REWARDS = Array.from({length:50},(_,i)=>({xp:(i+1)*10,label:i%5===4?`주사위 ${20+i*5}`:(i%3===0?`코인 ${(i+1)*100}`:`협동전 티켓 1`),field:i%5===4?'dice':(i%3===0?'coin':'coopTicket'),amount:i%5===4?20+i*5:(i%3===0?(i+1)*100:1)}));
 
 function clone(v){return JSON.parse(JSON.stringify(v));}
 function tokenFor(user){return jwt.sign({id:user.id,username:user.username},JWT_SECRET,{expiresIn:'30d'});}
@@ -70,12 +59,13 @@ function cleanState(raw){
       arenaTicket:Math.max(0,Math.floor(Number(s.currencies?.arenaTicket??DEFAULT_STATE.currencies.arenaTicket))),
       coopTicket:Math.max(0,Math.floor(Number(s.currencies?.coopTicket??DEFAULT_STATE.currencies.coopTicket)))
     },
-    deck:Array.isArray(s.deck)?s.deck.slice(0,5):clone(DEFAULT_STATE.deck),
-    unlocked:Array.isArray(s.unlocked)?[...new Set(s.unlocked)].slice(0,100):[],
+    deck:(()=>{const src=Array.isArray(s.deck)?s.deck:[];const out=[];for(const x of src){if(typeof x==='string'&&!out.includes(x))out.push(x);if(out.length>=5)break;}for(const x of DEFAULT_STATE.deck)if(!out.includes(x)&&out.length<5)out.push(x);return out;})(),
+    unlocked:(()=>{const src=Array.isArray(s.unlocked)?s.unlocked:[];const out=[];for(const x of src){if(typeof x==='string'&&!out.includes(x))out.push(x);if(out.length>=20)break;}for(const x of DEFAULT_STATE.unlocked)if(!out.includes(x)&&out.length<20)out.push(x);return out;})(),
     treeUnlocked:Array.isArray(s.treeUnlocked)?[...new Set(s.treeUnlocked)].slice(0,100):[],
-    diceLevels:s.diceLevels&&typeof s.diceLevels==='object'?s.diceLevels:{},
+    diceLevels:s.diceLevels&&typeof s.diceLevels==='object'?s.diceLevels:{blue:1,cyan:1,red:1,green:1,yellow:1},
+    traitLevels:s.traitLevels&&typeof s.traitLevels==='object'?s.traitLevels:{},
     treeLevels:s.treeLevels&&typeof s.treeLevels==='object'?{allDamage:Math.max(1,Math.min(50,Math.floor(Number(s.treeLevels.allDamage||1)))),attackSpeed:Math.max(1,Math.min(50,Math.floor(Number(s.treeLevels.attackSpeed||1)))),spGain:Math.max(1,Math.min(50,Math.floor(Number(s.treeLevels.spGain||1))))}:{allDamage:1,attackSpeed:1,spGain:1},
-    passXP:Math.max(0,Math.min(100,Math.floor(Number(s.passXP??0)))),
+    passXP:Math.max(0,Math.min(500,Math.floor(Number(s.passXP??0)))),
     passRewardsClaimed:Array.isArray(s.passRewardsClaimed)?[...new Set(s.passRewardsClaimed.map(Number).filter(Number.isInteger))]:[],
     lucky:Math.max(0,Math.floor(Number(s.lucky??0))),
     quests:Array.isArray(s.quests)?s.quests.slice(0,20).map(Number):[0,0,0],
@@ -189,23 +179,16 @@ app.put('/api/me/profile',auth,async(req,res)=>{const nickname=String(req.body.n
 
 
 // ---------------- Dice Tree ----------------
-const TREE_NODES = [
- {id:0,next:[1,2]},
- {id:1,type:'blue',next:[3,4]}, {id:2,type:'cyan',next:[5,6]},
- {id:3,type:'red',next:[7]}, {id:4,upgrade:'allDamage',next:[7,8]},
- {id:5,type:'green',next:[8]}, {id:6,type:'yellow',next:[9]},
- {id:7,type:'pink',next:[10]}, {id:8,upgrade:'attackSpeed',next:[10,11]},
- {id:9,type:'purple',next:[11]}, {id:10,upgrade:'allDamage',next:[12]},
- {id:11,upgrade:'spGain',next:[12]}, {id:12,type:'yellow',next:[13]},
- {id:13,upgrade:'allDamage',next:[]}
-];
-const TREE_TYPES = new Set(['blue','cyan','red','green','yellow','pink','purple']);
+const TREE_NODES=[{id:0,next:[1,2]},{id:1,type:'blue',next:[3,4]},{id:2,type:'cyan',next:[5,6]},{id:3,type:'red',next:[7,8]},{id:4,type:'green',next:[8,9]},{id:5,type:'yellow',next:[9,10]},{id:6,type:'pink',next:[10,11]},{id:7,type:'purple',next:[11,12]},{id:8,type:'orange',next:[13]},{id:9,type:'black',next:[13,14]},{id:10,type:'white',next:[14,15]},{id:11,type:'silver',next:[15,16]},{id:12,type:'gold',next:[16,17]},{id:13,type:'aqua',next:[17]},{id:14,type:'violet',next:[18]},{id:15,type:'lime',next:[18]},{id:16,type:'navy',next:[19]},{id:17,type:'coral',next:[19]},{id:18,type:'mint',next:[20]},{id:19,type:'rose',next:[21]},{id:20,type:'prism',next:[21]},{id:21,type:'cosmic',next:[]}];
+const TREE_TYPES = new Set(['blue','cyan','red','green','yellow','pink','purple','orange','black','white','silver','gold','aqua','violet','lime','navy','coral','mint','rose','prism','cosmic']);
 const TREE_UPGRADES = new Set(['allDamage','attackSpeed','spGain']);
 function treeNodeById(id){return TREE_NODES.find(n=>n.id===Number(id));}
 function treeParentFor(id){return TREE_NODES.find(n=>n.next.includes(Number(id)));}
 function treeUpgradeCostServer(level){const lv=Math.max(1,Number(level)||1);if(lv>=50)return {coin:0,dice:0};const next=lv+1;return next%5===0?{coin:0,dice:8}:{coin:Math.max(100,Math.floor(75*lv*1.15)),dice:0};}
 function treeStatePayload(state){const clean=cleanState(state);if(!Array.isArray(clean.treeUnlocked))clean.treeUnlocked=[];if(!clean.diceLevels)clean.diceLevels={};if(!clean.treeLevels)clean.treeLevels={allDamage:1,attackSpeed:1,spGain:1};return clean;}
 app.post('/api/tree/unlock',auth,async(req,res)=>{const nodeId=Number(req.body.nodeId),node=treeNodeById(nodeId);if(!node||node.id===0)return res.status(400).json({error:'해금할 수 없는 트리 노드입니다.'});const client=await pool.connect();try{await client.query('BEGIN');const ticketed=await accrueTicketsTx(client,req.auth.id);if(!ticketed)throw new Error('계정을 찾을 수 없습니다.');const state=treeStatePayload(ticketed.state);if(state.treeUnlocked.includes(nodeId))throw new Error('이미 해금된 노드입니다.');const parent=treeParentFor(nodeId);if(!parent||(parent.id!==0&&!state.treeUnlocked.includes(parent.id)))throw new Error('먼저 연결된 앞의 노드를 해금하세요.');if(state.currencies.dice<8)throw new Error('주사위 재화가 부족합니다. 해금에는 8개가 필요합니다.');state.currencies.dice-=8;state.treeUnlocked.push(nodeId);if(node.type&&TREE_TYPES.has(node.type)){if(!state.unlocked.includes(node.type))state.unlocked.push(node.type);if(!state.diceLevels[node.type])state.diceLevels[node.type]=1;}if(node.upgrade&&!state.treeLevels[node.upgrade])state.treeLevels[node.upgrade]=1;await client.query('UPDATE users SET state=$1::jsonb,updated_at=NOW() WHERE id=$2',[JSON.stringify(state),req.auth.id]);const row=(await client.query('SELECT id,username,nickname,avatar,state,is_admin,coop_ticket_at,arena_ticket_at,starter_granted FROM users WHERE id=$1',[req.auth.id])).rows[0];await client.query('COMMIT');const extra={coopTicketNextIn:ticketed.coopNext,arenaTicketNextIn:ticketed.arenaNext};broadcast(req.auth.id,stateMessage(row,state,extra));broadcastAdmins({type:'admin_state_update',username:row.username});res.json({ok:true,state,coopTicketNextIn:ticketed.coopNext,arenaTicketNextIn:ticketed.arenaNext});}catch(e){await client.query('ROLLBACK');res.status(400).json({error:e.message||'다이스 트리 해금 실패'});}finally{client.release();}});
+app.post('/api/dice/trait',auth,async(req,res)=>{const type=String(req.body.type||'');const TRAITS={blue:'공격력 강화',cyan:'빙결 강화',red:'치명타 강화',green:'독 피해 강화',yellow:'공격 범위 강화',pink:'분열 강화',purple:'성장 강화',orange:'연쇄 번개 강화',black:'암흑 피해 강화',white:'성스러운 방어',silver:'철벽 생존',gold:'코인 획득 강화',aqua:'파동 범위 강화',violet:'공허 피해 강화',lime:'회복 강화',navy:'폭격 강화',coral:'산호 피해 강화',mint:'지속 피해 강화',rose:'치명타 강화 II',prism:'무지개 피해 강화',cosmic:'우주 피해 강화'};if(!TRAITS[type])return res.status(400).json({error:'지원하지 않는 주사위입니다.'});const client=await pool.connect();try{await client.query('BEGIN');const t=await accrueTicketsTx(client,req.auth.id);if(!t)throw new Error('계정을 찾을 수 없습니다.');const state=cleanState(t.state);const lv=Math.max(0,Math.floor(Number(state.diceLevels[type]||0)));if(!state.unlocked.includes(type))throw new Error('먼저 주사위를 해금하세요.');if(lv<10)throw new Error('다이스 트리에서 이 주사위를 10레벨까지 올려야 특성을 구매할 수 있습니다.');const current=Math.max(0,Math.floor(Number(state.traitLevels?.[type]||0)));if(current>=5)throw new Error('특성은 최대 5단계입니다.');const cost=500*(current+1);if(state.currencies.coin<cost)throw new Error(`특성 구매에는 코인 ${cost}개가 필요합니다.`);state.currencies.coin-=cost;state.traitLevels[type]=current+1;await client.query('UPDATE users SET state=$1::jsonb,updated_at=NOW() WHERE id=$2',[JSON.stringify(state),req.auth.id]);const row=(await client.query('SELECT id,username,nickname,avatar,state,is_admin,coop_ticket_at,arena_ticket_at,starter_granted FROM users WHERE id=$1',[req.auth.id])).rows[0];await client.query('COMMIT');broadcast(req.auth.id,stateMessage(row,state,{coopTicketNextIn:t.coopNext,arenaTicketNextIn:t.arenaNext}));res.json({ok:true,state,trait:{type,label:TRAITS[type],level:current+1},coopTicketNextIn:t.coopNext,arenaTicketNextIn:t.arenaNext});}catch(e){await client.query('ROLLBACK');res.status(400).json({error:e.message||'특성 구매 실패'});}finally{client.release();}});
+
 app.post('/api/tree/upgrade',auth,async(req,res)=>{const key=String(req.body.type||'');if(!TREE_TYPES.has(key)&&!TREE_UPGRADES.has(key))return res.status(400).json({error:'지원하지 않는 업그레이드입니다.'});const client=await pool.connect();try{await client.query('BEGIN');const ticketed=await accrueTicketsTx(client,req.auth.id);if(!ticketed)throw new Error('계정을 찾을 수 없습니다.');const state=treeStatePayload(ticketed.state);let level; if(TREE_TYPES.has(key)){if(!state.unlocked.includes(key))throw new Error('먼저 다이스 트리에서 이 주사위를 해금하세요.');level=Math.max(1,Math.floor(Number(state.diceLevels[key]||1)));}else{const node=state.treeUnlocked.map(treeNodeById).find(n=>n&&n.upgrade===key);if(!node)throw new Error('먼저 다이스 트리에서 이 업그레이드를 해금하세요.');level=Math.max(1,Math.floor(Number(state.treeLevels[key]||1)));}if(level>=50)throw new Error('이미 50레벨입니다.');const cost=treeUpgradeCostServer(level);if(cost.dice&&state.currencies.dice<cost.dice)throw new Error(`레벨 ${level+1} 업그레이드에는 주사위 재화 ${cost.dice}개가 필요합니다.`);if(cost.coin&&state.currencies.coin<cost.coin)throw new Error(`레벨 ${level+1} 업그레이드에는 코인 ${cost.coin}개가 필요합니다.`);if(cost.dice)state.currencies.dice-=cost.dice;if(cost.coin)state.currencies.coin-=cost.coin;if(TREE_TYPES.has(key))state.diceLevels[key]=level+1;else state.treeLevels[key]=level+1;await client.query('UPDATE users SET state=$1::jsonb,updated_at=NOW() WHERE id=$2',[JSON.stringify(state),req.auth.id]);const row=(await client.query('SELECT id,username,nickname,avatar,state,is_admin,coop_ticket_at,arena_ticket_at,starter_granted FROM users WHERE id=$1',[req.auth.id])).rows[0];await client.query('COMMIT');const extra={coopTicketNextIn:ticketed.coopNext,arenaTicketNextIn:ticketed.arenaNext};broadcast(req.auth.id,stateMessage(row,state,extra));broadcastAdmins({type:'admin_state_update',username:row.username});res.json({ok:true,state,upgrade:{type:key,fromLevel:level,toLevel:level+1,label:TREE_UPGRADES.has(key)?'전역 업그레이드 레벨 '+(level+1):(key+' 레벨 '+(level+1))},coopTicketNextIn:ticketed.coopNext,arenaTicketNextIn:ticketed.arenaNext});}catch(e){await client.query('ROLLBACK');res.status(400).json({error:e.message||'다이스 업그레이드 실패'});}finally{client.release();}});
 
 // ---------------- Matchmaking ----------------
@@ -224,7 +207,7 @@ async function adminTarget(username){const {rows}=await pool.query('SELECT id,us
 async function adminOrSystemAdjust(userId,field,delta,notify=true){
  const client=await pool.connect();try{await client.query('BEGIN');const t=await accrueTicketsTx(client,userId);if(!t)throw new Error('계정을 찾을 수 없습니다.');const s=cleanState(t.state);
    const isPass=field==='passXP', isLucky=field==='lucky';
-   if(isPass)s.passXP=Math.max(0,Math.min(100,s.passXP+Math.floor(Number(delta))));
+   if(isPass)s.passXP=Math.max(0,Math.min(500,s.passXP+Math.floor(Number(delta))));
    else if(isLucky)s.lucky=Math.max(0,s.lucky+Math.floor(Number(delta)));
    else if(['coin','dice','diamond','arenaTicket','coopTicket'].includes(field)){const v=s.currencies[field]+Math.floor(Number(delta));if(v<0)throw new Error('재화는 0보다 작아질 수 없습니다.');s.currencies[field]=v;}
    else throw new Error('지원하지 않는 재화입니다.');
@@ -234,7 +217,7 @@ async function adminOrSystemAdjust(userId,field,delta,notify=true){
  }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}}
 async function adminSetValue(userId,field,value){
  const client=await pool.connect();try{await client.query('BEGIN');const t=await accrueTicketsTx(client,userId);if(!t)throw new Error('계정을 찾을 수 없습니다.');const s=cleanState(t.state);const v=Math.floor(Number(value));if(v<0||!Number.isFinite(v))throw new Error('설정값은 0 이상의 정수여야 합니다.');
-   if(field==='passXP')s.passXP=Math.min(100,v);
+   if(field==='passXP')s.passXP=Math.min(500,v);
    else if(field==='lucky')s.lucky=v;
    else if(['coin','dice','diamond','arenaTicket','coopTicket'].includes(field))s.currencies[field]=v;
    else throw new Error('지원하지 않는 재화입니다.');
@@ -248,7 +231,7 @@ app.post('/api/admin/users/:username/set-currency',auth,requireAdmin,async(req,r
 
 // ---------------- Lucky + Dice Pass ----------------
 app.post('/api/lucky/use',auth,async(req,res)=>{
- const client=await pool.connect();try{await client.query('BEGIN');const t=await accrueTicketsTx(client,req.auth.id);if(!t)throw new Error('계정을 찾을 수 없습니다.');const s=cleanState(t.state);if(s.lucky<1)throw new Error('행운의 주사위가 없습니다.');s.lucky-=1;const r=Math.floor(Math.random()*3);let reward;if(r===0){s.currencies.coin+=2000;reward={label:'🍀 코인 2,000 획득!'};}else if(r===1){s.currencies.dice+=1200;reward={label:'🍀 주사위 1,200 획득!'};}else{s.passXP=Math.min(100,s.passXP+10);reward={label:'🍀 다이스 패스 XP +10!'};}
+ const client=await pool.connect();try{await client.query('BEGIN');const t=await accrueTicketsTx(client,req.auth.id);if(!t)throw new Error('계정을 찾을 수 없습니다.');const s=cleanState(t.state);if(s.lucky<1)throw new Error('행운의 주사위가 없습니다.');s.lucky-=1;const r=Math.floor(Math.random()*3);let reward;if(r===0){s.currencies.coin+=2000;reward={label:'🍀 코인 2,000 획득!'};}else if(r===1){s.currencies.dice+=1200;reward={label:'🍀 주사위 1,200 획득!'};}else{s.passXP=Math.min(500,s.passXP+10);reward={label:'🍀 다이스 패스 XP +10!'};}
  await client.query('UPDATE users SET state=$1::jsonb,updated_at=NOW() WHERE id=$2',[JSON.stringify(s),req.auth.id]);const row=(await client.query('SELECT * FROM users WHERE id=$1',[req.auth.id])).rows[0];await client.query('COMMIT');broadcast(req.auth.id,stateMessage(row,s,{coopTicketNextIn:t.coopNext,arenaTicketNextIn:t.arenaNext}));broadcastAdmins({type:'admin_state_update',username:row.username});res.json({ok:true,state:s,reward,coopTicketNextIn:t.coopNext,arenaTicketNextIn:t.arenaNext});
  }catch(e){await client.query('ROLLBACK');res.status(400).json({error:e.message||'사용 실패'});}finally{client.release();}}
 );
