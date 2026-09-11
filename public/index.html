@@ -493,6 +493,30 @@ window.addEventListener('error',e=>{
 const A=localStorage;
 const API_BASE='';
 let serverToken=A.getItem('rd2_token')||'';
+// Canonical dice catalog. This must be defined before any renderer uses D[type].
+const D={
+ blue:{name:'바람 주사위',icon:'◉',cls:'d-blue',damage:55},
+ cyan:{name:'얼음 주사위',icon:'❄',cls:'d-cyan',damage:48},
+ red:{name:'화염 주사위',icon:'●',cls:'d-red',damage:62},
+ green:{name:'독 주사위',icon:'☠',cls:'d-green',damage:52},
+ yellow:{name:'빛 주사위',icon:'✦',cls:'d-yellow',damage:58},
+ pink:{name:'분열 주사위',icon:'✤',cls:'d-pink',damage:45},
+ purple:{name:'성장 주사위',icon:'✧',cls:'d-purple',damage:42},
+ orange:{name:'번개 주사위',icon:'ϟ',cls:'d-orange',damage:70},
+ black:{name:'암흑 주사위',icon:'●',cls:'d-black',damage:78},
+ white:{name:'성스러움 주사위',icon:'✧',cls:'d-white',damage:65},
+ silver:{name:'철벽 주사위',icon:'■',cls:'d-silver',damage:35},
+ gold:{name:'금빛 주사위',icon:'◆',cls:'d-gold',damage:50},
+ aqua:{name:'파동 주사위',icon:'≈',cls:'d-aqua',damage:60},
+ violet:{name:'공허 주사위',icon:'◌',cls:'d-violet',damage:74},
+ lime:{name:'회복 주사위',icon:'+',cls:'d-lime',damage:38},
+ navy:{name:'폭격 주사위',icon:'✹',cls:'d-navy',damage:84},
+ coral:{name:'산호 주사위',icon:'❋',cls:'d-coral',damage:57},
+ mint:{name:'민트 주사위',icon:'❈',cls:'d-mint',damage:46},
+ rose:{name:'장미 주사위',icon:'✿',cls:'d-rose',damage:68},
+ prism:{name:'무지개 주사위',icon:'✧',cls:'d-prism',damage:72},
+ cosmic:{name:'우주 주사위',icon:'✦',cls:'d-cosmic',damage:95}
+};
 const DEFAULT_CLIENT_STATE={
  user:null,page:'lobby',mode:'coop',matching:false,matchSec:0,matchTimer:null,
  sp:0,wave:1,gameSec:20,speed:1,kills:0,diceGrid:[],selected:null,enemies:[],
@@ -766,8 +790,8 @@ function drawLobby(){
  const pos={1:['c'],2:['tl','br'],3:['tl','c','br'],4:['tl','tr','bl','br'],5:['tl','tr','c','bl','br'],6:['tl','tr','ml','mr','bl','br']}[r];
  return `<div class="pips">${pos.map(x=>`<i class="pip ${x}"></i>`).join('')}</div>`;
 }
-function diceHTML(type,lvl=1){const d=D[type]||D.blue;return `<div class="dice ${d.cls}">${d.icon}<small>Lv.${Math.max(1,Math.min(50,Number(lvl)||1))}</small></div>`;}
-function battleDiceHTML(die,selected=false){if(!die)return '';const d=D[die.type]||D.blue,r=Math.max(1,Math.min(7,Number(die.rank)||1));if(r>=7)return `<div class="dice battleDie ${d.cls} ${selected?'battleSelected':''}" title="7성 · 합성 불가"><div class="starMark">★</div></div>`;return `<div class="dice battleDie ${d.cls} ${selected?'battleSelected':''}" title="${d.name} · ${r}성">${battlePips(r)}</div>`;}
+function diceHTML(type,lvl=1){const d=D[type]||D.blue||{cls:'d-blue',icon:'◉',name:'바람 주사위',damage:50};return `<div class="dice ${d.cls}">${d.icon}<small>Lv.${Math.max(1,Math.min(50,Number(lvl)||1))}</small></div>`;}
+function battleDiceHTML(die,selected=false){if(!die)return '';const d=D[die.type]||D.blue||{cls:'d-blue',icon:'◉',name:'바람 주사위',damage:50},r=Math.max(1,Math.min(7,Number(die.rank)||1));if(r>=7)return `<div class="dice battleDie ${d.cls} ${selected?'battleSelected':''}" title="7성 · 합성 불가"><div class="starMark">★</div></div>`;return `<div class="dice battleDie ${d.cls} ${selected?'battleSelected':''}" title="${d.name} · ${r}성">${battlePips(r)}</div>`;}
 function upgradeCost(level){const lv=Math.max(1,Number(level)||1);if(lv>=50)return {coin:0,dice:0};const next=lv+1;return next%5===0?{coin:0,dice:8}:{coin:Math.max(100,Math.floor(75*lv*1.15)),dice:0};}
 function upgradeCostText(level){const c=upgradeCost(level);return c.dice?`🎲 ${c.dice}`:`🪙 ${c.coin}`;}
 function battleUpgradeCost(level){return 50+Math.max(0,level)*50;}
