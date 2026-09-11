@@ -26,7 +26,7 @@ button,input{font:inherit}button{cursor:pointer}
 .topsp{flex:1}
 .topbtn{border:1px solid #614b83;background:#302347;color:#fff;border-radius:9px;padding:7px 8px;font-weight:900;font-size:10px}
 .profileBtn{display:flex;align-items:center;gap:5px;font-size:10px;padding:5px 6px}.avatar{width:27px;height:27px;border-radius:9px;background:linear-gradient(145deg,#78e7ff,#7d63ff);display:grid;place-items:center;font-size:14px}
-.body{height:calc(100% - 68px);display:grid;grid-template-columns:126px 1fr;overflow:hidden}
+.body{height:calc(100% - 68px);display:grid;grid-template-columns:118px 1fr;overflow:hidden}
 .side{
       padding:10px 7px;
       background:#1a1229;
@@ -201,6 +201,52 @@ button,input{font:inherit}button{cursor:pointer}
   .profileBtn .avatar{width:24px;height:24px}
 }
 
+
+.quickNav{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:3px;
+}
+.quickNav button{
+  border:0;background:transparent;color:#e7e0f2;padding:4px 2px;border-radius:9px;
+  font-weight:900;font-size:8px;min-height:48px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;
+}
+.quickNav button:hover{background:#2b2040}
+.quickNav .qicon{font-size:18px;line-height:1}
+.quickNav .qtext{font-size:8px;white-space:nowrap}
+.deckStrip{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.deckStrip .dice{width:46px;max-width:100%;margin:auto}
+.resourceBar{display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden}
+.resourceBar .chip{flex:0 0 auto}
+@media(max-width:700px){
+  .stageLobby{width:430px!important;height:900px!important;min-width:430px!important;min-height:900px!important}
+  .stageBattle{width:430px!important;height:900px!important;min-width:430px!important;min-height:900px!important}
+  .body{display:block;height:calc(100% - 62px);overflow:hidden}
+  .side{display:none!important}
+  .top{height:62px;padding:6px 7px;gap:4px}
+  .brand{font-size:15px;white-space:nowrap}
+  .brand small{display:none}
+  .res{display:none}
+  .profileBtn{font-size:9px;margin-left:auto}
+  .main{height:calc(100% - 62px);padding:10px 9px;overflow:hidden}
+  .hero{display:flex;flex-direction:column;gap:7px;min-height:0}
+  .heroCard{min-height:165px;padding:14px}
+  .modeCard{min-height:0;padding:10px}
+  .mode{padding:7px;margin-bottom:4px}
+  .modeCard h3{margin:0 0 5px}
+  .bigLogo{font-size:30px}
+  .play{margin-top:10px;padding:12px 22px}
+  .section{margin-top:7px}
+  .sectionHead{margin-bottom:5px}
+  .quickNav{grid-template-columns:repeat(4,1fr);gap:2px}
+  .quickNav button{min-height:48px;padding:3px 1px}
+  .quickNav .qicon{font-size:17px}
+  .quickNav .qtext{font-size:7px}
+  .deckStrip{gap:5px}
+  .deckStrip .dice{width:43px}
+  .resourceBar{gap:3px}
+  .resourceBar .chip{font-size:8px;padding:4px 5px}
+}
+
 </style>
 </head>
 <body>
@@ -230,24 +276,23 @@ const appState=DEFAULT_CLIENT_STATE;
 function fitStage(mode){
   const app=document.querySelector('.app');
   if(!app)return;
+  const mobile=window.innerWidth<=700;
   const battle=(mode==='battle');
+
+  let logicalW,logicalH;
+  if(mobile){
+    logicalW=430; logicalH=900; // all mobile screens are portrait
+  }else{
+    logicalW=1200; logicalH=700; // all desktop screens are landscape
+  }
+
   app.classList.toggle('stageBattle',battle);
   app.classList.toggle('stageLobby',!battle);
 
-  const logicalW=battle?400:1200;
-  const logicalH=battle?900:700;
-
-  const root=document.getElementById('root');
-  const vw=Math.max(1, root?.clientWidth || window.innerWidth);
-  const vh=Math.max(1, root?.clientHeight || window.innerHeight);
-
-  // Leave a tiny safety margin so no edge is clipped on phones with
-  // browser chrome / safe-area insets.
-  const margin=8;
-  const scale=Math.min(
-    (vw-margin*2)/logicalW,
-    (vh-margin*2)/logicalH
-  );
+  const vw=Math.max(1,window.innerWidth);
+  const vh=Math.max(1,window.innerHeight);
+  const margin=mobile?2:8;
+  const scale=Math.min((vw-margin*2)/logicalW,(vh-margin*2)/logicalH);
 
   app.style.width=logicalW+'px';
   app.style.height=logicalH+'px';
@@ -256,7 +301,7 @@ function fitStage(mode){
   app.style.maxWidth='none';
   app.style.maxHeight='none';
   app.style.transformOrigin='center center';
-  app.style.transform='scale('+Math.max(0.20,scale)+')';
+  app.style.transform='scale('+Math.max(.2,scale)+')';
 }
 window.addEventListener('resize',function(){
   fitStage(document.getElementById('page-battle')?.classList.contains('active')?'battle':'lobby');
@@ -386,19 +431,49 @@ function sidebar(){return `<button class="nav active" onclick="nav('lobby')"><i>
  <div class="sideBottom"><div class="mini">현재 로그인: <b>${esc(appState.profile.nickname)}</b><br>협동전 티켓은 서버에서 <b>5분마다 +1</b>, 아레나 티켓은 <b>30분마다 +1</b> 지급됩니다.<br><span id="sideTicketTimer"></span><br><span id="sideArenaTimer"></span></div></div>`}
 function drawLobby(){
  const m=document.getElementById('main');if(!m)return;
- m.innerHTML=`<div class="hero"><div class="heroCard"><div class="muted">협동전</div><div class="bigLogo">함께 막아내자</div><div class="sub">플레이를 누르면 온라인 매칭을 시작합니다.</div><button class="play" onclick="startMatch()">▶ 플레이</button><div class="smallHint">모드 입장 시 협동전 티켓 1장 사용 · 매칭 → 로딩 → 전투 시작</div></div>
- <div class="modeCard"><h3>게임 모드</h3><div class="mode sel"><div><b>🤝 협동전</b><span>다른 플레이어와 몬스터를 함께 막는 모드</span></div><button onclick="startMatch()">플레이</button></div><div class="mode"><div><b>⚔️ 대전</b><span>각자의 길에서 먼저 기지가 파괴되면 패배</span></div><button onclick="startMatch(false,'battle')">플레이</button></div><div class="mode"><div><b>👥 친구와 하기</b><span>방 생성 / 코드 참가 / 준비</span></div><button onclick="openFriends()">열기</button></div></div></div>
- <div class="section"><div class="sectionHead"><h2>로비 바로가기</h2><span>전투 밖에서 관리하는 메뉴</span></div><div class="cardgrid">
-  <div class="tile"><h3>🎴 덱</h3><p>전투에 가져갈 주사위 5개를 선택합니다.</p><button onclick="nav('deck')">덱 관리</button></div>
-  <div class="tile"><h3>🌳 다이스 트리</h3><p>주사위를 해금하고 레벨 업그레이드까지 모두 여기서 관리합니다.</p><button onclick="nav('tree')">트리 열기</button></div>
-  <div class="tile"><h3>🎨 꾸미기</h3><p>프로필 아이콘과 보드 스킨을 관리합니다.</p><button onclick="nav('style')">꾸미기</button></div>
-  <div class="tile"><h3>📜 퀘스트</h3><p>로비에서 진행도를 확인하고 보상을 수령합니다.</p><button onclick="nav('quests')">퀘스트</button></div>
-  <div class="tile"><h3>🎫 다이스 패스</h3><p>경험치를 모아 단계별 무료 보상을 받습니다.</p><button onclick="nav('pass')">패스 보기</button></div>
-  <div class="tile"><h3>🍀 행운의 주사위</h3><p>주사위 재화를 소모해 랜덤 보너스를 뽑습니다.</p><button onclick="openLucky()">행운 사용</button></div>
- </div></div>
- <div class="section"><div class="sectionHead"><h2>내 덱</h2><span>전투에서 사용 · SP는 인게임 전용</span></div><div class="deck">${appState.deck.map((x,i)=>diceHTML(x,i+1)).join('')}</div></div>`;
-}
-function diceHTML(type,lvl=1){
+ m.innerHTML=`
+ <div class="hero">
+   <div class="heroCard">
+     <div class="muted">협동전</div>
+     <div class="bigLogo">함께 막아내자</div>
+     <div class="sub">플레이를 누르면 온라인 매칭을 시작합니다.</div>
+     <button class="play" onclick="startMatch()">▶ 플레이</button>
+     <div class="smallHint">협동전 티켓 1장 · 매칭 → 로딩 → 전투 시작</div>
+   </div>
+   <div class="modeCard">
+     <h3>게임 모드</h3>
+     <div class="mode sel"><div><b>🤝 협동전</b><span>다른 플레이어와 함께</span></div><button onclick="startMatch()">플레이</button></div>
+     <div class="mode"><div><b>⚔️ 대전</b><span>각자의 길 · 먼저 파괴되면 패배</span></div><button onclick="startMatch()">플레이</button></div>
+     <div class="mode"><div><b>👥 친구와 하기</b><span>방 생성 / 코드 참가</span></div><button onclick="openFriends()">열기</button></div>
+   </div>
+ </div>
+ <div class="section">
+   <div class="sectionHead"><h2>로비 메뉴</h2><span>아이콘 + 텍스트</span></div>
+   <div class="quickNav">
+     <button onclick="nav('deck')"><span class="qicon">🎴</span><span class="qtext">덱</span></button>
+     <button onclick="nav('tree')"><span class="qicon">🌳</span><span class="qtext">다이스 트리</span></button>
+     <button onclick="nav('style')"><span class="qicon">🎨</span><span class="qtext">꾸미기</span></button>
+     <button onclick="nav('quests')"><span class="qicon">📜</span><span class="qtext">퀘스트</span></button>
+     <button onclick="nav('pass')"><span class="qicon">🎫</span><span class="qtext">다이스 패스</span></button>
+     <button onclick="openLucky()"><span class="qicon">🍀</span><span class="qtext">행운의 주사위</span></button>
+     <button onclick="nav('bounty')"><span class="qicon">⚔️</span><span class="qtext">토벌 보상</span></button>
+   </div>
+ </div>
+ <div class="section">
+   <div class="sectionHead"><h2>내 덱</h2><span>전투에 가져갈 5개</span></div>
+   <div class="deckStrip">${appState.deck.map((x,i)=>diceHTML(x,appState.diceLevels?.[x]||1)).join('')}</div>
+ </div>
+ <div class="section">
+   <div class="sectionHead"><h2>재화</h2><span>SP는 전투 전용</span></div>
+   <div class="resourceBar">
+     <div class="chip">🪙 <b>${appState.currencies.coin.toLocaleString()}</b></div>
+     <div class="chip">🎲 <b>${appState.currencies.dice.toLocaleString()}</b></div>
+     <div class="chip">💎 <b>${appState.currencies.diamond.toLocaleString()}</b></div>
+     <div class="chip">🏟️ <b>${appState.currencies.arenaTicket.toLocaleString()}</b></div>
+     <div class="chip">🤝 <b>${appState.currencies.coopTicket.toLocaleString()}</b></div>
+   </div>
+ </div>`;
+}function diceHTML(type,lvl=1){
  const d=D[type]||D.blue;
  if(Number(lvl)>=7)return `<div class="dice ${d.cls} star7">★<small>7</small></div>`;
  return `<div class="dice ${d.cls}">${d.icon}<small>${lvl}</small></div>`;

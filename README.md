@@ -69,3 +69,10 @@ v15: fixed missing fitStage declaration order and enforced desktop/mobile fixed 
 - On mobile the navigation becomes a compact bottom icon/text bar so all major lobby menus stay on screen.
 - Lobby content remains non-scrollable; the logical canvas scales as a whole.
 - Top resource indicators are reduced to prevent clipping.
+
+
+## v18 layout
+- PC: every screen uses a landscape logical canvas.
+- Mobile: every screen uses a portrait logical canvas.
+- The entire canvas scales uniformly to fit both width and height; no page scrolling.
+- Lobby quick-access menus use compact icon + text buttons instead of large cards.
