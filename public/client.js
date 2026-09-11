@@ -422,12 +422,40 @@ function randomBattleDie(prefix='refill'){const deck=appState.deck?.length?appSt
 function ensureBattleGrid(grid,prefix='keep'){const arr=Array.isArray(grid)?grid.slice(0,15):[];while(arr.length<15)arr.push(null);for(let i=0;i<15;i++){const die=arr[i];if(die&&!D[die.type])arr[i]=null;}arr.length=15;return arr;}
 let battleDrag={active:false,from:null,pointerId:null,moved:false};
 function renderBattleDice(){const draw=(id,grid,clickable,prefix)=>{const el=document.getElementById(id);if(!el)return;const safe=ensureBattleGrid(grid,prefix);el.innerHTML=safe.map((die,i)=>`<div class="slot battleSlot" data-slot="${i}"><div class="battleDieHolder" ${clickable?`onclick="battleSelect(${i})" onpointerdown="battleDragStart(event,${i})"`:''}>${die?battleDiceHTML(die,clickable&&appState.selected===i):'<div class="emptyBattleSlot"></div>'}</div></div>`).join('')};appState.diceGrid=ensureBattleGrid(appState.diceGrid,'me');if(appState.battle)appState.battle.opponentDice=ensureBattleGrid(appState.battle.opponentDice,'opp');draw('myDiceGrid',appState.diceGrid,true,'me');draw('opponentDiceGrid',appState.battle?.opponentDice||[],false,'opp');}
-function summonBattleDice(){if(appState.sp<50)return toast('SP가 부족합니다.');appState.diceGrid=ensureBattleGrid(appState.diceGrid,'me');const empty=[];for(let i=0;i<15;i++)if(!appState.diceGrid[i])empty.push(i);if(!empty.length)return toast('칸이 가득 차서 소환할 수 없습니다.');appState.sp-=50;const idx=empty[Math.floor(Math.random()*empty.length)];const spawned=randomBattleDie('summon');appState.diceGrid[idx]=spawned;appState.selected=null;renderBattleDice();sendBattle({type:'summon',slot:idx,die:spawned});updateBattleHUD();toast(`${D[spawned.type]?.name||'주사위'} 1성 소환`);}
+function getEmptyBattleSlots(){const grid=ensureBattleGrid(appState.diceGrid,'me');const empty=[];for(let i=0;i<15;i++)if(grid[i]==null)empty.push(i);return empty;}
+function summonBattleDice(){
+ if(appState.sp<50)return toast('SP가 부족합니다.');
+ appState.diceGrid=ensureBattleGrid(appState.diceGrid,'me');
+ const empty=getEmptyBattleSlots();
+ if(!empty.length)return toast('칸이 가득 차서 소환할 수 없습니다.');
+ appState.sp-=50;
+ const idx=empty[Math.floor(Math.random()*empty.length)];
+ const spawned=randomBattleDie('summon');
+ appState.diceGrid[idx]=spawned;
+ appState.selected=null;
+ renderBattleDice();
+ sendBattle({type:'summon',slot:idx,die:spawned});
+ updateBattleHUD();
+ toast(`${D[spawned.type]?.name||'주사위'} 1성 소환`);
+}
 function battleSelect(i){if(battleDrag.moved){battleDrag.moved=false;return;}if(!appState.diceGrid?.[i])return;if(appState.selected!=null&&appState.selected!==i){const a=appState.selected,b=i;const A=appState.diceGrid[a],B=appState.diceGrid[b];if(A&&B&&A.type===B.type&&A.rank===B.rank){tryBattleMerge(a,b);return;}toast('같은 주사위 + 같은 성을 드래그해서 합성하세요.');return;}appState.selected=appState.selected===i?null:i;renderBattleDice();}
 function battleDragStart(event,i){if(!appState.diceGrid?.[i])return;if(event.pointerId!=null&&event.currentTarget?.setPointerCapture){try{event.currentTarget.setPointerCapture(event.pointerId)}catch{}}battleDrag={active:true,from:i,pointerId:event.pointerId,moved:false};event.preventDefault();document.addEventListener('pointerup',battleDragEnd,{once:true});document.addEventListener('pointercancel',battleDragCancel,{once:true});}
 function battleDragEnd(event){if(!battleDrag.active)return;const from=battleDrag.from;const point=document.elementFromPoint(event.clientX,event.clientY);const holder=point?.closest?.('#myDiceGrid .battleDieHolder');const slot=holder?.closest?.('.battleSlot');const to=slot?Number(slot.dataset.slot):-1;battleDrag.active=false;battleDrag.pointerId=null;if(to>=0&&to!==from){battleDrag.moved=true;const A=appState.diceGrid[from],B=appState.diceGrid[to];if(A&&B&&A.type===B.type&&A.rank===B.rank){tryBattleMerge(from,to);}else{toast('같은 주사위 + 같은 성으로 옮겨야 합성됩니다.');}}else{battleDrag.moved=false;}}
 function battleDragCancel(){battleDrag.active=false;battleDrag.pointerId=null;battleDrag.moved=false;}
-function tryBattleMerge(a,b){if(a===b)return toast('서로 다른 칸으로 옮겨주세요.');const A=appState.diceGrid[a],B=appState.diceGrid[b];if(!A||!B)return toast('두 칸 모두 주사위가 있어야 합니다.');if(A.type!==B.type||A.rank!==B.rank)return toast('같은 주사위 + 같은 성끼리만 합칠 수 있습니다.');if(A.rank>=7)return toast('7성은 더 합칠 수 없습니다.');const merged={type:B.type,rank:Math.min(7,B.rank+1),id:'merge-'+Date.now()+'-'+Math.random().toString(36).slice(2)};appState.diceGrid[a]=null;appState.diceGrid[b]=merged;appState.selected=null;renderBattleDice();sendBattle({type:'merge',from:a,to:b,die:merged});}
+function tryBattleMerge(a,b){
+ if(a===b)return toast('서로 다른 칸으로 옮겨주세요.');
+ const A=appState.diceGrid[a],B=appState.diceGrid[b];
+ if(!A||!B)return toast('두 칸 모두 주사위가 있어야 합니다.');
+ if(A.type!==B.type||A.rank!==B.rank)return toast('같은 주사위 + 같은 성끼리만 합칠 수 있습니다.');
+ if(A.rank>=7)return toast('7성은 더 합칠 수 없습니다.');
+ const merged={type:B.type,rank:Math.min(7,B.rank+1),id:'merge-'+Date.now()+'-'+Math.random().toString(36).slice(2)};
+ // 합성은 빈칸을 자동 보충하지 않습니다. 출발 칸은 반드시 비워둡니다.
+ appState.diceGrid[a]=null;
+ appState.diceGrid[b]=merged;
+ appState.selected=null;
+ renderBattleDice();
+ sendBattle({type:'merge',from:a,to:b,die:merged});
+}
 function toggleSpeed(){appState.speed=appState.speed>=2?1:appState.speed+0.5;appState.battle&&(appState.battle.opponentSpeed=appState.speed);sendBattle({type:'speed',speed:appState.speed});updateBattleHUD();}
 function battleDieUpgradeCost(type){const lv=Number(appState.battleDiceUpgrades?.[type]||0);return 40+(lv*35);}
 function upgradeBattleDie(type){if(!D[type])return;const lv=Number(appState.battleDiceUpgrades?.[type]||0);if(lv>=10)return toast('이 주사위는 이번 판 업그레이드가 최대 레벨입니다.');const cost=battleDieUpgradeCost(type);if(appState.sp<cost)return toast('SP가 부족합니다.');appState.sp-=cost;appState.battleDiceUpgrades[type]=lv+1;updateBattleHUD();toast(`${D[type].name} 주사위 · 이번 판 공격력 +${(lv+1)*15}%`);}
