@@ -67,20 +67,26 @@ function fitStage(mode){
     app.style.transform='scale('+Math.max(.15,scale)+')';
   }
 }
-function refitCurrentViewport(){fitStage(currentPageMode())}
+let refitQueued=false, lastVpKey='';
+function refitCurrentViewport(){
+  if(refitQueued)return;
+  refitQueued=true;
+  requestAnimationFrame(()=>{
+    refitQueued=false;
+    const vp=getBrowserViewport();
+    const key=`${vp.w}x${vp.h}:${currentPageMode()}`;
+    if(key===lastVpKey)return;
+    lastVpKey=key;
+    fitStage(currentPageMode());
+  });
+}
 window.addEventListener('resize',refitCurrentViewport,{passive:true});
 window.addEventListener('orientationchange',()=>setTimeout(refitCurrentViewport,50),{passive:true});
 window.addEventListener('fullscreenchange',()=>setTimeout(refitCurrentViewport,50));
 window.addEventListener('pageshow',()=>setTimeout(refitCurrentViewport,50));
-window.addEventListener('visibilitychange',()=>setTimeout(refitCurrentViewport,50));
+window.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(refitCurrentViewport,50)});
 if(window.visualViewport){
   window.visualViewport.addEventListener('resize',refitCurrentViewport,{passive:true});
-  window.visualViewport.addEventListener('scroll',refitCurrentViewport,{passive:true});
-}
-if(window.ResizeObserver){
-  const viewportObserver=new ResizeObserver(()=>refitCurrentViewport());
-  viewportObserver.observe(document.documentElement);
-  viewportObserver.observe(document.body);
 }
 
 const D={
@@ -209,7 +215,7 @@ function nav(page){
  if(page==='bounty')drawBounty();
  if(page==='admin'&&appState.isAdmin)drawAdmin();
  ensureBackButton(page);
- fitStage('lobby');
+ refitCurrentViewport();
 }
 function renderGame(){
  return `<div class="app stageLobby">

@@ -462,6 +462,15 @@ button,input{font:inherit}button{cursor:pointer}
   .coopArena{bottom:172px!important}
 }
 </style>
+
+<style>
+/* v48 performance: avoid repeated viewport/layout feedback and expensive paint work on menu screens. */
+.treeNode,.treeEdge,.dice,.tile,.mode,.quickNav button{will-change:auto!important;}
+.treeNode{box-shadow:0 4px 10px #0004!important;}
+.treeWide{box-shadow:none!important;}
+.treeCanvas{box-shadow:none!important;}
+.dice{box-shadow:0 4px 8px #0004!important;}
+</style>
 </head>
 <body>
 <div id="root"><div class="auth"><div class="authbox">
@@ -894,7 +903,7 @@ function startBattle(){
  const title=mode==='battle'?'⚔️ 아레나':'🤝 협동전',sub=mode==='battle'?'각자의 길 · 먼저 기지 HP가 0이 되면 패배':'가운데 하나의 길을 함께 방어 · 5000킬 클리어';
  const middle=mode==='battle'?`<div class="battleSplitPath topLane"><div id="oppEnemies"></div></div><div class="battleSplitPath bottomLane"><div id="myEnemies"></div></div>`:`<div class="battleSharedPath"><div id="sharedEnemies"></div></div>`;
  const baseTop=mode==='battle'?'<span id="oppBaseLabel" class="base">❤️ 150</span>':'<span id="oppBaseLabel" class="base">🤝 공동</span>',baseBottom=mode==='battle'?'<span id="myBaseLabel" class="base">❤️ 150</span>':'<span id="myBaseLabel" class="base">🤝 공동</span>';
- document.getElementById('page-battle').innerHTML=`<div class="battle"><div class="battleTop"><button class="topbtn" onclick="leaveBattle()">‹</button><div style="min-width:72px"><b id="bwave">0</b><div style="font-size:8px;color:#b9adca">${mode==='coop'?'KILL':'BASE'}</div></div><div class="pill">${title}</div><div class="pill">상대: ${esc(opponentName)}</div><div class="pill" id="btime">${mode==='coop'?'5000':'HP'}</div><div class="pill right">SP <span id="bsp">100</span></div><div class="pill" id="bkills">처치 0</div><div class="pill" id="coopStatus">${mode==='coop'?'협동 처치 0 / 5000':'기지 150 / 150'}</div></div><div class="coopArena"><div class="bossBadge" id="bossBadge">BOSS</div><div class="coopPlayer opponent"><div class="coopHeader"><span class="who">상대 · ${esc(opponentName)}</span><span id="oppSpeedLabel" class="who">1.0x</span><span class="who">${opponentType==='player'?'온라인':'AI'}</span>${baseTop}</div><div class="coopField"><div class="coopGrid" id="opponentDiceGrid"></div></div></div>${middle}<div class="coopPlayer me"><div class="coopHeader"><span class="who">나 · ${esc(playerName)}</span><span id="mySpeedLabel" class="who">1.0x</span><span class="who">SP <span id="miniSp">100</span></span>${baseBottom}</div><div class="coopField"><div class="coopGrid" id="myDiceGrid"></div></div></div><div class="battleUpgrade" id="battleUpgrade"><div><b>이번 판 업그레이드</b><span id="battleUpgradeText">이번 판 전체 주사위 공격력 +0%</span></div><button onclick="buyBattleDamageUpgrade()">SP <span id="battleUpgradeCost">50</span></button></div></div><div class="battlebar"><div class="sp">✦ <span id="sp">100</span></div><button class="spawn" onclick="summonBattleDice()">소환 · SP 50</button><button class="speed" id="speedButton" onclick="toggleSpeed()">1.0x</button></div></div>`;
+ document.getElementById('page-battle').innerHTML=`<div class="battle"><div class="battleTop"><button class="topbtn" onclick="leaveBattle()">‹</button><div style="min-width:72px"><b id="bwave">0</b><div style="font-size:8px;color:#b9adca">${mode==='coop'?'KILL':'BASE'}</div></div><div class="pill">${title}</div><div class="pill">상대: ${esc(opponentName)}</div><div class="pill" id="btime">${mode==='coop'?'5000':'HP'}</div><div class="pill right">SP <span id="bsp">100</span></div><div class="pill" id="bkills">처치 0</div><div class="pill" id="coopStatus">${mode==='coop'?'협동 처치 0 / 5000':'기지 150 / 150'}</div></div><div class="coopArena"><div class="bossBadge" id="bossBadge">BOSS</div><div class="coopPlayer opponent"><div class="coopHeader"><span class="who">상대 · ${esc(opponentName)}</span><span id="oppSpeedLabel" class="who">1.0x</span><span class="who">${opponentType==='player'?'온라인':'AI'}</span>${baseTop}</div><div class="coopField"><div class="coopGrid" id="opponentDiceGrid"></div></div></div>${middle}<div class="coopPlayer me"><div class="coopHeader"><span class="who">나 · ${esc(playerName)}</span><span id="mySpeedLabel" class="who">1.0x</span><span class="who">SP <span id="miniSp">100</span></span>${baseBottom}</div><div class="coopField"><div class="coopGrid" id="myDiceGrid"></div></div></div></div><div class="battlebar"><div class="battleControlsRow"><div class="sp">✦ <span id="sp">100</span></div><button class="spawn" onclick="summonBattleDice()">소환 · SP 50</button><button class="speed" id="speedButton" onclick="toggleSpeed()">1.0x</button></div><div class="battleUpgrade" id="battleUpgrade"><div><b>이번 판 업그레이드</b><span id="battleUpgradeText">이번 판 전체 주사위 공격력 +0%</span></div><button onclick="buyBattleDamageUpgrade()">SP <span id="battleUpgradeCost">50</span></button></div></div></div>`;
  navBattle();setupBattle();
 }
 function navBattle(){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById('page-battle').classList.add('active');fitStage('battle');}
@@ -1136,4 +1145,24 @@ bootClient();
 #page-battle .battleLobbyIcon{font-size:28px;line-height:1}
 #page-battle .battleDieHolder .battleDie small{display:block}
 @media(max-width:700px){#page-battle .battlebar{height:188px}.coopArena{bottom:198px}#page-battle .battleUpgrade{height:120px;min-height:120px;max-height:120px}.battleDieUpgradeCard{flex-basis:88px}.battleDieUpgradeImage{width:40px;height:40px}}
+</style>
+<style>
+/* v47: battle controls are one compact row, upgrades strictly below speed */
+#page-battle .battlebar{height:174px!important;bottom:8px!important;display:flex!important;flex-direction:column!important;gap:6px!important;z-index:60!important}
+#page-battle .battleControlsRow{display:flex!important;flex:0 0 40px!important;height:40px!important;min-height:40px!important;width:100%!important;gap:6px!important;align-items:stretch!important}
+#page-battle .battleControlsRow .sp{height:40px!important;min-height:40px!important;padding:0 8px!important;box-sizing:border-box!important}
+#page-battle .battleControlsRow .spawn{height:40px!important;min-height:40px!important;flex:1 1 auto!important;padding:0 10px!important;font-size:13px!important;line-height:1!important;border-radius:11px!important;box-shadow:0 4px 0 #08734f!important}
+#page-battle .battleControlsRow .speed{height:40px!important;min-height:40px!important;padding:0 11px!important;box-sizing:border-box!important}
+#page-battle .battleUpgrade{position:static!important;order:2!important;width:100%!important;height:120px!important;min-height:120px!important;max-height:120px!important;box-sizing:border-box!important;margin:0!important;padding:5px 6px!important;overflow:hidden!important}
+#page-battle .battleUpgradeTitle{font-size:9px!important}
+#page-battle .battleDieUpgradeList{height:82px!important;max-height:82px!important;overflow-x:auto!important;overflow-y:hidden!important;margin-top:3px!important}
+#page-battle .battleDieUpgradeCard{height:76px!important;min-height:76px!important}
+@media(max-width:700px){
+  #page-battle .battlebar{height:166px!important}
+  #page-battle .battleControlsRow,#page-battle .battleControlsRow .sp,#page-battle .battleControlsRow .spawn,#page-battle .battleControlsRow .speed{height:38px!important;min-height:38px!important}
+  #page-battle .battleControlsRow .spawn{font-size:12px!important}
+  #page-battle .battleUpgrade{height:122px!important;min-height:122px!important;max-height:122px!important}
+  #page-battle .battleDieUpgradeList{height:84px!important;max-height:84px!important}
+  .coopArena{bottom:180px!important}
+}
 </style>
