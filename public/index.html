@@ -97,9 +97,10 @@ button,input{font:inherit}button{cursor:pointer}
 .coopPath i{position:absolute;left:4px;right:4px;top:50%;height:2px;background:#c19b60aa}
 .coopEnemy{position:absolute;left:-10px;width:24px;height:24px;border-radius:8px;background:linear-gradient(145deg,#927f9c,#493a54);border:2px solid #ffffff66;display:grid;place-items:center;font-size:9px;font-weight:1000;box-shadow:0 3px 7px #0004}
 .coopEnemy.boss{width:30px;height:30px;background:linear-gradient(145deg,#be68ed,#64249a)}
-.coopGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:10px;min-height:0;height:min(100%,300px);width:auto;aspect-ratio:5/3;align-self:center;justify-self:center}
-.coopGrid .slot{border:2px dashed #b88f58;background:#e8c991cc;aspect-ratio:1;min-width:0;min-height:0;width:100%;height:100%;display:grid;place-items:center;overflow:hidden;border-radius:12px}
-.coopGrid .dice{width:min(82px,88%);height:auto;aspect-ratio:1;border-radius:12px;font-size:23px;cursor:pointer;max-width:88%;max-height:88%;min-width:0}
+.diceBoardRect{width:min(78%,560px);aspect-ratio:5/3;align-self:center;justify-self:center;padding:10px;border-radius:15px;background:rgba(67,48,67,.28);border:2px solid rgba(184,143,88,.28);box-sizing:border-box;display:flex;align-items:stretch;justify-content:stretch}
+.coopGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:10px;min-height:0;min-width:0;width:100%;height:100%;aspect-ratio:5/3}
+.coopGrid .slot{border:2px dashed #b88f58;background:#e8c991cc;aspect-ratio:1;min-width:0;min-height:0;width:100%;height:auto;display:grid;place-items:center;overflow:hidden;border-radius:12px;position:relative}.coopGrid .slot>div{width:90%;height:90%;display:grid;place-items:center;min-width:0;min-height:0}.coopGrid .slot>div .dice{width:100%;height:100%;max-width:none;max-height:none}
+.coopGrid .dice{width:min(82px,100%);height:auto;aspect-ratio:1;border-radius:12px;font-size:23px;cursor:pointer;min-width:0;min-height:0}
 .coopBase{border-radius:10px;background:linear-gradient(#6b6267,#3b303c);border:4px solid #2f2730;display:grid;place-items:center;font-size:22px;position:relative;align-self:center;height:70px}
 .coopBase small{position:absolute;bottom:-15px;font-size:8px;background:#23182e;padding:2px 5px;border-radius:7px}
 .remoteBadge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#1f1827cc;border:1px solid #655178;border-radius:9px;padding:3px 7px;font-size:8px;z-index:5;white-space:nowrap}
@@ -123,6 +124,13 @@ button,input{font:inherit}button{cursor:pointer}
 .treeCheck{position:absolute;left:-6px;top:-6px;width:20px;height:20px;border-radius:50%;background:#36d89c;color:#09281f;display:grid;place-items:center;font-size:12px;font-weight:1000;border:2px solid #1c1730}
 .treeLegend{display:flex;gap:18px;justify-content:center;padding:10px 4px 2px;color:#bdb1ce;font-size:10px}
 .treeLayout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(270px,.7fr);gap:18px;align-items:start}.treeDetails{min-width:0}.treeSelected{outline:4px solid #fff0a566;transform:translate(-50%,-50%) scale(1.06);z-index:6}.treeSelected .treeLabel{color:#fff}.treeOpen .treeIcon{filter:drop-shadow(0 0 7px #6be6b0aa)}
+
+@media(max-width:600px){
+  .diceBoardRect{width:88%;max-width:none;padding:7px;border-radius:12px}
+  .coopGrid{gap:6px}
+  .coopGrid .slot{border-radius:9px;border-width:1.5px}.coopGrid .slot>div{width:92%;height:92%}
+}
+
 @media(max-width:850px){.treeLayout{grid-template-columns:1fr}.treeDetails{order:2}.treeWide{order:1}}
 
 .treeWide{height:725px;overflow:hidden}.treeNode{width:74px;height:74px}.treeIcon{font-size:24px}.treeLabel{top:77px;font-size:8px}}
@@ -359,7 +367,7 @@ button,input{font:inherit}button{cursor:pointer}
   .coopArena{bottom:148px}
   .coopGrid{height:min(100%,240px);gap:7px}
   .coopGrid .slot{border-radius:10px}
-  .coopGrid .dice{width:min(72px,88%);border-radius:10px;font-size:20px}
+  .coopGrid .dice{width:100%;height:100%;border-radius:10px;font-size:20px}
 }
 </style>
 </head>
