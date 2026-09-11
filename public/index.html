@@ -11,7 +11,9 @@
 }
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#08060d;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 button,input{font:inherit}button{cursor:pointer}
-#root{min-height:100%;display:grid;place-items:center;padding:12px}
+#root{width:100vw;height:100vh;display:grid;place-items:center;overflow:hidden;padding:0}
+.stageLobby{width:1200px;height:700px;min-width:1200px;min-height:700px}
+.stageBattle{width:400px;height:900px;min-width:400px;min-height:900px}
 .app{width:1200px;height:700px;min-width:1200px;min-height:700px;overflow:hidden;position:relative;transform-origin:center center;border:2px solid #45345f;border-radius:24px;background:#171024;box-shadow:0 30px 100px #0009}
 .view{position:absolute;inset:0;display:none}.view.active{display:block}
 .top{height:68px;background:#241935;border-bottom:1px solid #493863;display:flex;align-items:center;padding:9px 16px;gap:10px;z-index:20}
@@ -84,14 +86,13 @@ button,input{font:inherit}button{cursor:pointer}
 .treeLayout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(270px,.7fr);gap:12px;align-items:start}.treeDetails{min-width:0}.treeSelected{outline:4px solid #fff0a566;transform:translate(-50%,-50%) scale(1.06);z-index:6}.treeSelected .treeLabel{color:#fff}.treeOpen .treeIcon{filter:drop-shadow(0 0 7px #6be6b0aa)}
 @media(max-width:850px){.treeLayout{grid-template-columns:1fr}.treeDetails{order:2}.treeWide{order:1}}
 
-@media(max-width:650px){.treeCanvas{height:500px;transform:scale(.92);transform-origin:top center}.treeWide{height:535px;overflow:hidden}.treeNode{width:74px;height:74px}.treeIcon{font-size:24px}.treeLabel{top:77px;font-size:8px}}
+.treeWide{height:535px;overflow:hidden}.treeNode{width:74px;height:74px}.treeIcon{font-size:24px}.treeLabel{top:77px;font-size:8px}}
 
 .pass{display:grid;grid-template-columns:1fr 1.2fr;gap:14px}.passHero{background:linear-gradient(145deg,#3c285d,#221635);border:1px solid #60497f;border-radius:17px;padding:18px}.passTrack{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:15px}.rewardBox{border:1px solid #5d477d;background:#2d2144;border-radius:10px;padding:8px;text-align:center;font-size:10px}.rewardBox b{display:block;font-size:17px}.progress{height:10px;background:#33254b;border-radius:20px;overflow:hidden}.progress i{display:block;height:100%;background:linear-gradient(90deg,#ffc62c,#ff7b50);width:65%}
 .quest{display:grid;gap:9px}.q{background:#2a1e40;border:1px solid #513d6b;border-radius:13px;padding:11px;display:flex;align-items:center;gap:10px}.q .qbar{height:7px;background:#392b52;border-radius:10px;overflow:hidden}.q i{display:block;height:100%;background:#48dfa2;width:60%}
 .skinGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.skin{border:1px solid #54406f;background:#261a3a;border-radius:14px;padding:12px;text-align:center}.skin .art{width:64px;height:64px;border-radius:16px;margin:auto auto 8px;display:grid;place-items:center;font-size:25px}
-@media(max-width:900px){.body{grid-template-columns:80px 1fr}.side{padding:8px}.nav{font-size:0;text-align:center}.nav i{width:auto;font-size:19px}.nav .badge{font-size:8px}.hero{grid-template-columns:1fr}.cardgrid{grid-template-columns:1fr 1fr}.res{margin-left:0}.top .brand small{display:none}}
+.side{padding:8px}.nav{font-size:0;text-align:center}.nav i{width:auto;font-size:19px}.nav .badge{font-size:8px}.hero{grid-template-columns:1fr}.cardgrid{grid-template-columns:1fr 1fr}.res{margin-left:0}.top .brand small{display:none}}
 
-/* Fixed logical canvases: lobby is always 1200x700 landscape, gameplay 400x900 portrait.
    JS scales the whole canvas uniformly so coordinates and proportions stay identical across devices. */
 .app.stageBattle{width:400px;height:900px;min-width:400px;min-height:900px}
 .app.stageLobby{width:1200px;height:700px;min-width:1200px;min-height:700px}
@@ -101,7 +102,7 @@ button,input{font:inherit}button{cursor:pointer}
 .dragGhost{position:fixed;z-index:1000;pointer-events:none;transform:translate(-50%,-50%);filter:drop-shadow(0 8px 8px #0008)}
 .coopGrid .slot.dropTarget{outline:3px solid #fff05b;outline-offset:-2px;background:#ffeaa533}
 
-@media(max-width:650px){#root{padding:0}.app{width:100vw;height:100vh;min-height:620px;border-radius:0;border:0}.body{grid-template-columns:1fr}.side{display:none}.top{height:62px}.main{height:calc(100% - 62px);padding:12px}.bigLogo{font-size:34px}.cardgrid{grid-template-columns:1fr}.deck{grid-template-columns:repeat(5,1fr);gap:6px}.heroCard{padding:18px}.res .chip{padding:6px 7px;font-size:10px}.topbtn{padding:8px}.pass{grid-template-columns:1fr}.skinGrid{grid-template-columns:repeat(2,1fr)}}
+.app{width:100vw;height:100vh;min-height:620px;border-radius:0;border:0}.body{grid-template-columns:1fr}.side{display:none}.top{height:62px}.main{height:calc(100% - 62px);padding:12px}.bigLogo{font-size:34px}.cardgrid{grid-template-columns:1fr}.deck{grid-template-columns:repeat(5,1fr);gap:6px}.heroCard{padding:18px}.res .chip{padding:6px 7px;font-size:10px}.topbtn{padding:8px}.pass{grid-template-columns:1fr}.skinGrid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -127,6 +128,30 @@ const DEFAULT_CLIENT_STATE={
  passXP:0,passRewardsClaimed:[],lucky:0,quests:[0,0,0],difficulty:'normal',room:null,isAdmin:false,coopTicketNextIn:300000,arenaTicketNextIn:1800000,matchQueueId:null,opponentType:null,opponentNickname:''
 };
 const appState=DEFAULT_CLIENT_STATE;
+
+function fitStage(mode){
+  const app=document.querySelector('.app');
+  if(!app)return;
+  const battle=(mode==='battle');
+  app.classList.toggle('stageBattle',battle);
+  app.classList.toggle('stageLobby',!battle);
+  const logicalW=battle?400:1200;
+  const logicalH=battle?900:700;
+  const vw=Math.max(1,window.innerWidth);
+  const vh=Math.max(1,window.innerHeight);
+  const scale=Math.min(vw/logicalW,vh/logicalH);
+  app.style.transformOrigin='center center';
+  app.style.transform='scale('+Math.max(.25,scale)+')';
+}
+window.addEventListener('resize',function(){
+  fitStage(document.getElementById('page-battle')?.classList.contains('active')?'battle':'lobby');
+});
+window.addEventListener('orientationchange',function(){
+  setTimeout(function(){
+    fitStage(document.getElementById('page-battle')?.classList.contains('active')?'battle':'lobby');
+  },100);
+});
+
 const D={
  blue:{name:'바람',icon:'🌀',cls:'d-blue',damage:85,rate:750},
  cyan:{name:'얼음',icon:'❄',cls:'d-cyan',damage:50,rate:1000},

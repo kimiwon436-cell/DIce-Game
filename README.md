@@ -41,3 +41,17 @@ DIce-Game/
 - Dragging one die onto another merges only when type and rank match.
 - Merging is allowed through 6-star; 6-star + 6-star creates a 7-star ★.
 - 7-star cannot be merged further.
+
+
+## v13
+- Fixed `fitStage is not defined` by defining it before any UI code can use it.
+- Lobby remains a 1200×700 logical landscape canvas.
+- Gameplay remains a 400×900 logical portrait canvas.
+- Both are uniformly scaled to fit the viewport on desktop, tablet and mobile.
+- Device orientation changes re-run the fitting calculation.
+
+
+v14: fitStage is defined before all callers and mobile/desktop view fitting uses fixed logical canvases.
+
+
+v15: fixed missing fitStage declaration order and enforced desktop/mobile fixed logical canvases with uniform scaling; battle portrait and lobby landscape.
