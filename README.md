@@ -1,1 +1,2 @@
-Random Dice 2 v51 — menu performance fix. Server push no longer redraws Deck/Tree/Lobby menus; focus sync simplified; periodic sync reduced to 60s.
+# Random Dice 2 Render v52
+Menu unresponsive hotfix. Removed self-triggering MutationObserver on #main, removed focus-triggered server sync, and reduced background sync interval.

@@ -625,7 +625,6 @@ function clearSession(){serverToken='';A.removeItem('rd2_token');A.removeItem('r
 function mountShell(){
  const root=document.getElementById('root');
  root.innerHTML=appState.user?renderGame():renderAuth();
- if(appState.user && window.MutationObserver){const main=document.getElementById('main');if(main){const obs=new MutationObserver(()=>{if(appState.page&&appState.page!=='lobby')ensureBackButton(appState.page)});obs.observe(main,{childList:true});appState._backObserver=obs;}}
  if(appState.user){drawLobby();updateRes();}
  bindAuth();
  requestAnimationFrame(()=>{
@@ -1108,7 +1107,7 @@ async function syncMe(){
 }
 function startServerSync(){
  clearInterval(window.rd2ServerSync);
- window.rd2ServerSync=setInterval(syncMe,20000);
+ window.rd2ServerSync=setInterval(syncMe,60000);
  syncMe();
 }
 function formatCountdown(ms){const sec=Math.max(0,Math.ceil(Number(ms||0)/1000));return `+1 ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`}
@@ -1154,7 +1153,7 @@ function startLiveSocket(){
  }catch(e){console.warn('live socket',e)}
 }
 setInterval(updateTicketTimer,1000);
-window.addEventListener('focus',()=>{syncMe();startLiveSocket()});
+window.addEventListener('focus',()=>{startLiveSocket()});
 
 async function drawAdmin(){
  const main=document.getElementById('main');if(!main)return;
