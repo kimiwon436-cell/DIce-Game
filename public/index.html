@@ -12,7 +12,7 @@
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#08060d;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 button,input{font:inherit}button{cursor:pointer}
 #root{min-height:100%;display:grid;place-items:center;padding:12px}
-.app{width:min(1180px,100vw - 24px);height:min(900px,calc(100vh - 24px));min-height:680px;overflow:hidden;position:relative;border:2px solid #45345f;border-radius:24px;background:#171024;box-shadow:0 30px 100px #0009}
+.app{width:1200px;height:700px;min-width:1200px;min-height:700px;overflow:hidden;position:relative;transform-origin:center center;border:2px solid #45345f;border-radius:24px;background:#171024;box-shadow:0 30px 100px #0009}
 .view{position:absolute;inset:0;display:none}.view.active{display:block}
 .top{height:68px;background:#241935;border-bottom:1px solid #493863;display:flex;align-items:center;padding:9px 16px;gap:10px;z-index:20}
 .brand{font-weight:1000;font-size:21px}.brand small{display:block;color:#9e90ba;font-size:9px;letter-spacing:1px}
@@ -90,6 +90,17 @@ button,input{font:inherit}button{cursor:pointer}
 .quest{display:grid;gap:9px}.q{background:#2a1e40;border:1px solid #513d6b;border-radius:13px;padding:11px;display:flex;align-items:center;gap:10px}.q .qbar{height:7px;background:#392b52;border-radius:10px;overflow:hidden}.q i{display:block;height:100%;background:#48dfa2;width:60%}
 .skinGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.skin{border:1px solid #54406f;background:#261a3a;border-radius:14px;padding:12px;text-align:center}.skin .art{width:64px;height:64px;border-radius:16px;margin:auto auto 8px;display:grid;place-items:center;font-size:25px}
 @media(max-width:900px){.body{grid-template-columns:80px 1fr}.side{padding:8px}.nav{font-size:0;text-align:center}.nav i{width:auto;font-size:19px}.nav .badge{font-size:8px}.hero{grid-template-columns:1fr}.cardgrid{grid-template-columns:1fr 1fr}.res{margin-left:0}.top .brand small{display:none}}
+
+/* Fixed logical canvases: lobby is always 1200x700 landscape, gameplay 400x900 portrait.
+   JS scales the whole canvas uniformly so coordinates and proportions stay identical across devices. */
+.app.stageBattle{width:400px;height:900px;min-width:400px;min-height:900px}
+.app.stageLobby{width:1200px;height:700px;min-width:1200px;min-height:700px}
+.dice.star7{clip-path:polygon(50% 0%,61% 34%,98% 38%,70% 59%,79% 96%,50% 74%,21% 96%,30% 59%,2% 38%,39% 34%);border-radius:4px!important;font-size:31px;background:linear-gradient(145deg,#fff0a3,#e9a928)!important;color:#fff;text-shadow:0 2px 5px #6d4300}
+.dice.star7 small{display:none}
+.dice.dragging{opacity:.25}
+.dragGhost{position:fixed;z-index:1000;pointer-events:none;transform:translate(-50%,-50%);filter:drop-shadow(0 8px 8px #0008)}
+.coopGrid .slot.dropTarget{outline:3px solid #fff05b;outline-offset:-2px;background:#ffeaa533}
+
 @media(max-width:650px){#root{padding:0}.app{width:100vw;height:100vh;min-height:620px;border-radius:0;border:0}.body{grid-template-columns:1fr}.side{display:none}.top{height:62px}.main{height:calc(100% - 62px);padding:12px}.bigLogo{font-size:34px}.cardgrid{grid-template-columns:1fr}.deck{grid-template-columns:repeat(5,1fr);gap:6px}.heroCard{padding:18px}.res .chip{padding:6px 7px;font-size:10px}.topbtn{padding:8px}.pass{grid-template-columns:1fr}.skinGrid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -214,9 +225,9 @@ function drawAuthForm(type){
    }
   }catch(e){alert(e.message)}
  };
-}function nav(page){appState.page=page;document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+page)?.classList.add('active');if(page==='lobby')drawLobby();if(page==='deck')drawDeck();if(page==='tree')drawTree();if(page==='style')drawStyle();if(page==='pass')drawPass();if(page==='quests')drawQuests();if(page==='profile')drawProfile();if(page==='bounty')drawBounty();if(page==='admin'&&appState.isAdmin)drawAdmin();}
+}function nav(page){appState.page=page;document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+page)?.classList.add('active');if(page==='lobby')drawLobby();if(page==='deck')drawDeck();if(page==='tree')drawTree();if(page==='style')drawStyle();if(page==='pass')drawPass();if(page==='quests')drawQuests();if(page==='profile')drawProfile();if(page==='bounty')drawBounty();if(page==='admin'&&appState.isAdmin)drawAdmin();fitStage('lobby');}
 function renderGame(){
- return `<div class="app">
+ return `<div class="app stageLobby">
   <div id="pages">${pageShell()}</div>
   <div id="modalRoot"></div>
   <div id="loading" class="loading"><div style="font-size:28px;font-weight:1000">전투 준비 중</div><div class="muted" id="loadText" style="margin:7px 0 16px">플레이어 정보를 불러오는 중...</div><div class="bar"><i id="loadBar"></i></div></div>
@@ -247,7 +258,11 @@ function drawLobby(){
  </div></div>
  <div class="section"><div class="sectionHead"><h2>내 덱</h2><span>전투에서 사용 · SP는 인게임 전용</span></div><div class="deck">${appState.deck.map((x,i)=>diceHTML(x,i+1)).join('')}</div></div>`;
 }
-function diceHTML(type,lvl=1){const d=D[type]||D.blue;return `<div class="dice ${d.cls}">${d.icon}<small>${lvl}</small></div>`}
+function diceHTML(type,lvl=1){
+ const d=D[type]||D.blue;
+ if(Number(lvl)>=7)return `<div class="dice ${d.cls} star7">★<small>7</small></div>`;
+ return `<div class="dice ${d.cls}">${d.icon}<small>${lvl}</small></div>`;
+}
 function upgradeCost(level){
  const next=level+1;
  return (next%5===0)?{coin:0,dice:8}:{coin:Math.max(50,level*50),dice:0};
@@ -441,12 +456,17 @@ function startBattle(){
  `<div class="battlebar"><div class="sp">✦ <span id="sp">100</span></div><button class="spawn" onclick="summonBattleDice()">소환 · SP 50</button><button class="speed" id="speedButton" onclick="toggleSpeed()">1.0x</button></div><div class="battleBottom">${sub}</div></div>`;
  navBattle();setupBattle();
 }
-function navBattle(){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById('page-battle').classList.add('active')}
+function navBattle(){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById('page-battle').classList.add('active');fitStage('battle')}
+function makeFullGrid(deck,prefix='die'){
+ const source=(Array.isArray(deck)&&deck.length?deck:['blue']);
+ return Array.from({length:15},(_,i)=>({type:source[Math.floor(Math.random()*source.length)]||'blue',lvl:1,id:prefix+'-'+Date.now()+'-'+i}));
+}
 function setupBattle(){
  appState.sp=100;appState.wave=1;appState.gameSec=20;appState.speed=1;appState.kills=0;appState.enemies=[];appState.oppEnemies=[];appState.sharedEnemies=[];appState.selected=null;
- appState.diceGrid=(appState.deck||['blue','blue','blue','blue','blue']).map((type,i)=>({type,lvl:1,id:i+1}));
+ appState.diceGrid=makeFullGrid(appState.deck||['blue','blue','blue','blue','blue'],'me');
+ appState.battle.opponentDice=makeFullGrid(appState.deck||['blue','blue','blue','blue','blue'],'ai');
  appState.battle.myBase=150;appState.battle.opponentBase=150;appState.battle.sharedBase=150;appState.battle.opponentSpeed=1;
- appState.battle.opponentDice=appState.opponentType==='ai'?(appState.deck||[]).map((type,i)=>({type,lvl:1,id:'ai'+i})):[]; last=0;lastAttack=0;lastOpponentAttack=0;renderBattleDice();updateBattleHUD();
+ if(appState.opponentType!=='ai')appState.battle.opponentDice=[]; last=0;lastAttack=0;lastOpponentAttack=0;renderBattleDice();updateBattleHUD();
  if(appState.battle.mode==='coop'){for(let i=0;i<8;i++)setTimeout(()=>addEnemyFor('shared'),i*260)} else {for(let i=0;i<6;i++){setTimeout(()=>addEnemyFor('me'),i*260);setTimeout(()=>addEnemyFor('opp'),i*260)}}
  if(appState.opponentType==='player'&&appState.matchId)sendBattle({type:'battle_join',matchId:appState.matchId,grid:appState.diceGrid,speed:appState.speed}); window.rd2BattleRaf=requestAnimationFrame(battleLoop);
 }
@@ -454,31 +474,102 @@ let last=0,lastAttack=0,lastOpponentAttack=0;
 function renderCoopGrid(arr,id,clickable=false,selectedIndex=null){
   const el=document.getElementById(id);if(!el)return;el.innerHTML='';
   for(let i=0;i<15;i++){
-    const s=document.createElement('div');s.className='slot';const d=arr[i];
-    if(d){const n=document.createElement('div');n.innerHTML=diceHTML(d,1);n.firstChild.style.width='min(44px,82%)';if(selectedIndex===i)n.firstChild.classList.add('selected');if(clickable)n.firstChild.onclick=(ev)=>{ev.stopPropagation();battleDieClick(i)};s.appendChild(n)}
+    const s=document.createElement('div');s.className='slot';s.dataset.index=i;
+    const d=arr[i];
+    if(d){
+      const n=document.createElement('div');n.innerHTML=diceHTML(d,1);
+      const die=n.firstChild;die.style.width='min(44px,82%)';
+      if(selectedIndex===i)die.classList.add('selected');
+      if(clickable){attachDiceDrag(die,i)}
+      s.appendChild(n);
+    }
     el.appendChild(s);
   }
 }
 function renderCoopBoards(){renderCoopGrid(appState.battle?.opponentDice||[],'opponentDiceGrid',false);renderCoopGrid(appState.diceGrid||[],'myDiceGrid',true,appState.selected)}
 function renderBattleDice(){renderCoopBoards()}
+
+let dragInfo=null;
+function attachDiceDrag(die,index){
+ die.onpointerdown=(e)=>{
+   if(e.button!==0)return;
+   e.preventDefault();
+   const rect=die.getBoundingClientRect();
+   dragInfo={index,startX:e.clientX,startY:e.clientY,dragging:false,ghost:null};
+   const move=(ev)=>{
+     if(!dragInfo)return;
+     const dist=Math.hypot(ev.clientX-dragInfo.startX,ev.clientY-dragInfo.startY);
+     if(!dragInfo.dragging && dist<6)return;
+     if(!dragInfo.dragging){
+       dragInfo.dragging=true;die.classList.add('dragging');
+       const g=die.cloneNode(true);g.classList.remove('dragging');g.classList.add('dragGhost');
+       g.style.width=rect.width+'px';g.style.height=rect.height+'px';document.body.appendChild(g);dragInfo.ghost=g;
+     }
+     if(dragInfo.ghost){dragInfo.ghost.style.left=ev.clientX+'px';dragInfo.ghost.style.top=ev.clientY+'px'}
+     document.querySelectorAll('#myDiceGrid .slot.dropTarget').forEach(x=>x.classList.remove('dropTarget'));
+     const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest?.('#myDiceGrid .slot');
+     if(target)target.classList.add('dropTarget');
+   };
+   const up=(ev)=>{
+     document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);
+     document.querySelectorAll('#myDiceGrid .slot.dropTarget').forEach(x=>x.classList.remove('dropTarget'));
+     const wasDragging=dragInfo?.dragging;
+     const source=dragInfo?.index;
+     const ghost=dragInfo?.ghost; if(ghost)ghost.remove();
+     die.classList.remove('dragging');
+     const targetSlot=document.elementFromPoint(ev.clientX,ev.clientY)?.closest?.('#myDiceGrid .slot');
+     dragInfo=null;
+     if(wasDragging && targetSlot){
+       const target=Number(targetSlot.dataset.index);
+       mergeByDrag(source,target);
+     }else if(!wasDragging){
+       battleDieClick(source);
+     }
+   };
+   document.addEventListener('pointermove',move);
+   document.addEventListener('pointerup',up,{once:true});
+ };
+}
+function mergeByDrag(source,target){
+ if(source===target)return;
+ const a=appState.diceGrid[source],b=appState.diceGrid[target];
+ if(!a||!b)return toast('주사위가 없습니다');
+ if(a.type!==b.type||a.lvl!==b.lvl)return toast('같은 종류 · 같은 등급끼리만 합칠 수 있습니다');
+ if(a.lvl>=7)return toast('7성 주사위는 더 이상 합성할 수 없습니다');
+ appState.diceGrid[target]={type:a.type,lvl:Math.min(7,a.lvl+1),id:Date.now()};
+ // 항상 15칸을 유지: 소스 칸은 덱 랜덤 1성 주사위로 즉시 채웁니다.
+ const deck=appState.deck||['blue'];const t=deck[Math.floor(Math.random()*deck.length)]||'blue';
+ appState.diceGrid[source]={type:t,lvl:1,id:Date.now()+1};
+ appState.sp+=10;appState.selected=null;
+ renderCoopBoards();updateBattleHUD();
+ sendBattle({type:'merge',matchId:appState.matchId,grid:appState.diceGrid});
+ toast(a.lvl===6?'7성 ★ 완성!':`${a.lvl+1}성 합성!`);
+}
+
 function battleDieClick(i){
-  const d=appState.diceGrid[i];if(!d)return;
-  if(appState.selected===null){appState.selected=i;renderCoopBoards();return}
-  if(appState.selected===i){appState.selected=null;renderCoopBoards();return}
-  const a=appState.diceGrid[appState.selected],b=appState.diceGrid[i];
-  if(a&&b&&a.type===b.type&&a.lvl===b.lvl){
-    const target=appState.selected;
-    appState.diceGrid[target]={type:a.type,lvl:Math.min(7,a.lvl+1),id:Date.now()};
-    appState.diceGrid[i]=null;appState.selected=null;appState.sp+=15;
-    renderCoopBoards();updateBattleHUD();sendBattle({type:'merge',matchId:appState.matchId,grid:appState.diceGrid});toast('같은 주사위 합성!');
-  }else{appState.selected=i;renderCoopBoards();toast('같은 종류 · 같은 레벨의 주사위를 선택하세요')}
+ const d=appState.diceGrid[i];if(!d)return;
+ if(appState.selected===null){appState.selected=i;renderCoopBoards();return}
+ if(appState.selected===i){appState.selected=null;renderCoopBoards();return}
+ mergeByDrag(appState.selected,i);
 }
 function summonBattleDice(){
-  if(appState.sp<50)return toast('SP가 부족합니다');
-  const empty=[...Array(15).keys()].find(i=>!appState.diceGrid[i]);if(empty===undefined)return toast('빈 칸이 없습니다');
-  appState.sp-=50;const deck=appState.deck||['blue'];const type=deck[Math.floor(Math.random()*deck.length)];
-  appState.diceGrid[empty]={type,lvl:1,id:Date.now()+empty};renderCoopBoards();updateBattleHUD();
-  sendBattle({type:'summon',matchId:appState.matchId,index:empty,dice:appState.diceGrid[empty],grid:appState.diceGrid});
+ if(appState.sp<50)return toast('SP가 부족합니다');
+ const filled=appState.diceGrid.map((d,i)=>d?i:null).filter(i=>i!==null);
+ let index=filled.find(i=>!appState.diceGrid[i]);
+ if(index===undefined){
+   // 칸을 항상 채운 상태로 유지: 빈 칸이 없으면 가장 낮은 성급 슬롯을 교체합니다.
+   const min=Math.min(...filled.map(i=>appState.diceGrid[i].lvl||1));
+   const candidates=filled.filter(i=>(appState.diceGrid[i].lvl||1)===min);
+   index=candidates[Math.floor(Math.random()*candidates.length)];
+ }
+ appState.sp-=50;
+ const deck=appState.deck||['blue'];
+ const type=deck[Math.floor(Math.random()*deck.length)]||'blue';
+ appState.diceGrid[index]={type,lvl:1,id:Date.now()+index};
+ appState.selected=null;
+ renderCoopBoards();updateBattleHUD();
+ sendBattle({type:'summon',matchId:appState.matchId,index,dice:appState.diceGrid[index],grid:appState.diceGrid});
+ toast(`${D[type]?.name||'주사위'} 주사위 소환!`);
 }
 function enemyLayerFor(side){if(appState.battle?.mode==='coop')return document.getElementById('sharedEnemies');return document.getElementById(side==='me'?'myEnemies':'oppEnemies')}
 function addEnemyFor(side,boss=false){const layer=enemyLayerFor(side);if(!layer)return;const el=document.createElement('div');el.className='coopEnemy'+(boss?' boss':'');el.textContent=boss?'B':'●';el.style.top=(25+Math.random()*45)+'%';layer.appendChild(el);const e={el,x:-22,y:25+Math.random()*45,hp:boss?900:190+appState.wave*18,max:boss?900:190+appState.wave*18,speed:17+appState.wave*.25+(boss?-5:0),boss,side};(side==='shared'?appState.sharedEnemies:side==='me'?appState.enemies:appState.oppEnemies).push(e)}
@@ -504,7 +595,7 @@ function endCoop(result,reason){
  const r=document.createElement('div');r.id='resultOverlay';r.className='overlay open';r.innerHTML=`<div class="modal"><h2>${esc(result)}</h2><p class="muted">${esc(reason)}</p><div class="statgrid"><div class="stat"><small>WAVE</small><b>${appState.wave}</b></div><div class="stat"><small>처치</small><b>${appState.kills}</b></div></div><button class="primary" style="width:100%" onclick="leaveBattle()">로비로</button></div>`;document.getElementById('page-battle').appendChild(r);
  sendBattle({type:'battle_game_over',matchId:appState.matchId,result,reason});
 }
-function leaveBattle(){document.getElementById('page-battle').classList.remove('active');cancelAnimationFrame(window.rd2BattleRaf||0);clearInterval(appState.matchTimer);appState.matchTimer=null;appState.matching=false;appState.diceGrid=[];appState.enemies=[];appState.oppEnemies=[];appState.selected=null;appState.coopEnded=false;appState.page='lobby';document.getElementById('page-lobby').classList.add('active');drawLobby();updateRes();toast('전투를 종료하고 로비로 돌아왔습니다')}
+function leaveBattle(){document.getElementById('page-battle').classList.remove('active');cancelAnimationFrame(window.rd2BattleRaf||0);clearInterval(appState.matchTimer);appState.matchTimer=null;appState.matching=false;appState.diceGrid=[];appState.enemies=[];appState.oppEnemies=[];appState.selected=null;appState.coopEnded=false;appState.page='lobby';document.getElementById('page-lobby').classList.add('active');drawLobby();updateRes();fitStage('lobby');toast('전투를 종료하고 로비로 돌아왔습니다')}
 function updateRes(){['coin','dice','diamond','arenaTicket','coopTicket'].forEach(k=>{const el=document.getElementById(k);if(el)el.textContent=appState.currencies[k].toLocaleString()})}
 function closeModal(){document.getElementById('modalRoot').innerHTML=''}
 function toast(msg){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:absolute;z-index:300;left:50%;top:78px;transform:translateX(-50%);background:#25183a;border:1px solid #694f90;border-radius:12px;padding:10px 14px;font-weight:900;opacity:0;transition:.2s';document.body.appendChild(t)}t.textContent=msg;t.style.opacity=1;clearTimeout(t._tm);t._tm=setTimeout(()=>t.style.opacity=0,1500)}

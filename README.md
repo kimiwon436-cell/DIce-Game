@@ -30,3 +30,14 @@ DIce-Game/
 
 ## v10
 협동전은 상대/내 5x3 소환 공간을 동시에 표시하고, 각자 별도의 적 경로/기지를 사용합니다. 사람 매칭 시 주사위 소환·합성·배속을 WebSocket으로 상대에게 중계하며 어느 한쪽 기지가 먼저 파괴되면 양쪽 전투가 종료됩니다.
+
+
+## v12 UI / dice changes
+- Lobby uses a fixed 1200x700 landscape logical canvas.
+- Gameplay uses a fixed 400x900 portrait logical canvas.
+- The canvas is uniformly scaled to the viewport so UI positions/proportions remain stable across devices.
+- All 15 battle cells are populated.
+- Summon picks a random die from the current deck; when the board is full it replaces a lowest-rank slot so the board remains full.
+- Dragging one die onto another merges only when type and rank match.
+- Merging is allowed through 6-star; 6-star + 6-star creates a 7-star ★.
+- 7-star cannot be merged further.
