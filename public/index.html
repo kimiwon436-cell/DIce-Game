@@ -20,24 +20,59 @@ button,input{font:inherit}button{cursor:pointer}
 .stageBattle{width:400px;height:900px;min-width:400px;min-height:900px}
 .app{width:1200px;height:700px;min-width:1200px;min-height:700px;overflow:hidden;position:relative;transform-origin:center center;border:2px solid #45345f;border-radius:24px;background:#171024;box-shadow:0 30px 100px #0009}
 .view{position:absolute;inset:0;display:none;overflow:hidden}.view.active{display:block;overflow:hidden}
-.top{height:68px;background:#241935;border-bottom:1px solid #493863;display:flex;align-items:center;padding:9px 16px;gap:10px;z-index:20}
+.top{height:68px;background:#241935;border-bottom:1px solid #493863;display:flex;align-items:center;padding:8px 10px;gap:7px;z-index:20}
 .brand{font-weight:1000;font-size:21px}.brand small{display:block;color:#9e90ba;font-size:9px;letter-spacing:1px}
-.res{display:flex;gap:7px;margin-left:16px;flex-wrap:wrap}.res .chip{background:#312447;border:1px solid #584575;border-radius:12px;padding:7px 10px;font-weight:900;font-size:12px}.res .chip b{color:var(--gold)}
+.res{display:flex;gap:5px;margin-left:8px;flex-wrap:nowrap;align-items:center;min-width:0;overflow:hidden}.res .chip{background:#312447;border:1px solid #584575;border-radius:9px;padding:5px 6px;font-weight:900;font-size:9px;white-space:nowrap}.res .chip b{color:var(--gold)}
 .topsp{flex:1}
-.topbtn{border:1px solid #614b83;background:#302347;color:#fff;border-radius:11px;padding:9px 11px;font-weight:900}
-.profileBtn{display:flex;align-items:center;gap:8px}.avatar{width:30px;height:30px;border-radius:9px;background:linear-gradient(145deg,#78e7ff,#7d63ff);display:grid;place-items:center;font-size:14px}
-.body{height:calc(100% - 68px);display:grid;grid-template-columns:225px 1fr;overflow:hidden}
-.side{padding:14px;background:#1a1229;border-right:1px solid #46355f;display:flex;flex-direction:column;gap:8px}
-.nav{border:1px solid transparent;background:#211832;color:#d7cdea;border-radius:13px;padding:12px;text-align:left;font-weight:950}.nav:hover,.nav.active{background:#342551;border-color:#634d89;color:#fff}
-.nav i{font-style:normal;width:26px;display:inline-block}.nav .badge{float:right;background:#7549d1;border-radius:8px;padding:2px 6px;font-size:10px}
+.topbtn{border:1px solid #614b83;background:#302347;color:#fff;border-radius:9px;padding:7px 8px;font-weight:900;font-size:10px}
+.profileBtn{display:flex;align-items:center;gap:5px;font-size:10px;padding:5px 6px}.avatar{width:27px;height:27px;border-radius:9px;background:linear-gradient(145deg,#78e7ff,#7d63ff);display:grid;place-items:center;font-size:14px}
+.body{height:calc(100% - 68px);display:grid;grid-template-columns:126px 1fr;overflow:hidden}
+.side{
+      padding:10px 7px;
+      background:#1a1229;
+      border-right:1px solid #46355f;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+.nav{
+      border:0;
+      background:transparent;
+      color:#d7cdea;
+      border-radius:9px;
+      padding:5px 2px;
+      text-align:center;
+      font-weight:900;
+      min-height:46px;
+      line-height:1;
+    }
+    .nav:hover,.nav.active{
+      background:#2e2244;
+      color:#fff;
+    }
+    .nav i{
+      font-style:normal;
+      display:block;
+      width:auto;
+      font-size:18px;
+      margin-bottom:3px;
+    }
+    .nav .badge{
+      position:absolute;
+      margin:-31px 0 0 12px;
+      background:#7549d1;
+      border-radius:7px;
+      padding:2px 4px;
+      font-size:7px;
+    }
 .sideBottom{margin-top:auto}.mini{padding:11px;background:#251a38;border:1px solid #513e6e;border-radius:14px;font-size:11px;color:#b9adce;line-height:1.5}
 .main{overflow:hidden;padding:18px;background:radial-gradient(circle at 55% 10%,#32205a 0,#1b112a 45%,#130d1f 100%)}
-.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;min-height:250px}
-.heroCard{border:1px solid #5c477b;border-radius:18px;background:linear-gradient(145deg,#38245b,#201536);padding:24px;position:relative;overflow:hidden}
+.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:12px;min-height:220px}
+.heroCard{border:1px solid #5c477b;border-radius:15px;background:linear-gradient(145deg,#38245b,#201536);padding:17px;position:relative;overflow:hidden}
 .heroCard:after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;right:-70px;top:-80px;background:#7c5aff24}
 .bigLogo{font-size:44px;font-weight:1000;letter-spacing:-2px}.sub{color:#c8bce0;font-weight:800;margin-top:2px}
 .play{margin-top:26px;border:0;border-radius:15px;background:linear-gradient(#45e8a9,#13bd7b);padding:16px 30px;font-weight:1000;font-size:18px;color:#062017;box-shadow:0 7px 0 #087b54}.smallHint{margin-top:10px;color:#a99dbf;font-size:11px}
-.modeCard{border:1px solid #5c477b;border-radius:18px;background:#231836;padding:18px}.modeCard h3{margin:0 0 12px}.mode{background:#302246;border:1px solid #604b83;border-radius:13px;padding:12px;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center}.mode.sel{outline:3px solid #ffe05a55;border-color:#e5bf35}.mode b{display:block}.mode span{font-size:10px;color:#aba0c3}.mode button{border:0;background:#5c44a3;color:#fff;border-radius:9px;padding:7px 9px;font-weight:900}
+.modeCard{border:1px solid #5c477b;border-radius:15px;background:#231836;padding:13px}.modeCard h3{margin:0 0 12px}.mode{background:#302246;border:1px solid #604b83;border-radius:11px;padding:9px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}.mode.sel{outline:3px solid #ffe05a55;border-color:#e5bf35}.mode b{display:block}.mode span{font-size:10px;color:#aba0c3}.mode button{border:0;background:#5c44a3;color:#fff;border-radius:9px;padding:7px 9px;font-weight:900}
 .section{margin-top:16px}.sectionHead{display:flex;justify-content:space-between;align-items:end;margin-bottom:10px}.sectionHead h2{margin:0;font-size:18px}.sectionHead span{font-size:11px;color:#a99cbe}
 .cardgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.tile{border:1px solid #4e3b6b;border-radius:15px;background:#201531;padding:14px;min-height:145px}.tile h3{margin:0 0 6px;font-size:14px}.tile p{margin:0;color:#ab9fbe;font-size:11px;line-height:1.5}.tile button{margin-top:12px;width:100%;border:0;border-radius:10px;background:#39275c;color:#fff;padding:9px;font-weight:900}
 .deck{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.dice{aspect-ratio:1;border-radius:16px;border:3px solid #ffffff66;display:grid;place-items:center;font-weight:1000;font-size:27px;position:relative;box-shadow:0 8px 15px #0005}.dice small{position:absolute;right:6px;top:5px;background:#0009;border-radius:8px;padding:1px 5px;font-size:10px}.d-blue{background:linear-gradient(145deg,#93e2ff,#5e92ff)}.d-cyan{background:linear-gradient(145deg,#adffff,#34b7d2)}.d-red{background:linear-gradient(145deg,#ff9a95,#dd4250)}.d-green{background:linear-gradient(145deg,#b4fa9a,#55ad56)}.d-yellow{background:linear-gradient(145deg,#fff5a1,#e9b72b)}.d-pink{background:linear-gradient(145deg,#ffc0ec,#dd70cb)}.d-purple{background:linear-gradient(145deg,#cdb7ff,#7454cf)}
@@ -119,6 +154,51 @@ button,input{font:inherit}button{cursor:pointer}
   .section{margin-top:10px}
   .sectionHead h2{font-size:16px}
   .sectionHead span{font-size:9px}
+}
+
+
+@media(max-width:700px){
+  .body{display:block;position:relative;height:calc(100% - 68px)}
+  .side{
+    position:absolute;
+    left:0;right:0;bottom:0;top:auto;
+    height:58px;
+    padding:3px 6px;
+    border-right:0;
+    border-top:1px solid #46355f;
+    display:grid;
+    grid-template-columns:repeat(8,1fr);
+    gap:1px;
+    z-index:30;
+    background:#191126f2;
+  }
+  .nav{
+    min-height:52px;
+    padding:4px 0 2px;
+    border-radius:7px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+  }
+  .nav i{font-size:16px;margin-bottom:2px}
+  .nav{font-size:7px}
+  .nav .badge{
+    position:absolute;
+    margin:-28px 0 0 10px;
+    font-size:6px;
+    padding:1px 3px;
+  }
+  .main{
+    height:calc(100% - 58px);
+    padding:10px;
+    overflow:hidden;
+  }
+  .sideBottom{display:none}
+  .res{gap:3px}
+  .res .chip{font-size:8px;padding:4px 5px}
+  .profileBtn{font-size:8px}
+  .profileBtn .avatar{width:24px;height:24px}
 }
 
 </style>

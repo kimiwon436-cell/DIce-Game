@@ -62,3 +62,10 @@ v15: fixed missing fitStage declaration order and enforced desktop/mobile fixed 
 - No horizontal clipping and no document/page scrolling.
 - A small safety margin prevents edge clipping on phones with browser UI/safe areas.
 - Lobby and gameplay retain their logical layouts; only the scale changes per viewport.
+
+
+## v17 compact navigation
+- Navigation buttons are now icon + text only, without large card-style button boxes.
+- On mobile the navigation becomes a compact bottom icon/text bar so all major lobby menus stay on screen.
+- Lobby content remains non-scrollable; the logical canvas scales as a whole.
+- Top resource indicators are reduced to prevent clipping.
