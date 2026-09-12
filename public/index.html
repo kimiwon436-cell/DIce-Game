@@ -730,7 +730,7 @@ async function api(path, options={}){
  if(!res.ok)throw new Error(data.error||('HTTP '+res.status));
  return data;
 }
-function snapshot(){return {user:appState.user,userId:appState.userId,battleMode:appState.battleMode||'coop',profile:appState.profile,currencies:appState.currencies,deck:appState.deck,unlocked:appState.unlocked,treeUnlocked:appState.treeUnlocked,diceLevels:appState.diceLevels,treeLevels:appState.treeLevels,passXP:appState.passXP,passRewardsClaimed:appState.passRewardsClaimed,lucky:appState.lucky,quests:appState.quests,difficulty:appState.difficulty,selectedTreeNode:appState.selectedTreeNode||0,traitLevels:appState.traitLevels||{},bountyClaimed:appState.bountyClaimed||0}}
+function snapshot(){return {user:appState.user,userId:appState.userId,battleMode:appState.battleMode||'coop',profile:appState.profile,currencies:appState.currencies,deck:appState.deck,unlocked:appState.unlocked,treeUnlocked:appState.treeUnlocked,diceLevels:appState.diceLevels,treeLevels:appState.treeLevels,passXP:appState.passXP,passRewardsClaimed:appState.passRewardsClaimed,lucky:appState.lucky,quests:appState.quests,difficulty:appState.difficulty,selectedTreeNode:appState.selectedTreeNode||0,traitLevels:appState.traitLevels||{},bountyClaimed:appState.bountyClaimed||0,bountyBestKills:appState.bountyBestKills||0}}
 function saveLocal(){try{A.setItem('rd2_local_cache',JSON.stringify(snapshot()))}catch{}}
 function save(){saveLocal();if(!serverToken)return Promise.resolve();return api('/api/me/state',{method:'PUT',body:JSON.stringify(snapshot())}).catch(e=>console.warn('server save failed',e))}
 function loadLocal(){
@@ -750,7 +750,7 @@ function loadLocal(){
  if(!appState.treeLevels.attackSpeed)appState.treeLevels.attackSpeed=1;
  if(!appState.treeLevels.spGain)appState.treeLevels.spGain=1;
  if(!appState.selectedTreeNode && appState.selectedTreeNode!==0)appState.selectedTreeNode=0;
- if(!Array.isArray(appState.passRewardsClaimed))appState.passRewardsClaimed=[]; if(!Number.isFinite(Number(appState.bountyClaimed)))appState.bountyClaimed=0;
+ if(!Array.isArray(appState.passRewardsClaimed))appState.passRewardsClaimed=[]; if(!Number.isFinite(Number(appState.bountyClaimed)))appState.bountyClaimed=0; if(!Number.isFinite(Number(appState.bountyBestKills)))appState.bountyBestKills=0;
  if(!appState.arenaTicketNextIn)appState.arenaTicketNextIn=1800000;
  if(!appState.coopTicketNextIn)appState.coopTicketNextIn=300000;
 }
@@ -987,22 +987,20 @@ async function useLucky(){
  catch(e){toast(e.message)}
 }
 function drawBounty(){
- const reached=Math.floor((appState.kills||0)/100);
- const claimed=appState.bountyClaimed||0;
- const reward=reached>claimed?`보상 ${reached*100}킬 달성`:'다음 보상까지 '+((claimed+1)*100-(appState.kills||0))+'킬';
- document.getElementById('main').innerHTML=`<div class="sectionHead"><h2>토벌 보상</h2><span>협동전 100킬마다 획득</span></div>
- <div class="tile"><h3>현재 처치 수 · ${appState.kills||0} / 5000</h3><p>${reward}</p>
- <button class="primary" onclick="claimBountyMilestone()">토벌 보상 받기</button></div>`; ensureBackButton('bounty');
+ const best=Math.max(0,Math.floor(Number(appState.bountyBestKills||0)));
+ const reached=Math.floor(best/100);
+ const claimed=Math.max(0,Math.floor(Number(appState.bountyClaimed||0)));
+ const canClaim=reached>claimed;
+ const reward=canClaim?(reached-claimed)*500:0;
+ const next=Math.max(0,(claimed+1)*100-best);
+ document.getElementById('main').innerHTML=`<div class="sectionHead"><h2>토벌 보상</h2><span>협동전 최고 기록</span></div>
+ <div class="tile"><h3>최고 처치 기록 · ${best} / 5000</h3><p>${canClaim?`받을 수 있는 보상 <b>${reward.toLocaleString()} 코인</b>`:`다음 보상까지 ${next}킬`}</p>
+ <button class="primary" ${canClaim?'':'disabled'} onclick="claimBountyMilestone()">토벌 보상 받기</button></div>`; ensureBackButton('bounty');
 }
-function claimBountyMilestone(){
- const reached=Math.floor((appState.kills||0)/100);
- const claimed=appState.bountyClaimed||0;
- if(reached<=claimed)return toast('아직 받을 토벌 보상이 없습니다');
- const count=reached-claimed;
- appState.bountyClaimed=reached;
- appState.currencies.coin+=count*500;
- save();updateRes();drawBounty();toast('토벌 보상 '+(count*500).toLocaleString()+' 코인 획득!');
+async function claimBountyMilestone(){
+ try{const r=await api('/api/bounty/claim',{method:'POST'});applyServerResponse(r);drawBounty();updateRes();toast(`${Number(r.rewardCoins||0).toLocaleString()} 코인 획득!`);}catch(e){toast(e.message)}
 }
+
 async function logout(){
  try{if(serverToken)await api('/api/auth/logout',{method:'POST'})}catch{}
  serverToken='';clearSession();mountShell()
@@ -1203,7 +1201,7 @@ function handleRemoteBattle(m){if(!appState.battle||m.matchId!==appState.matchId
 async function persistBattleResult(reason='finished'){
  if(appState.battleFinishSaved||!appState.matchId)return;
  appState.battleFinishSaved=true;
- try{const r=await api('/api/battle/finish',{method:'POST',body:JSON.stringify({matchId:appState.matchId,mode:appState.battle?.mode||'coop',kills:Math.floor(appState.kills||0),reason})});if(r.state)applyServerResponse(r);if(r.rewardCoins)toast(`토벌 보상 ${Number(r.rewardCoins).toLocaleString()} 코인이 저장되었습니다`);}
+ try{const r=await api('/api/battle/finish',{method:'POST',body:JSON.stringify({matchId:appState.matchId,mode:appState.battle?.mode||'coop',kills:Math.floor(appState.kills||0),reason})});if(r.state)applyServerResponse(r);if(Number.isFinite(Number(r.bestKills)))appState.bountyBestKills=Math.max(Number(appState.bountyBestKills||0),Number(r.bestKills));if(r.rewardCoins)toast(`토벌 보상 ${Number(r.rewardCoins).toLocaleString()} 코인이 저장되었습니다`);}
  catch(e){appState.battleFinishSaved=false;console.warn('battle finish save',e)}
 }
 function endCoop(title,msg){if(appState.coopEnded)return;appState.coopEnded=true;cancelAnimationFrame(window.rd2BattleRaf||0);persistBattleResult('finished');sendBattle({type:'battle_game_over',title});document.getElementById('modalRoot').innerHTML=`<div class="overlay"><div class="modal"><h2>${esc(title)}</h2><p class="muted">${esc(msg)}</p><div class="tile"><b>${appState.battle?.mode==='coop'?'처치':'기지 상태'}: ${appState.battle?.mode==='coop'?appState.kills:(appState.battle?.myBase??0)}</b><p style="margin-top:6px">이번 판 업그레이드: 공격력 +${appState.battleUpgradeDamage||0}%</p></div><button class="primary" style="width:100%" onclick="closeModal();leaveBattle()">로비로</button></div></div>`;}

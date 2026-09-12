@@ -33,7 +33,7 @@ const DEFAULT_STATE = {
   currencies: { coin: 100, dice: 0, diamond: 0, arenaTicket: 1, coopTicket: 5 },
   deck: ['blue','cyan','red','green','yellow'],
   unlocked: ['blue','cyan','red','green','yellow'], treeUnlocked: [], diceLevels: {blue:1,cyan:1,red:1,green:1,yellow:1}, traitLevels: {}, treeLevels: {allDamage:1,attackSpeed:1,spGain:1},
-  passXP: 0, passRewardsClaimed: [], lucky: 0, bountyClaimed: 0,
+  passXP: 0, passRewardsClaimed: [], lucky: 0, bountyClaimed: 0, bountyBestKills: 0,
   quests: [0,0,0], difficulty: 'normal'
 };
 
@@ -70,6 +70,7 @@ function cleanState(raw){
     lucky:Math.max(0,Math.floor(Number(s.lucky??0))),
     quests:Array.isArray(s.quests)?s.quests.slice(0,20).map(Number):[0,0,0],
     bountyClaimed:Math.max(0,Math.floor(Number(s.bountyClaimed??0))),
+    bountyBestKills:Math.max(0,Math.floor(Number(s.bountyBestKills??0))),
     difficulty:['easy','normal','hard'].includes(s.difficulty)?s.difficulty:'normal'
   };
 }
@@ -225,9 +226,43 @@ app.post('/api/battle/finish',auth,async(req,res)=>{
    const kills=Math.max(0,Math.floor(Number(req.body?.kills||0)));
    if(mode!=='coop'||!matchId)return res.json({ok:true,rewardCoins:0,state:undefined});
    const client=await pool.connect();
-   try{await client.query('BEGIN');const row=(await client.query('SELECT * FROM users WHERE id=$1 FOR UPDATE',[req.auth.id])).rows[0];if(!row)throw new Error('계정을 찾을 수 없습니다.');const state=cleanState(row.state);const reached=Math.floor(kills/100);const claimed=Math.max(0,Math.floor(Number(state.bountyClaimed||0)));const reward=Math.max(0,(reached-claimed)*500);if(reward>0){state.currencies.coin+=reward;}state.bountyClaimed=Math.max(claimed,reached);await client.query('UPDATE users SET state=$1::jsonb,updated_at=NOW() WHERE id=$2',[JSON.stringify(state),req.auth.id]);const fresh=(await client.query('SELECT * FROM users WHERE id=$1',[req.auth.id])).rows[0];await client.query('COMMIT');broadcast(req.auth.id,stateMessage(fresh,state,{battleRewardCoins:reward,reason:req.body?.reason||'finished'}));res.json({ok:true,rewardCoins:reward,state});}
-   catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
+   try{await client.query('BEGIN');
+     const row=(await client.query('SELECT * FROM users WHERE id=$1 FOR UPDATE',[req.auth.id])).rows[0];
+     if(!row)throw new Error('계정을 찾을 수 없습니다.');
+     const state=cleanState(row.state);
+     const previousBest=Math.max(0,Math.floor(Number(state.bountyBestKills||0)));
+     state.bountyBestKills=Math.max(previousBest,kills);
+     await client.query('UPDATE users SET state=$1::jsonb,updated_at=NOW() WHERE id=$2',[JSON.stringify(state),req.auth.id]);
+     const fresh=(await client.query('SELECT * FROM users WHERE id=$1',[req.auth.id])).rows[0];
+     await client.query('COMMIT');
+     broadcast(req.auth.id,stateMessage(fresh,state,{battleBestKills:state.bountyBestKills,reason:req.body?.reason||'finished'}));
+     res.json({ok:true,rewardCoins:0,bestKills:state.bountyBestKills,state});
+   } catch(e){await client.query('ROLLBACK');throw e;} finally{client.release();}
  }catch(e){res.status(400).json({error:e.message||'전투 결과 저장 실패'});}
+});
+
+app.post('/api/bounty/claim',auth,async(req,res)=>{
+ try{
+   const client=await pool.connect();
+   try{await client.query('BEGIN');
+     const row=(await client.query('SELECT * FROM users WHERE id=$1 FOR UPDATE',[req.auth.id])).rows[0];
+     if(!row)throw new Error('계정을 찾을 수 없습니다.');
+     const state=cleanState(row.state);
+     const best=Math.max(0,Math.floor(Number(state.bountyBestKills||0)));
+     const reached=Math.floor(best/100);
+     const claimed=Math.max(0,Math.floor(Number(state.bountyClaimed||0)));
+     if(reached<=claimed)throw new Error('아직 받을 토벌 보상이 없습니다.');
+     const count=reached-claimed;
+     const reward=count*500;
+     state.currencies.coin+=reward;
+     state.bountyClaimed=reached;
+     await client.query('UPDATE users SET state=$1::jsonb,updated_at=NOW() WHERE id=$2',[JSON.stringify(state),req.auth.id]);
+     const fresh=(await client.query('SELECT * FROM users WHERE id=$1',[req.auth.id])).rows[0];
+     await client.query('COMMIT');
+     broadcast(req.auth.id,stateMessage(fresh,state,{battleRewardCoins:reward,reason:'bounty_claim'}));
+     res.json({ok:true,rewardCoins:reward,bestKills:best,state});
+   }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
+ }catch(e){res.status(400).json({error:e.message||'토벌 보상 수령 실패'});}
 });
 
 // ---------------- Matchmaking ----------------
@@ -246,12 +281,18 @@ async function finalizeMatchRewards(match,reason='finished'){
      const uid=String(pid), st=match.playerStates?.[uid];
      if(!st||match.mode!=='coop')continue;
      const kills=Math.max(0,Math.floor(Number(st.kills||0)));
-     const reached=Math.floor(kills/100);
-     if(reached<=0)continue;
      const client=await pool.connect();
-     try{await client.query('BEGIN');const row=(await client.query('SELECT * FROM users WHERE id=$1 FOR UPDATE',[pid])).rows[0];if(!row){await client.query('ROLLBACK');continue;}const state=cleanState(row.state);const claimed=Math.max(0,Math.floor(Number(state.bountyClaimed||0)));if(reached>claimed){const reward=(reached-claimed)*500;state.currencies.coin+=reward;state.bountyClaimed=reached;await client.query('UPDATE users SET state=$1::jsonb,updated_at=NOW() WHERE id=$2',[JSON.stringify(state),pid]);const fresh=(await client.query('SELECT * FROM users WHERE id=$1',[pid])).rows[0];await client.query('COMMIT');broadcast(pid,stateMessage(fresh,state,{battleRewardCoins:reward,reason}));}else{await client.query('COMMIT');}}
-     catch(e){await client.query('ROLLBACK');console.warn('finalize reward',e.message)}finally{client.release();}
-   }catch(e){console.warn('finalize player reward',e.message)}
+     try{await client.query('BEGIN');
+       const row=(await client.query('SELECT * FROM users WHERE id=$1 FOR UPDATE',[pid])).rows[0];
+       if(!row){await client.query('ROLLBACK');continue;}
+       const state=cleanState(row.state);
+       state.bountyBestKills=Math.max(Math.floor(Number(state.bountyBestKills||0)),kills);
+       await client.query('UPDATE users SET state=$1::jsonb,updated_at=NOW() WHERE id=$2',[JSON.stringify(state),pid]);
+       const fresh=(await client.query('SELECT * FROM users WHERE id=$1',[pid])).rows[0];
+       await client.query('COMMIT');
+       broadcast(pid,stateMessage(fresh,state,{battleBestKills:state.bountyBestKills,reason}));
+     }catch(e){await client.query('ROLLBACK');console.warn('save best bounty',e.message)}finally{client.release();}
+   }catch(e){console.warn('finalize player bounty',e.message)}
  }
 }
 
