@@ -825,7 +825,7 @@ function diceArtSVG(type,small=false){
  };
  return `<span class="diceArt" aria-hidden="true">${emoji[type]||emoji.blue}</span>`;
 }
-function diceHTML(type,lvl=1){const d=D[type]||D.blue||{cls:'d-blue',name:'주사위',damage:50};return `<div class="dice ${d.cls}" aria-label="${esc(d.name||type)}"><span class="dieArt">${diceArtSVG(type)}</span><small>Lv.${Math.max(1,Math.min(50,Number(lvl)||1))}</small></div>`;}
+function diceHTML(type,lvl=1){const d=D[type]||D.blue||{cls:'d-blue',name:'주사위',damage:50};return `<div class="dice ${d.cls}" aria-label="${esc(d.name||type)}"><span class="dieArt">${diceArtSVG(type)}</span></div>`;}
 function deckPickerHtml(slot){const equipped=new Set(appState.deck);return `<div class="overlay"><div class="modal" style="max-width:760px"><button class="close" onclick="closeModal()">✕</button><h2>🎴 덱 주사위 교체</h2><p class="muted">슬롯 ${slot+1}에 넣을 주사위를 선택하세요.</p><div class="cardgrid">${appState.unlocked.map(x=>{const d=D[x],used=equipped.has(x)&&appState.deck[slot]!==x;return `<button class="tile" ${used?'disabled':''} onclick="setDeckSlot(${slot},'${x}')" style="text-align:left;opacity:${used?.45:1}"><div class="row"><div style="width:52px">${diceHTML(x,appState.diceLevels?.[x]||1)}</div><div><b>${d.name}</b><div class="muted">${used?'이미 장착됨':`트리 Lv.${appState.diceLevels?.[x]||1}`}</div></div></div></button>`}).join('')}</div></div></div>`}
 function openDeckPicker(slot){document.getElementById('modalRoot').innerHTML=deckPickerHtml(slot)}
 function openDeckPickerForDice(type){const slot=appState.deck.indexOf(type)>=0?appState.deck.indexOf(type):0;openDeckPicker(slot)}
@@ -1036,7 +1036,22 @@ function summonBattleDice(){
  sendBattle({type:'summon',slot:idx,die:appState.diceGrid[idx]});
  updateBattleHUD();
 }
-function toggleSpeed(){appState.speed=appState.speed>=2?1:appState.speed+0.5;sendBattle({type:'speed',speed:appState.speed});updateBattleHUD();}
+function toggleSpeed(){appState.speed=appState.speed>=1.5?1:Math.min(1.5,appState.speed+0.5);sendBattle({type:'speed',speed:appState.speed});updateBattleHUD();}
+function battleUpgradeLevel(type){return Math.max(0,Number(appState.battleUpgradeLevels?.[type]||0));}
+function battleUpgradeCost(level){return 50+Math.max(0,Number(level)||0)*50;}
+function drawBattleUpgrades(){
+ const box=document.getElementById('battleDieUpgradeList');
+ if(!box)return;
+ const deck=Array.isArray(appState.deck)&&appState.deck.length?appState.deck:Object.keys(D).slice(0,5);
+ box.innerHTML=deck.slice(0,5).map(type=>{
+   const d=D[type]||D.blue;
+   const lv=battleUpgradeLevel(type);
+   const cost=battleUpgradeCost(lv);
+   const max=lv>=10;
+   const face=battleDiceHTML({type,rank:1},false);
+   return `<div class="battleDieUpgradeCard"><div class="battleDieUpgradeImage">${face}</div><b>${esc(d.name||type)}</b><small>현재 Lv.${lv}/10</small><button class="battleDieUpgradeBtn" ${max?'disabled':''} onclick="buyBattleDamageUpgrade('${type}')">${max?'MAX':'업그레이드 · SP '+cost}</button></div>`;
+ }).join('');
+}
 function buyBattleDamageUpgrade(type){if(!type)return;appState.battleUpgradeLevels=appState.battleUpgradeLevels||{};const lv=battleUpgradeLevel(type);if(lv>=10)return toast('이 주사위의 이번 판 업그레이드는 최대 레벨입니다.');const cost=battleUpgradeCost(lv);if(appState.sp<cost)return toast('SP가 부족합니다.');appState.sp-=cost;appState.battleUpgradeLevels[type]=lv+1;updateBattleHUD();toast((D[type]?.name||type)+' 이번 판 업그레이드 Lv.'+(lv+1));}
 function setupBattle(){appState.sp=100;appState.kills=0;appState.gameSec=0;appState.speed=1;appState.selected=null;appState.coopEnded=false;appState.battleFinishSaved=false;appState.killGoal=5000;appState.nextBossKill=150;appState.bossIndex=0;appState.myBossCount=0;appState.oppBossCount=0;appState.battleUpgradeLevel=0;appState.battleUpgradeDamage=0;appState.battleUpgradeLevels={};appState.enemies=[];appState.oppEnemies=[];appState.sharedEnemies=[];appState.diceGrid=Array.from({length:15},()=>null);appState.battle.myBase=150;appState.battle.opponentBase=150;appState.battle.sharedBase=150;appState.battle.opponentSpeed=1;appState.battle.opponentDice=Array.from({length:15},()=>null);
  const snap=appState._resumeSnapshot;
