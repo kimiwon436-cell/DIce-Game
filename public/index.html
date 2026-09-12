@@ -125,7 +125,7 @@ button,input{font:inherit}button{cursor:pointer}
 .treeWide{background:#2a2140;border:1px solid #5d4a79;border-radius:18px;padding:10px;box-shadow:0 10px 25px #0003}
 .treeCanvas{position:relative;height:760px;overflow:hidden;border-radius:13px;background:#30274a;box-shadow:inset 0 0 80px #100b1d99}
 .treeCanvas:before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle at 50% 50%,#8d7aa722 1px,transparent 1.5px);background-size:38px 38px;opacity:.45}
-.treeEdge{position:absolute;height:2px;background:#6d6685;transform-origin:left center;z-index:1;opacity:.8}
+.treeEdge{position:absolute;height:2px;background:#6d6685;transform-origin:left center;z-index:1;opacity:.8}.treeLinks{position:absolute;inset:0;width:100%;height:100%;z-index:1;overflow:visible;pointer-events:none}.treeLinks line{stroke:#776a8f;stroke-width:0.45;vector-effect:non-scaling-stroke;stroke-linecap:round;opacity:.95}
 .treeNode{position:absolute;transform:translate(-50%,-50%);width:86px;height:86px;border-radius:15px;border:2px solid #5b5372;background:#3c3355;z-index:3;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 17px #0006}
 .treeNode:hover{transform:translate(-50%,-50%) scale(1.04)}
 .treeOpen{border-color:#6be6b0;box-shadow:0 0 0 2px #6be6b018,0 10px 25px #0007}
@@ -610,6 +610,16 @@ button,input{font:inherit}button{cursor:pointer}
 .deckSlotVisual{width:76px;height:76px;display:grid;place-items:center;flex:0 0 76px;}
 .deckOwnedVisual{width:72px;height:72px;display:grid;place-items:center;flex:0 0 72px;}
 @media(max-width:700px){.deckDiceVisual>span{font-size:30px!important}.deckSlotVisual{width:66px;height:66px;flex-basis:66px}.deckOwnedVisual{width:64px;height:64px;flex-basis:64px}}
+<style>
+.app.theme-wind .top{background:linear-gradient(135deg,#1c4b5c,#21304d)}
+.app.theme-ice .top{background:linear-gradient(135deg,#28577c,#293859)}
+.app.theme-fire .top{background:linear-gradient(135deg,#6a3126,#2f202a)}
+.app.theme-rainbow .top{background:linear-gradient(135deg,#3f255e,#244c63,#5b2a47)}
+.app.theme-glacier .top{background:linear-gradient(135deg,#225d68,#244260)}
+.app.theme-thunder .top{background:linear-gradient(135deg,#64521d,#322b48)}
+.app.theme-cherry .top{background:linear-gradient(135deg,#713b60,#3a273b)}
+.selectedSkin{outline:2px solid #6be6b0;box-shadow:0 0 0 3px #6be6b022}
+</style>
 </style>
 </head>
 <body>
@@ -658,7 +668,7 @@ const DEFAULT_CLIENT_STATE={
  traitLevels:{},
  treeLevels:{allDamage:1,attackSpeed:1,spGain:1},
  profile:{nickname:'',avatar:'🎲'},deck:['blue','cyan','red','green','yellow'],unlocked:['blue','cyan','red','green','yellow'],treeUnlocked:[],diceLevels:{blue:1,cyan:1,red:1,green:1,yellow:1},traitLevels:{},
- passXP:0,passRewardsClaimed:[],lucky:0,quests:[0,0,0],difficulty:'normal',room:null,isAdmin:false,coopTicketNextIn:300000,arenaTicketNextIn:1800000,matchQueueId:null,opponentType:null,opponentNickname:''
+ passXP:0,passRewardsClaimed:[],lucky:0,quests:[0,0,0],difficulty:'normal',styleTheme:'default',room:null,isAdmin:false,coopTicketNextIn:300000,arenaTicketNextIn:1800000,matchQueueId:null,opponentType:null,opponentNickname:''
 };
 const appState=DEFAULT_CLIENT_STATE;
 
@@ -730,7 +740,7 @@ async function api(path, options={}){
  if(!res.ok)throw new Error(data.error||('HTTP '+res.status));
  return data;
 }
-function snapshot(){return {user:appState.user,userId:appState.userId,battleMode:appState.battleMode||'coop',profile:appState.profile,currencies:appState.currencies,deck:appState.deck,unlocked:appState.unlocked,treeUnlocked:appState.treeUnlocked,diceLevels:appState.diceLevels,treeLevels:appState.treeLevels,passXP:appState.passXP,passRewardsClaimed:appState.passRewardsClaimed,lucky:appState.lucky,quests:appState.quests,difficulty:appState.difficulty,selectedTreeNode:appState.selectedTreeNode||0,traitLevels:appState.traitLevels||{},bountyClaimed:appState.bountyClaimed||0,bountyBestKills:appState.bountyBestKills||0}}
+function snapshot(){return {user:appState.user,userId:appState.userId,battleMode:appState.battleMode||'coop',profile:appState.profile,currencies:appState.currencies,deck:appState.deck,unlocked:appState.unlocked,treeUnlocked:appState.treeUnlocked,diceLevels:appState.diceLevels,treeLevels:appState.treeLevels,passXP:appState.passXP,passRewardsClaimed:appState.passRewardsClaimed,lucky:appState.lucky,quests:appState.quests,difficulty:appState.difficulty,styleTheme:appState.styleTheme||'default',selectedTreeNode:appState.selectedTreeNode||0,traitLevels:appState.traitLevels||{},bountyClaimed:appState.bountyClaimed||0,bountyBestKills:appState.bountyBestKills||0,questClaimed:appState.questClaimed||[]}}
 function saveLocal(){try{A.setItem('rd2_local_cache',JSON.stringify(snapshot()))}catch{}}
 function save(){saveLocal();if(!serverToken)return Promise.resolve();return api('/api/me/state',{method:'PUT',body:JSON.stringify(snapshot())}).catch(e=>console.warn('server save failed',e))}
 function loadLocal(){
@@ -750,7 +760,7 @@ function loadLocal(){
  if(!appState.treeLevels.attackSpeed)appState.treeLevels.attackSpeed=1;
  if(!appState.treeLevels.spGain)appState.treeLevels.spGain=1;
  if(!appState.selectedTreeNode && appState.selectedTreeNode!==0)appState.selectedTreeNode=0;
- if(!Array.isArray(appState.passRewardsClaimed))appState.passRewardsClaimed=[]; if(!Number.isFinite(Number(appState.bountyClaimed)))appState.bountyClaimed=0; if(!Number.isFinite(Number(appState.bountyBestKills)))appState.bountyBestKills=0;
+ if(!appState.styleTheme)appState.styleTheme='default'; if(!Array.isArray(appState.passRewardsClaimed))appState.passRewardsClaimed=[]; if(!Array.isArray(appState.questClaimed))appState.questClaimed=[]; ensureQuestState(); if(!Number.isFinite(Number(appState.bountyClaimed)))appState.bountyClaimed=0; if(!Number.isFinite(Number(appState.bountyBestKills)))appState.bountyBestKills=0;
  if(!appState.arenaTicketNextIn)appState.arenaTicketNextIn=1800000;
  if(!appState.coopTicketNextIn)appState.coopTicketNextIn=300000;
 }
@@ -855,7 +865,7 @@ function nav(page){
  ensureBackButton(page);
 }
 function renderGame(){
- return `<div class="app stageLobby">
+ return `<div class="app stageLobby theme-${esc(appState.styleTheme||'default')}">
   <div id="pages">${pageShell()}</div>
   <div id="modalRoot"></div>
   <div id="loading" class="loading"><div style="font-size:28px;font-weight:1000">전투 준비 중</div><div class="muted" id="loadText" style="margin:7px 0 16px">플레이어 정보를 불러오는 중...</div><div class="bar"><i id="loadBar"></i></div></div>
@@ -970,13 +980,73 @@ function selectTreeNode(id){const n=Number(id);if(!treeNode(n))return;appState.s
 async function upgradeTreeDice(type){try{const r=await api('/api/tree/upgrade',{method:'POST',body:JSON.stringify({type})});applyServerResponse(r);drawTree();updateRes();toast(r.upgrade?.label||`${D[type]?.name||'업그레이드'} 업그레이드 완료`);}catch(e){toast(e.message)}}
 async function buyTree(id){ensureTreeState();const node=treeNode(id);if(!node)return;if(treeUnlocked(id)){appState.selectedTreeNode=id;drawTree();return;}if(!treeIsNext(id)){toast('먼저 연결된 앞의 노드를 해금하세요');return;}try{const r=await api('/api/tree/unlock',{method:'POST',body:JSON.stringify({nodeId:id})});applyServerResponse(r);appState.selectedTreeNode=id;drawTree();updateRes();toast(`${node.label} 해금 완료 · 🎲 -8`);}catch(e){toast(e.message)}}
 function treeDetails(node){if(!node||node.id===0)return `<div class="tile"><b>다이스 트리</b><p>노드 간격을 넓혀 성장 경로를 길게 구성했습니다.</p><p style="margin-top:7px">주사위 해금은 <b>🎲 8개</b>, 업그레이드는 <b>최대 50레벨</b>입니다.</p></div>`;const unlocked=treeUnlocked(node.id),key=treeUpgradeKey(node),lv=selectedTreeLevel(node),c=treeUpgradeCost(lv),isPassive=!!node.upgrade;if(!unlocked)return `<div class="tile"><div class="row"><div style="width:64px;font-size:36px">${node.icon}</div><div class="grow"><h3 style="margin:0">${node.label}</h3><div class="muted">잠긴 노드</div></div></div><p style="margin-top:10px">앞의 연결 노드를 해금하면 이 노드를 구매할 수 있습니다.</p><button class="primary" style="width:100%" onclick="buyTree(${node.id})">🎲 8개로 해금</button></div>`;const effect=isPassive?(key==='allDamage'?`모든 주사위 공격력 +${(lv-1)*5}%`:(key==='attackSpeed'?`모든 주사위 공격속도 +${(lv-1)*2}%`:`SP 획득량 +${(lv-1)*3}%`)):`주사위 자체 성장 레벨 · 전투 성급과는 별개`;return `<div class="tile"><div class="row"><div style="width:64px">${isPassive?node.icon:diceHTML(node.type,lv)}</div><div class="grow"><h3 style="margin:0">${node.label}</h3><div class="muted">현재 레벨 ${lv} / 50</div></div></div><p style="margin-top:10px">${effect}</p>${node.type&&lv>=10?`<button class="primary" style="width:100%;margin:8px 0" onclick="openTraitShop('${node.type}')">⭐ 특성 업그레이드 구매</button>`:''}${lv>=50?'<div class="tile">MAX · 50레벨</div>':`<p>다음 레벨 <b>${lv+1}</b> · 비용 <b>${c.dice?`🎲 ${c.dice}`:`🪙 ${c.coin}`}</b></p><button class="primary" style="width:100%" onclick="upgradeTreeDice('${key}')">레벨 ${lv+1}로 업그레이드</button><p class="muted" style="margin-top:8px">5·10·15·… 레벨에 도달할 때만 🎲 8개, 나머지는 코인을 사용합니다.</p>`}</div>`;}
-function drawTree(){ensureTreeState();if(!appState.selectedTreeNode&&appState.selectedTreeNode!==0)appState.selectedTreeNode=0;const edges=[];treeNodes.forEach(n=>n.next.forEach(to=>{const t=treeNode(to);if(t){const dx=(t.x-n.x)*7,dy=(t.y-n.y)*4;edges.push(`<div class="treeEdge" style="left:${n.x}%;top:${n.y}%;width:${Math.hypot(dx,dy)}px;transform:rotate(${Math.atan2(dy,dx)*180/Math.PI}deg)"></div>`)}}));const nodes=treeNodes.map(n=>{const open=treeUnlocked(n.id),next=treeIsNext(n.id),selected=appState.selectedTreeNode===n.id;return `<div class="treeNode ${open?'treeOpen':next?'treeNext':'treeLocked'} ${selected?'treeSelected':''}" style="left:${n.x}%;top:${n.y}%" onclick="selectTreeNode(${n.id})"><div class="treeIcon">${n.icon}</div><div class="treeLevel">${open?'해금됨':next?'다음 해금':'잠김'}</div><div class="treeLabel">${n.label}</div>${open&&n.id>0?'<div class="treeCheck">✓</div>':''}${!open?`<div class="treeCost">🎲 ${n.cost}</div>`:''}</div>`}).join('');document.getElementById('main').innerHTML=`<div class="sectionHead"><h2>다이스 트리</h2><span>노드 간격 확대 · 50레벨</span></div><div class="treeLayout"><div class="treeWide"><div class="treeCanvas">${edges.join('')}${nodes}</div><div class="treeLegend"><span>🟢 해금</span><span>🟡 다음 해금</span><span>⚫ 잠김</span></div></div><div class="treeDetails">${treeDetails(treeNode(appState.selectedTreeNode))}</div></div><div class="section"><div class="tile"><b>중요</b><p>협동/아레나에서 보이는 <b>1~7성은 이 로비 레벨과 완전히 별개</b>입니다. 같은 주사위 + 같은 성만 합성할 수 있고, 합성된 칸이 한 단계 높은 성으로 바뀌며 비워진 칸은 덱에서 1성으로 즉시 보충됩니다.</p></div></div>`;}
-function drawStyle(){document.getElementById('main').innerHTML=`<div class="sectionHead"><h2>꾸미기</h2><span>로비에서만 변경 가능</span></div><div class="skinGrid">
- ${['🎲','🌀','❄️','🔥','🌈','🧊','⚡','🌸'].map((a,i)=>`<div class="skin"><div class="art" style="background:hsl(${i*42},55%,35%)">${a}</div><b>${['기본','바람 테마','얼음 테마','화염 테마','무지개 테마','빙하 테마','번개 테마','벚꽃 테마'][i]}</b><button class="topbtn" style="margin-top:8px;width:100%" onclick="toast('${i===0?'기본 꾸미기 적용':'꾸미기를 적용했습니다'}')">사용</button></div>`).join('')}
- </div>`; ensureBackButton('style');}
+function drawTree(){
+ ensureTreeState();
+ if(!appState.selectedTreeNode&&appState.selectedTreeNode!==0)appState.selectedTreeNode=0;
+ const edgeLines=[];
+ treeNodes.forEach(n=>n.next.forEach(to=>{
+  const t=treeNode(to);
+  if(t) edgeLines.push(`<line x1="${n.x}" y1="${n.y}" x2="${t.x}" y2="${t.y}" />`);
+ }));
+ const nodes=treeNodes.map(n=>{
+  const open=treeUnlocked(n.id),next=treeIsNext(n.id),selected=appState.selectedTreeNode===n.id;
+  return `<div class="treeNode ${open?'treeOpen':next?'treeNext':'treeLocked'} ${selected?'treeSelected':''}" style="left:${n.x}%;top:${n.y}%" onclick="selectTreeNode(${n.id})"><div class="treeIcon">${n.icon}</div><div class="treeLevel">${open?'해금됨':next?'다음 해금':'잠김'}</div><div class="treeLabel">${n.label}</div>${open&&n.id>0?'<div class="treeCheck">✓</div>':''}${!open?`<div class="treeCost">🎲 ${n.cost}</div>`:''}</div>`;
+ }).join('');
+ document.getElementById('main').innerHTML=`<div class="sectionHead"><h2>다이스 트리</h2><span>노드 연결 · 50레벨</span></div><div class="treeLayout"><div class="treeWide"><div class="treeCanvas"><svg class="treeLinks" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><g>${edgeLines.join('')}</g></svg>${nodes}</div><div class="treeLegend"><span>🟢 해금</span><span>🟡 다음 해금</span><span>⚫ 잠김</span></div></div><div class="treeDetails">${treeDetails(treeNode(appState.selectedTreeNode))}</div></div><div class="section"><div class="tile"><b>중요</b><p>협동/아레나에서 보이는 <b>1~7성은 이 로비 레벨과 완전히 별개</b>입니다. 같은 주사위 + 같은 성만 합성할 수 있고, 합성된 칸이 한 단계 높은 성으로 바뀌며 비워진 칸은 덱에서 1성으로 즉시 보충됩니다.</p></div></div>`;
+ ensureBackButton('tree');
+}
+function drawStyle(){
+ const themes=[
+  {id:'default',icon:'🎲',name:'기본 꾸미기',bg:'hsl(220,50%,32%)'},
+  {id:'wind',icon:'🌀',name:'바람 테마',bg:'hsl(190,55%,30%)'},
+  {id:'ice',icon:'❄️',name:'얼음 테마',bg:'hsl(205,60%,33%)'},
+  {id:'fire',icon:'🔥',name:'화염 테마',bg:'hsl(8,58%,31%)'},
+  {id:'rainbow',icon:'🌈',name:'무지개 테마',bg:'hsl(280,55%,32%)'},
+  {id:'glacier',icon:'🧊',name:'빙하 테마',bg:'hsl(180,55%,31%)'},
+  {id:'thunder',icon:'⚡',name:'번개 테마',bg:'hsl(45,58%,30%)'},
+  {id:'cherry',icon:'🌸',name:'벚꽃 테마',bg:'hsl(330,52%,34%)'}
+ ];
+ const cur=appState.styleTheme||'default';
+ document.getElementById('main').innerHTML=`<div class="sectionHead"><h2>꾸미기</h2><span>로비 테마를 선택하세요</span></div><div class="skinGrid">${themes.map(t=>`<div class="skin ${cur===t.id?'selectedSkin':''}"><div class="art" style="background:${t.bg}">${t.icon}</div><b>${t.name}</b><button class="topbtn" style="margin-top:8px;width:100%" onclick="applyStyleTheme('${t.id}')">${cur===t.id?'사용 중':'사용'}</button></div>`).join('')}</div>`;
+ ensureBackButton('style');
+}
+async function applyStyleTheme(id){
+ const allowed=['default','wind','ice','fire','rainbow','glacier','thunder','cherry'];
+ if(!allowed.includes(id))return toast('지원하지 않는 꾸미기입니다.');
+ appState.styleTheme=id;saveLocal();mountShell();
+ try{await save();}catch(e){console.warn('style save',e)}
+ toast('꾸미기를 적용했습니다.');
+}
+
+
+const QUESTS=[
+ {name:'주사위 소환',goal:20,rewardXP:10,unit:'회'},
+ {name:'주사위 합성',goal:10,rewardXP:15,unit:'회'},
+ {name:'협동전 처치',goal:1000,rewardXP:25,unit:'킬'}
+];
+function ensureQuestState(){
+ if(!Array.isArray(appState.quests))appState.quests=[0,0,0];
+ while(appState.quests.length<QUESTS.length)appState.quests.push(0);
+ appState.quests=appState.quests.slice(0,QUESTS.length).map(v=>Math.max(0,Math.floor(Number(v)||0)));
+}
+function questCompleted(i){ensureQuestState();return appState.quests[i]>=QUESTS[i].goal;}
+function drawQuests(){
+ ensureQuestState();
+ const claimedList=Array.isArray(appState.questClaimed)?appState.questClaimed:[];const rows=QUESTS.map((q,i)=>{const cur=Math.min(q.goal,appState.quests[i]);const done=cur>=q.goal;const claimed=claimedList.includes(i);const pct=Math.min(100,cur/q.goal*100);return `<div class="q"><div style="font-size:24px;width:34px">${['🎯','🔄','⚔️'][i]}</div><div class="grow"><div class="row" style="align-items:center"><b>${q.name}</b><span class="muted">${cur.toLocaleString()} / ${q.goal.toLocaleString()} ${q.unit}</span></div><div class="qbar" style="margin-top:6px"><i style="width:${pct}%"></i></div><div class="muted" style="margin-top:4px">완료 보상 · 다이스 패스 XP +${q.rewardXP}</div></div><button class="primary" ${done&&!claimed?'':'disabled'} onclick="claimQuest(${i})">${claimed?'수령 완료':done?'받기':'진행 중'}</button></div>`}).join('');
+ document.getElementById('main').innerHTML=`<div class="sectionHead"><h2>퀘스트</h2><span>완료한 퀘스트만 보상 수령</span></div><div class="quest">${rows}</div>`;
+ ensureBackButton('quests');
+}
+async function claimQuest(i){
+ ensureQuestState();const q=QUESTS[i];if(!q||appState.quests[i]<q.goal)return toast('퀘스트를 완료한 후 받을 수 있습니다.');
+ const claimedKey='questClaimed';if(!Array.isArray(appState[claimedKey]))appState[claimedKey]=[];
+ if(appState[claimedKey].includes(i))return toast('이미 받은 퀘스트입니다.');
+ appState[claimedKey].push(i);appState.passXP=Math.min(500,Number(appState.passXP||0)+q.rewardXP);await save();drawQuests();if(document.getElementById('main'))updateRes();toast(`퀘스트 완료! 다이스 패스 XP +${q.rewardXP}`);
+}
+function addQuestProgress(i,amount=1){ensureQuestState();const q=QUESTS[i];if(!q)return;const before=appState.quests[i];appState.quests[i]=Math.min(q.goal,before+Math.max(0,Math.floor(amount)));if(appState.quests[i]!==before){save().catch(()=>{});}if(appState.page==='quests')drawQuests();}
+
 const PASS_REWARDS_CLIENT=Array.from({length:50},(_,i)=>({xp:(i+1)*10,label:i%5===4?`🎲 주사위 ${20+i*5}`:(i%3===0?`🪙 코인 ${(i+1)*100}`:`🎫 티켓 1`),icon:i%5===4?'🎲':(i%3===0?'🪙':'🎫'),kind:i%5===4?'dice':(i%3===0?'coin':'coopTicket'),value:i%5===4?20+i*5:(i%3===0?(i+1)*100:1)}));
 function drawPass(){
- const xp=appState.passXP;const claimed=appState.passRewardsClaimed||[];const level=Math.min(50,Math.floor(xp/10));const next=PASS_REWARDS_CLIENT.find(r=>xp>=r.xp&&!claimed.includes(r.xp));
+ const xp=Math.max(0,Number(appState.passXP)||0);const claimed=Array.isArray(appState.passRewardsClaimed)?appState.passRewardsClaimed:[];const level=Math.min(50,Math.floor(xp/10));const next=PASS_REWARDS_CLIENT.find(r=>xp>=r.xp&&!claimed.includes(r.xp));
  document.getElementById('main').innerHTML=`<div class="sectionHead"><h2>다이스 패스</h2><span>최대 50레벨</span></div><div class="pass"><div class="passHero"><div class="muted">무료 패스</div><h2 style="margin:5px 0 12px">시즌 보상</h2><div class="progress"><i style="width:${Math.min(100,(level/50)*100)}%"></i></div><div class="row" style="margin-top:8px"><b>Lv.${level}/50</b><span class="muted grow">${next?`다음 보상 Lv.${next.xp/10}`:'모든 보상 수령 완료'}</span></div>${next&&xp>=next.xp?`<button class="primary" style="margin-top:12px" onclick="claimPass()">${next.icon} ${next.label} 받기</button>`:''}</div><div>${PASS_REWARDS_CLIENT.map(r=>`<div class="tile" style="margin-bottom:6px"><b>Lv.${r.xp/10}</b> · ${r.label} ${claimed.includes(r.xp)?'✅':''}</div>`).join('')}</div></div>`;
  ensureBackButton('pass');
 }
@@ -1140,6 +1210,7 @@ function tryBattleMerge(a,b){
  // 합성 후 빈칸은 그대로 둡니다. 소환 버튼을 눌렀을 때만 빈칸을 채웁니다.
  appState.diceGrid[a]=null;
  appState.diceGrid[b]=merged;
+ addQuestProgress(1,1);
  appState.selected=null;
  renderBattleDice();
  sendBattle({type:'merge',from:a,to:b,die:merged});
@@ -1154,6 +1225,7 @@ function summonBattleDice(){
  appState.sp-=50;
  const idx=empty[Math.floor(Math.random()*empty.length)];
  appState.diceGrid[idx]=randomBattleDie('summon');
+ addQuestProgress(0,1);
  appState.selected=null;
  renderBattleDice();
  sendBattle({type:'summon',slot:idx,die:appState.diceGrid[idx]});
@@ -1181,7 +1253,7 @@ function setupBattle(){appState.sp=100;appState.kills=0;appState.gameSec=0;appSt
  if(snap?.diceGrid){appState.diceGrid=snap.diceGrid;appState.sp=Number(snap.sp??100);appState.kills=Number(snap.kills??0);appState.speed=Number(snap.speed??1);appState.battle.myBase=Number(snap.myBase??150);appState.battle.sharedBase=Number(snap.sharedBase??150);appState.battle.opponentBase=Number(snap.opponentBase??150);}
  last=0;lastAttack=0;lastOpponentAttack=0;appState._atk={};renderBattleDice();updateBattleHUD();for(let i=0;i<6;i++){setTimeout(()=>addEnemyFor('me'),i*260);setTimeout(()=>addEnemyFor(appState.battle.mode==='coop'?'shared':'opp'),i*260);}if(appState.opponentType==='player'&&appState.matchId)sendBattle({type:'battle_join',matchId:appState.matchId,mode:appState.battle.mode,stateSnapshot:{diceGrid:appState.diceGrid,sp:appState.sp,kills:appState.kills,speed:appState.speed,myBase:appState.battle.myBase,opponentBase:appState.battle.opponentBase,sharedBase:appState.battle.sharedBase},grid:appState.diceGrid,speed:appState.speed});window.rd2BattleRaf=requestAnimationFrame(battleLoop);}
 let last=0,lastAttack=0,lastOpponentAttack=0;
-function countKill(side,e){if(e._counted)return;e._counted=true;if(appState.battle.mode==='coop'&&side!=='shared')return;if(side==='me'||side==='shared'){appState.kills++;appState.sp=Math.min(9999,appState.sp+(e.boss?35:5)*(1+((appState.treeLevels?.spGain||1)-1)*0.03));if(appState.kills>=5000){endCoop('클리어','5000킬을 달성했습니다!');return;}if(appState.kills>=appState.nextBossKill){spawnBossSet('shared');appState.nextBossKill+=150;}}}
+function countKill(side,e){if(e._counted)return;e._counted=true;if(appState.battle.mode==='coop'&&side!=='shared')return;if(side==='me'||side==='shared'){appState.kills++;addQuestProgress(2,1);appState.sp=Math.min(9999,appState.sp+(e.boss?35:5)*(1+((appState.treeLevels?.spGain||1)-1)*0.03));if(appState.kills>=5000){endCoop('클리어','5000킬을 달성했습니다!');return;}if(appState.kills>=appState.nextBossKill){spawnBossSet('shared');appState.nextBossKill+=150;}}}
 function spawnBossSet(side){appState.bossIndex++;const count=Math.max(1,Math.min(1+Math.floor(appState.kills/750),6));for(let i=0;i<count;i++)setTimeout(()=>addEnemyFor(side,true),i*260);const badge=document.getElementById('bossBadge');if(badge){const names=['돌진형','흡수형','분열형','빙결형','폭격형','광폭형'];badge.textContent='BOSS · '+names[(appState.bossIndex-1)%names.length]+' × '+count;badge.style.display='block';clearTimeout(window.__bossBadgeTimer);window.__bossBadgeTimer=setTimeout(()=>badge.style.display='none',1800);}}
 function addEnemyFor(side,boss=false){const id=side==='shared'?'sharedEnemies':side==='me'?'myEnemies':'oppEnemies',layer=document.getElementById(id);if(!layer)return;const names=['돌진형','흡수형','분열형','빙결형','폭격형','광폭형'],skill=boss?names[(appState.bossIndex-1)%names.length]:'';const el=document.createElement('div');el.className='coopEnemy'+(boss?' boss':'');el.textContent=boss?'B':'●';el.style.top=(35+Math.random()*25)+'%';el.title=skill;layer.appendChild(el);const e={el,x:-18,y:35+Math.random()*25,hp:boss?900:190+Math.min(1400,appState.kills*.35),max:boss?900:190+Math.min(1400,appState.kills*.35),speed:17+Math.min(18,appState.kills*.004)+(boss?-4:0),boss,side,skill,stunned:false};(side==='shared'?appState.sharedEnemies:side==='me'?appState.enemies:appState.oppEnemies).push(e);}
 function useBossSkill(e){if(!e.boss||e._skillUsed)return;if(e.x>10&&e.x<18){e._skillUsed=true;switch(e.skill){case '돌진형':e.speed*=2.7;break;case '흡수형':e.hp=Math.min(e.max,e.hp+e.max*.45);break;case '분열형':addEnemyFor(e.side,false);break;case '빙결형':appState.speed=Math.max(.7,appState.speed-.3);break;case '폭격형':appState.battle.sharedBase=Math.max(0,appState.battle.sharedBase-8);break;case '광폭형':e.speed*=1.8;break;}}}
@@ -1197,7 +1269,7 @@ function sendBattleSnapshot(){
 }
 setInterval(()=>{if(appState.battle&&!appState.coopEnded&&appState.matchId)sendBattleSnapshot()},2000);
 function sendBattle(msg){if(!liveSocket||liveSocket.readyState!==WebSocket.OPEN||!appState.matchId)return;try{liveSocket.send(JSON.stringify({...msg,matchId:appState.matchId}));}catch(e){console.warn('battle send',e)}}
-function handleRemoteBattle(m){if(!appState.battle||m.matchId!==appState.matchId)return;if(m.type==='battle_join'){appState.battle.opponentType='player';appState.battle.opponentDice=m.grid||[];appState.battle.opponentSpeed=Number(m.speed||1);renderBattleDice();}else if(m.type==='summon'){if(Number.isInteger(m.slot)&&m.die){appState.battle.opponentDice=Array.from({length:15},(_,i)=>appState.battle.opponentDice?.[i]||null);appState.battle.opponentDice[m.slot]=m.die;renderBattleDice();}}else if(m.type==='merge'){if(Number.isInteger(m.from)&&Number.isInteger(m.to)&&m.die){appState.battle.opponentDice[m.from]=null;appState.battle.opponentDice[m.to]=m.die;renderBattleDice();}}else if(m.type==='battle_progress'){const s=m.stateSnapshot||{};if(Array.isArray(s.diceGrid))appState.battle.opponentDice=Array.from({length:15},(_,i)=>s.diceGrid?.[i]||null);if(s.speed)appState.battle.opponentSpeed=Number(s.speed);renderBattleDice();updateBattleHUD();}else if(m.type==='speed'){appState.battle.opponentSpeed=Math.max(1,Math.min(2,Number(m.speed)||1));updateBattleHUD();}else if(m.type==='battle_game_over'){appState.coopEnded=true;toast('상대가 전투를 종료했습니다.');}}
+function handleRemoteBattle(m){if(!appState.battle||m.matchId!==appState.matchId)return;if(m.type==='battle_join'){appState.battle.opponentType='player';appState.battle.opponentDice=m.grid||[];appState.battle.opponentSpeed=Number(m.speed||1);renderBattleDice();}else if(m.type==='summon'){if(Number.isInteger(m.slot)&&m.die){appState.battle.opponentDice=Array.from({length:15},(_,i)=>appState.battle.opponentDice?.[i]||null);appState.battle.opponentDice[m.slot]=m.die;renderBattleDice();}}else if(m.type==='merge'){if(Number.isInteger(m.from)&&Number.isInteger(m.to)&&m.die){appState.battle.opponentDice[m.from]=null;appState.battle.opponentDice[m.to]=m.die;renderBattleDice();}}else if(m.type==='battle_progress'){const s=m.stateSnapshot||{};if(Array.isArray(s.diceGrid))appState.battle.opponentDice=Array.from({length:15},(_,i)=>s.diceGrid?.[i]||null);if(s.speed)appState.battle.opponentSpeed=Number(s.speed);renderBattleDice();updateBattleHUD();}else if(m.type==='speed'){appState.battle.opponentSpeed=Math.max(1,Math.min(1.5,Number(m.speed)||1));updateBattleHUD();}else if(m.type==='battle_game_over'){appState.coopEnded=true;toast('상대가 전투를 종료했습니다.');}}
 async function persistBattleResult(reason='finished'){
  if(appState.battleFinishSaved||!appState.matchId)return;
  appState.battleFinishSaved=true;
@@ -1227,7 +1299,7 @@ function toast(msg){let t=document.getElementById('toast');if(!t){t=document.cre
 function esc(x){return String(x||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function stateSignature(st){
   if(!st)return '';
-  return JSON.stringify({profile:st.profile,currencies:st.currencies,deck:st.deck,unlocked:st.unlocked,treeUnlocked:st.treeUnlocked,diceLevels:st.diceLevels,treeLevels:st.treeLevels,passXP:st.passXP,passRewardsClaimed:st.passRewardsClaimed,lucky:st.lucky,quests:st.quests,difficulty:st.difficulty,traitLevels:st.traitLevels,bountyClaimed:st.bountyClaimed,battleMode:st.battleMode});
+  return JSON.stringify({profile:st.profile,currencies:st.currencies,deck:st.deck,unlocked:st.unlocked,treeUnlocked:st.treeUnlocked,diceLevels:st.diceLevels,treeLevels:st.treeLevels,passXP:st.passXP,passRewardsClaimed:st.passRewardsClaimed,lucky:st.lucky,quests:st.quests,difficulty:st.difficulty,traitLevels:st.traitLevels,questClaimed:st.questClaimed,bountyClaimed:st.bountyClaimed,battleMode:st.battleMode,styleTheme:st.styleTheme});
 }
 let lastAppliedStateSignature='';
 
@@ -1249,8 +1321,10 @@ function applyServerResponse(r){
    appState.passRewardsClaimed=Array.isArray(r.state.passRewardsClaimed)?r.state.passRewardsClaimed:appState.passRewardsClaimed;
    appState.lucky=Number(r.state.lucky??appState.lucky);
    appState.quests=r.state.quests||appState.quests;
-   appState.difficulty=r.state.difficulty||appState.difficulty;
+   appState.questClaimed=Array.isArray(r.state.questClaimed)?r.state.questClaimed:appState.questClaimed;
+   appState.difficulty=r.state.difficulty||appState.difficulty; appState.styleTheme=r.state.styleTheme||appState.styleTheme||'default';
    appState.bountyClaimed=Number(r.state.bountyClaimed??appState.bountyClaimed??0);
+   appState.bountyBestKills=Number(r.state.bountyBestKills??appState.bountyBestKills??0);
  }
  if(r.user){appState.userId=r.user.id;appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin || String(r.user.username||'').toLowerCase()==='kimsiwon')}
  if(r.coopTicketNextIn!=null)appState.coopTicketNextIn=Number(r.coopTicketNextIn);

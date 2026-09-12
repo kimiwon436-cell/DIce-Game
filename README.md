@@ -1,7 +1,10 @@
-# Random Dice 2 Render Server v66
+# Random Dice 2 Render Server v74
 
 Fixes:
-- Restored the `drawDeck()` function used by the deck menu and slot replacement flow.
-- Centered lobby deck emoji rendering with explicit full-face centering rules.
-- Made battle-result persistence idempotent and always persist the latest `bountyClaimed` progress when a battle is finished/left.
-- Existing PostgreSQL data is preserved; deploy code without recreating the database.
+- Restored the missing `drawQuests()` function so the Quest page no longer throws `drawQuests is not defined`.
+- Added saved quest progress and claim state.
+- Quest completion awards Dice Pass XP when the user manually claims the completed quest.
+- Quest progress increases from battle summoning, merging, and cooperative kills.
+- Dice Pass level/progress now advances from earned quest XP and remains server-saved.
+- Added questClaimed to the persistent state on both client and server.
+- Existing PostgreSQL data is preserved; deploy the code without recreating the database.

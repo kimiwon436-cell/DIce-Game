@@ -14,7 +14,7 @@ const DEFAULT_CLIENT_STATE={
  traitLevels:{},
  treeLevels:{allDamage:1,attackSpeed:1,spGain:1},
  profile:{nickname:'',avatar:'🎲'},deck:['blue','cyan','red','green','yellow'],unlocked:['blue','cyan','red','green','yellow'],treeUnlocked:[],diceLevels:{blue:1,cyan:1,red:1,green:1,yellow:1},traitLevels:{},
- passXP:0,passRewardsClaimed:[],lucky:0,quests:[0,0,0],difficulty:'normal',room:null,isAdmin:false,coopTicketNextIn:300000,arenaTicketNextIn:1800000,matchQueueId:null,opponentType:null,opponentNickname:''
+ passXP:0,passRewardsClaimed:[],lucky:0,quests:[0,0,0],difficulty:'normal',styleTheme:'default',room:null,isAdmin:false,coopTicketNextIn:300000,arenaTicketNextIn:1800000,matchQueueId:null,opponentType:null,opponentNickname:''
 };
 const appState=DEFAULT_CLIENT_STATE;
 
@@ -103,7 +103,7 @@ async function api(path, options={}){
  if(!res.ok)throw new Error(data.error||('HTTP '+res.status));
  return data;
 }
-function snapshot(){return {user:appState.user,userId:appState.userId,battleMode:appState.battleMode||'coop',profile:appState.profile,currencies:appState.currencies,deck:appState.deck,unlocked:appState.unlocked,treeUnlocked:appState.treeUnlocked,diceLevels:appState.diceLevels,treeLevels:appState.treeLevels,passXP:appState.passXP,passRewardsClaimed:appState.passRewardsClaimed,lucky:appState.lucky,quests:appState.quests,difficulty:appState.difficulty,selectedTreeNode:appState.selectedTreeNode||0,traitLevels:appState.traitLevels||{}}}
+function snapshot(){return {user:appState.user,userId:appState.userId,battleMode:appState.battleMode||'coop',profile:appState.profile,currencies:appState.currencies,deck:appState.deck,unlocked:appState.unlocked,treeUnlocked:appState.treeUnlocked,diceLevels:appState.diceLevels,treeLevels:appState.treeLevels,passXP:appState.passXP,passRewardsClaimed:appState.passRewardsClaimed,lucky:appState.lucky,quests:appState.quests,difficulty:appState.difficulty,styleTheme:appState.styleTheme||'default',selectedTreeNode:appState.selectedTreeNode||0,traitLevels:appState.traitLevels||{}}}
 function saveLocal(){try{A.setItem('rd2_local_cache',JSON.stringify(snapshot()))}catch{}}
 function save(){saveLocal();if(!serverToken)return Promise.resolve();return api('/api/me/state',{method:'PUT',body:JSON.stringify(snapshot())}).catch(e=>console.warn('server save failed',e))}
 function loadLocal(){
@@ -123,7 +123,7 @@ function loadLocal(){
  if(!appState.treeLevels.attackSpeed)appState.treeLevels.attackSpeed=1;
  if(!appState.treeLevels.spGain)appState.treeLevels.spGain=1;
  if(!appState.selectedTreeNode && appState.selectedTreeNode!==0)appState.selectedTreeNode=0;
- if(!Array.isArray(appState.passRewardsClaimed))appState.passRewardsClaimed=[];
+ if(!appState.styleTheme)appState.styleTheme='default'; if(!Array.isArray(appState.passRewardsClaimed))appState.passRewardsClaimed=[];
  if(!appState.arenaTicketNextIn)appState.arenaTicketNextIn=1800000;
  if(!appState.coopTicketNextIn)appState.coopTicketNextIn=300000;
 }
@@ -559,7 +559,7 @@ function applyServerResponse(r){
    appState.passRewardsClaimed=Array.isArray(r.state.passRewardsClaimed)?r.state.passRewardsClaimed:appState.passRewardsClaimed;
    appState.lucky=Number(r.state.lucky??appState.lucky);
    appState.quests=r.state.quests||appState.quests;
-   appState.difficulty=r.state.difficulty||appState.difficulty;
+   appState.difficulty=r.state.difficulty||appState.difficulty;appState.styleTheme=r.state.styleTheme||appState.styleTheme||'default';
  }
  if(r.user){appState.userId=r.user.id;appState.user=r.user.username;appState.isAdmin=Boolean(r.user.isAdmin || String(r.user.username||'').toLowerCase()==='kimsiwon')}
  if(r.coopTicketNextIn!=null)appState.coopTicketNextIn=Number(r.coopTicketNextIn);

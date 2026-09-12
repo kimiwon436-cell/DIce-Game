@@ -34,7 +34,7 @@ const DEFAULT_STATE = {
   deck: ['blue','cyan','red','green','yellow'],
   unlocked: ['blue','cyan','red','green','yellow'], treeUnlocked: [], diceLevels: {blue:1,cyan:1,red:1,green:1,yellow:1}, traitLevels: {}, treeLevels: {allDamage:1,attackSpeed:1,spGain:1},
   passXP: 0, passRewardsClaimed: [], lucky: 0, bountyClaimed: 0, bountyBestKills: 0,
-  quests: [0,0,0], difficulty: 'normal'
+  quests: [0,0,0], questClaimed: [], difficulty: 'normal', styleTheme:'default'
 };
 
 const PASS_REWARDS = Array.from({length:50},(_,i)=>({xp:(i+1)*10,label:i%5===4?`주사위 ${20+i*5}`:(i%3===0?`코인 ${(i+1)*100}`:`협동전 티켓 1`),field:i%5===4?'dice':(i%3===0?'coin':'coopTicket'),amount:i%5===4?20+i*5:(i%3===0?(i+1)*100:1)}));
@@ -69,9 +69,10 @@ function cleanState(raw){
     passRewardsClaimed:Array.isArray(s.passRewardsClaimed)?[...new Set(s.passRewardsClaimed.map(Number).filter(Number.isInteger))]:[],
     lucky:Math.max(0,Math.floor(Number(s.lucky??0))),
     quests:Array.isArray(s.quests)?s.quests.slice(0,20).map(Number):[0,0,0],
+    questClaimed:Array.isArray(s.questClaimed)?[...new Set(s.questClaimed.map(Number).filter(Number.isInteger))]:[],
     bountyClaimed:Math.max(0,Math.floor(Number(s.bountyClaimed??0))),
     bountyBestKills:Math.max(0,Math.floor(Number(s.bountyBestKills??0))),
-    difficulty:['easy','normal','hard'].includes(s.difficulty)?s.difficulty:'normal'
+    difficulty:['easy','normal','hard'].includes(s.difficulty)?s.difficulty:'normal', styleTheme:['default','wind','ice','fire','rainbow','glacier','thunder','cherry'].includes(s.styleTheme)?s.styleTheme:'default'
   };
 }
 function isAdminRow(row){return Boolean(row && (row.is_admin || String(row.username||'').toLowerCase()===ADMIN_USERNAME.toLowerCase()));}
