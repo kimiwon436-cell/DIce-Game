@@ -1335,3 +1335,30 @@ button{display:inline-flex;align-items:center;justify-content:center;box-sizing:
 .dice:not(.battleDie) .pips{display:none!important;}
 .diceFace{position:relative;width:100%;height:100%;display:grid;place-items:center;}
 </style>
+<style>
+/* v65: lobby deck emoji is always centered */
+#page-lobby .deckStrip .dice{position:relative!important;display:grid!important;place-items:center!important;}
+#page-lobby .deckStrip .dice .dieArt{
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  bottom:auto!important;
+  right:auto!important;
+  transform:translate(-50%,-50%)!important;
+  width:68%!important;
+  height:68%!important;
+  margin:0!important;
+  display:grid!important;
+  place-items:center!important;
+  line-height:1!important;
+  text-align:center!important;
+}
+#page-lobby .deckStrip .dice .dieArt .diceArt{
+  display:grid!important;
+  place-items:center!important;
+  width:100%!important;
+  height:100%!important;
+  line-height:1!important;
+  text-align:center!important;
+}
+</style>
