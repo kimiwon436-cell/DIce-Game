@@ -506,6 +506,44 @@ button,input{font:inherit}button{cursor:pointer}
 .battleDie .dieArt .diceArt{width:100%;height:100%;}
 .battleDie .starMark{position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;z-index:4!important;margin:0!important;}
 </style>
+
+<style>
+/* v66: lobby deck emoji is centered independently from every parent/layout rule */
+#page-lobby .deckStrip .dice,
+#page-lobby .deck .dice{
+  display:grid!important;
+  place-items:center!important;
+  position:relative!important;
+  overflow:hidden!important;
+}
+#page-lobby .deckStrip .dieArt,
+#page-lobby .deck .dieArt{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  transform:none!important;
+  margin:0!important;
+  display:grid!important;
+  place-items:center!important;
+  text-align:center!important;
+  line-height:1!important;
+  z-index:5!important;
+  pointer-events:none!important;
+}
+#page-lobby .deckStrip .dieArt .diceArt,
+#page-lobby .deck .dieArt .diceArt{
+  display:grid!important;
+  place-items:center!important;
+  width:100%!important;
+  height:100%!important;
+  line-height:1!important;
+  text-align:center!important;
+}
+#page-lobby .deckStrip .dice:not(.battleDie) .dieArt,
+#page-lobby .deck .dice:not(.battleDie) .dieArt{font-size:clamp(20px,4vw,36px)!important;}
+</style>
+
 </head>
 <body>
 <div id="root"><div class="auth"><div class="authbox">
@@ -826,6 +864,19 @@ function diceArtSVG(type,small=false){
  return `<span class="diceArt" aria-hidden="true">${emoji[type]||emoji.blue}</span>`;
 }
 function diceHTML(type,lvl=1){const d=D[type]||D.blue||{cls:'d-blue',name:'주사위',damage:50};return `<div class="dice ${d.cls}" aria-label="${esc(d.name||type)}"><span class="dieArt">${diceArtSVG(type)}</span></div>`;}
+
+function drawDeck(){
+ const main=document.getElementById('main');
+ if(!main)return;
+ const deck=Array.isArray(appState.deck)?appState.deck:[];
+ const unlocked=Array.isArray(appState.unlocked)?appState.unlocked:[];
+ main.innerHTML=`<div class="sectionHead"><h2>덱</h2><span>${deck.length}/5 장착</span></div>
+ <div class="tile" style="margin-bottom:12px"><b>전투 덱</b><p>슬롯을 누르면 교체할 주사위를 선택할 수 있습니다. 같은 주사위는 중복 장착할 수 없습니다.</p></div>
+ <div class="deck" style="max-width:600px">${deck.map((x,i)=>`<div class="slot" style="background:#1f1531;min-height:100px"><button onclick="openDeckPicker(${i})" style="width:100%;height:100%;background:transparent;border:0;display:grid;place-items:center;cursor:pointer;padding:8px"><div style="display:grid;place-items:center;gap:4px;width:100%">${diceHTML(x,appState.diceLevels?.[x]||1)}<div class="muted" style="text-align:center">${esc(D[x]?.name||x)}</div></div></button></div>`).join('')}</div>
+ <div class="section"><div class="sectionHead"><h2>보유 주사위</h2><span>${unlocked.length} / 20</span></div>
+ <div class="cardgrid">${unlocked.map(x=>{const d=D[x]||D.blue;const lv=appState.diceLevels?.[x]||1;return `<div class="tile"><div class="row"><div style="width:56px;height:56px;display:grid;place-items:center">${diceHTML(x,lv)}</div><div><b>${esc(d.name)}</b><div class="muted">트리 레벨 ${lv}</div></div></div><div class="muted" style="margin-top:7px">${deck.includes(x)?'현재 덱 장착 중':'장착 가능'}</div><button style="margin-top:8px;width:100%" onclick="openDeckPickerForDice('${esc(x)}')">덱에 장착</button></div>`}).join('')}</div></div>`;
+ ensureBackButton('deck');
+}
 function deckPickerHtml(slot){const equipped=new Set(appState.deck);return `<div class="overlay"><div class="modal" style="max-width:760px"><button class="close" onclick="closeModal()">✕</button><h2>🎴 덱 주사위 교체</h2><p class="muted">슬롯 ${slot+1}에 넣을 주사위를 선택하세요.</p><div class="cardgrid">${appState.unlocked.map(x=>{const d=D[x],used=equipped.has(x)&&appState.deck[slot]!==x;return `<button class="tile" ${used?'disabled':''} onclick="setDeckSlot(${slot},'${x}')" style="text-align:left;opacity:${used?.45:1}"><div class="row"><div style="width:52px">${diceHTML(x,appState.diceLevels?.[x]||1)}</div><div><b>${d.name}</b><div class="muted">${used?'이미 장착됨':`트리 Lv.${appState.diceLevels?.[x]||1}`}</div></div></div></button>`}).join('')}</div></div></div>`}
 function openDeckPicker(slot){document.getElementById('modalRoot').innerHTML=deckPickerHtml(slot)}
 function openDeckPickerForDice(type){const slot=appState.deck.indexOf(type)>=0?appState.deck.indexOf(type):0;openDeckPicker(slot)}
