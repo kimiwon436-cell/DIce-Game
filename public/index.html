@@ -544,6 +544,23 @@ button,input{font:inherit}button{cursor:pointer}
 #page-lobby .deck .dice:not(.battleDie) .dieArt{font-size:clamp(20px,4vw,36px)!important;}
 </style>
 
+<style>
+/* v67: robust centered dice emoji for lobby deck */
+#page-lobby .deckStrip .dice{position:relative!important;display:grid!important;place-items:center!important;overflow:hidden!important;}
+#page-lobby .deckStrip .dice .dieArt{
+ position:absolute!important;left:50%!important;top:50%!important;bottom:auto!important;right:auto!important;
+ transform:translate(-50%,-50%)!important;width:auto!important;height:auto!important;
+ display:grid!important;place-items:center!important;margin:0!important;padding:0!important;
+ font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif!important;
+ font-size:30px!important;line-height:1!important;z-index:5!important;
+}
+#page-lobby .deck .dice .dieArt{
+ position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;
+ bottom:auto!important;right:auto!important;margin:0!important;display:grid!important;place-items:center!important;
+ font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif!important;
+ line-height:1!important;z-index:5!important;
+}
+</style>
 </head>
 <body>
 <div id="root"><div class="auth"><div class="authbox">
@@ -861,9 +878,15 @@ function diceArtSVG(type,small=false){
   orange:'⚡',black:'🌑',white:'✧',silver:'🛡️',gold:'💰',aqua:'🌊',violet:'🕳️',lime:'💚',
   navy:'💣',coral:'🪸',mint:'🌿',rose:'🌹',prism:'🌈',cosmic:'🌌',teal:'🔷',magenta:'💜',brown:'🪨',crimson:'❤️'
  };
- return `<span class="diceArt" aria-hidden="true">${emoji[type]||emoji.blue}</span>`;
+ return emoji[type]||emoji.blue;
 }
-function diceHTML(type,lvl=1){const d=D[type]||D.blue||{cls:'d-blue',name:'주사위',damage:50};return `<div class="dice ${d.cls}" aria-label="${esc(d.name||type)}"><span class="dieArt">${diceArtSVG(type)}</span></div>`;}
+function diceHTML(type,lvl=1){const d=D[type]||D.blue||{cls:'d-blue',name:'주사위',damage:50};return `<div class="dice ${d.cls}" aria-label="${esc(d.name||type)}"><span class="dieArt" aria-hidden="true">${diceArtSVG(type)}</span></div>`;}
+function battleDiceHTML(die,selected=false){
+ const d=D[die?.type]||D.blue;
+ const r=Math.max(1,Math.min(7,Number(die?.rank)||1));
+ const face=r>=7?`<div class="starMark">★</div>`:battlePips(r);
+ return `<div class="dice battleDie ${d.cls} ${selected?'battleSelected':''}" title="${esc(d.name||die?.type||'주사위')} · ${r}성"><span class="dieArt" aria-hidden="true">${d.icon||diceArtSVG(die?.type)}</span>${face}<small>${r>=7?'★ 7성':r+'성'}</small></div>`;
+}
 
 function drawDeck(){
  const main=document.getElementById('main');
