@@ -1321,4 +1321,13 @@ button{display:inline-flex;align-items:center;justify-content:center;box-sizing:
 .battleDie .pips{z-index:3;}
 </style>
 
-<style>.diceEmoji{display:none!important}</style>
+<style>.diceEmoji{display:none!important}
+/* v61: lobby/tree dice show artwork only; battle dice show dark pips behind centered artwork */
+.dice{isolation:isolate;}
+.dice .dieArt{position:absolute;left:50%;top:50%;width:48%;height:48%;transform:translate(-50%,-50%);display:grid;place-items:center;color:rgba(255,255,255,.62);opacity:.62;z-index:2;pointer-events:none;}
+.dice .dieArt svg{width:100%;height:100%;display:block;}
+.dice:not(.battleDie) .dieArt{width:58%;height:58%;opacity:.68;}
+.battleDie .pips,.battleDie .starMark{position:relative;z-index:1;}
+.battleDie .dieArt{z-index:2;}
+.battleDie .pip{z-index:1;}
+</style>
